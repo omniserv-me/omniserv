@@ -1,16 +1,16 @@
 # omniserv
 So here's the thing: this is the repo for my homelab project, which will include different microservices:
-Butler (Orchestrator, CLI)
-Smartlife (rewritten in x-Language)
-Omniscient (rewritten in x-Language, add support for excel tables)
-Leobot (rewritten in x-Language)
-Cloud (selfhosted Nextcloud?)
-DNS (which will resolve my own domain such as .omni inside of local network, as well as self-hosted webpage)
-VPN (WireGuard?)
-Custom logging (also into the db and in cli)
-CI/CD pipeline (push from laptop, auto update on server)
-Prod/Test environments, bc the server must be reliable for my fam to use
-Maybe eeven add tester microservice to test env as part of cicd pipeline lol idk if its the best idea
+- Butler (Orchestrator, CLI)
+- Smartlife (rewritten in x-Language)
+- Omniscient (rewritten in x-Language, add support for excel tables)
+- Leobot (rewritten in x-Language)
+- Cloud (selfhosted Nextcloud?)
+- DNS (which will resolve my own domain such as .omni inside of local network, as well as self-hosted webpage)
+- VPN (WireGuard?)
+- Custom logging (also into the db and in cli)
+- CI/CD pipeline (push from laptop, auto update on server)
+- Prod/Test environments, bc the server must be reliable for my fam to use
+- Maybe eeven add tester microservice to test env as part of cicd pipeline lol idk if its the best idea
 
 To orchestrate all this shi docker compose should suffice, but it feels like kubernetes is just a few thoughts away
 
