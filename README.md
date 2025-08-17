@@ -22,3 +22,5 @@ Gitignore is github's template for Go
 This thingy I plan to run on Raspberry Pi 5 8/16GB with 512 SSD and 2TB HDD for starters
 
 Very much later on when I get the MANEY I plan on adding some AI's (selfhosted ofc)
+
+BTW gotta make my way with using go and git in neovim, Ill update those configs on my other repo
