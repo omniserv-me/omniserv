@@ -7,3 +7,4 @@ todo:
 think about security first. Maybe switch (duckdns?)
 noip-duc as a service on server boot
 feed omni.myddns.me to pivpn for further configuration
+to ci/cd set up github webhook to auto-pull
