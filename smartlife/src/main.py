@@ -171,7 +171,7 @@ async def kill():
 
 async def main():
     event.set()
-    await asyncio.gather(run(), listen_to_input(), runApi())
+    await asyncio.gather(run(), runApi()) # Call listen_to_input() to enable cli
 
 
 def exception_handler(loop, context):

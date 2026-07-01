@@ -24,6 +24,8 @@ services:
       - MONGO_PWD=${MONGO_PWD}
     ports:
       - "5003:5003"
+    depends_on:
+      - mongodb
 
   api:
     build: ./api/
@@ -31,6 +33,9 @@ services:
       - API_SECRET=$API_SECRET
     ports:
       - "5006:5006"
+    depends_on:
+      - omniscient
+      - smartlife
 
   smartlife:
     build: ./smartlife/
