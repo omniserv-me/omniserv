@@ -3,6 +3,11 @@ services:
     build: ./professional/
     ports:
       - "5005:5005"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://webpage:5005"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
 
   mongodb:
     image: mongo:8.0.6
@@ -36,6 +41,11 @@ services:
     depends_on:
       - omniscient
       - smartlife
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://api:5006/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 3
 
   smartlife:
     build: ./smartlife/
