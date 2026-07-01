@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Leo — Software Developer</title>
+  <link rel="icon" type="image/x-icon" href="/assets/me.jpg">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+  <header class="site-header">
+    <nav class="nav container">
+      <a class="logo" href="#">Leo</a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#about">About</a></li>
+        <li><a href="#stack">Stack</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#socials">Socials</a></li>
+      </ul>
+      <a class="nav-cta" id="downloadBtn" href="files/Yesaulov_CV.pdf" target="_blank">Resume</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section id="hero" class="hero">
+      <canvas id="particles"></canvas>
+      <div class="hero-bg" aria-hidden="true">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+      </div>
+
+      <div class="container hero-content">
+        <div class="hero-text reveal">
+          <h1>Hi — I’m <span class="accent">Leonid Yesaulov</span></h1>
+          <p class="tagline">I build fast, reliable software and delightful user experiences.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#projects">View Projects</a>
+            <a class="btn btn-ghost" href="#about">About me</a>
+          </div>
+        </div>
+
+        <!-- New: profile image -->
+        <aside class="hero-photo reveal">
+          <img src="assets/me.jpg" alt="Your portrait" loading="lazy" />
+        </aside>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="section">
+      <div class="container section-inner">
+        <div class="split">
+          <div class="reveal">
+            <h2>About</h2>
+            <p>I’m a software developer who enjoys designing robust systems and clean user interfaces. I focus on performance, readable code, and pragmatic design decisions. I value testing, automation, and collaboration.</p>
+            <p>Favourite domains: data/AI, backend systems and developer tools.</p>
+            <p>Hobbys: arts (music, literature), bonsai gardens and tabletop games.</p>
+          </div>
+
+          <div class="reveal card-light">
+            <h3>Quick facts</h3>
+            <ul class="facts">
+              <li><strong>Location:</strong> Munich, Germany</li>
+              <li><strong>Languages:</strong> English, German, Russian, Ukrainian</li>
+              <li><strong>Education:</strong> Informatics BSc @ TUM (projected - 2027)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STACK -->
+    <section id="stack" class="section alt">
+      <div class="container section-inner">
+        <h2 class="reveal">Tech Stack</h2>
+        <p class="reveal">Tools and languages I work with frequently:</p>
+
+        <div class="stack-grid">
+          <span class="badge reveal">Python</span>
+          <span class="badge reveal">Java</span>
+          <span class="badge reveal">C/C++</span>
+          <span class="badge reveal">SQL</span>
+          <span class="badge reveal">MongoDB</span>
+          <span class="badge reveal">Docker</span>
+          <span class="badge reveal">Git</span>
+          <span class="badge reveal">Linux</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section id="projects" class="section">
+      <div class="container section-inner">
+        <h2 class="reveal">Selected Projects</h2>
+        <p class="reveal">Small selection — <a class="accent" href="mailto:leo@omniserv.me?subject=New%20Offer&body=Hi,%20Leo!%0A%0A">reach out</a> for details.</p>
+
+        <div class="projects-grid">
+
+          <a href="https://github.com/leoyesaulov/smartlife" class="mute" target="_blank">
+          <article class="project-card reveal">
+            <div class="pc-top">
+              <h3>Omniserv</h3>
+              <p class="muted">Self-hosted · Server</p>
+            </div>
+            <p class="pc-desc">Home-server, providing reliable automations, secure VPN and Webserver capacity without downtime.</p>
+            <div class="pc-meta">
+              <span class="tag">Python</span>
+              <span class="tag">Linux</span>
+              <span class="tag">Cloudflare</span>
+            </div>
+          </article>
+          </a>
+
+          <a href="https://github.com/leoyesaulov/professional" class="mute" target="_blank">
+          <article class="project-card reveal">
+            <div class="pc-top">
+              <h3>Portfolio Website</h3>
+              <p class="muted">Web · HTML/CSS/JS</p>
+            </div>
+            <p class="pc-desc">This portfolio — clean, responsive, animated single-page site.</p>
+            <div class="pc-meta">
+              <span class="tag">HTML</span>
+              <span class="tag">CSS</span>
+              <span class="tag">JS</span>
+            </div>
+          </article>
+          </a>
+
+          <article class="project-card reveal">
+            <div class="pc-top">
+              <h3>Secure Memory Unit</h3>
+              <p class="muted">Embedded systems · Simulation</p>
+            </div>
+            <p class="pc-desc">Monolithic SMU module with controller logic, latency simulation, parity checks, and fault-injection tests.</p>
+            <div class="pc-meta">
+              <span class="tag">C/C++</span>
+              <span class="tag">Hardware</span>
+            </div>
+          </article>
+
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SOCIALS -->
+    <section id="socials" class="section alt">
+      <div class="container section-inner">
+        <h2 class="reveal">Socials & Contact</h2>
+        <p class="reveal">Find me online — happy to connect.</p>
+
+        <div class="socials-grid reveal">
+          <a class="social" href="https://github.com/leoyesaulov">GitHub</a>
+          <a class="social" href="https://www.linkedin.com/in/leonid-yesaulov-836b98217/">LinkedIn</a>
+          <a class="social" href="mailto:leo@omniserv.me?subject=Personal%20Inquiry&body=Hi,%20Leo!%0A%0A">Email</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="year"></span> Leonid Yesaulov — Built with care.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

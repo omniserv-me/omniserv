@@ -1,0 +1,15 @@
+services:
+  smartlife:
+    build: .
+    ports:
+      - "5002:5002"
+    networks:
+      - omniserv-net
+    environment:
+      STRIP_IP: $STRIP_IP
+      CITY:     $CITY
+      PROD:     $PROD
+
+networks:
+  omniserv-net:
+    external: true

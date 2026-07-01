@@ -1,0 +1,33 @@
+{
+	auto_https off
+}
+
+:5005 { # wildcard for any host. Localhost will not accept if called from remote
+	@notData {
+		not path /.git/*
+		not path /Caddyfile
+		not path /Dockerfile
+		not path /.vscode/*
+		not path /.idea/*
+		not path /.env
+		not path /hidden/*
+	}
+	
+
+	log {
+		output file /hidden/caddylog 
+		format console
+	}
+
+
+
+	respond /.git/* 403
+	respond /Caddyfile 403
+	respond /Dockerfile 403
+	respond /.vscode/* 403
+	respond /.idea/* 403
+	respond /.env 403
+	respond /hidden/* 403
+
+	file_server 
+}
