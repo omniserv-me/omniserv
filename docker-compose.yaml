@@ -1,0 +1,43 @@
+services:
+  webpage:
+    build: ./professional/
+    ports:
+      - "5005:5005"
+
+  mongodb:
+    image: mongo:8.0.6
+    volumes:
+      - type: bind
+        # ToDo: fix: hardcode for omniserv deploy: ~/omni/omniscient/data
+        source: ${DATA_DIR} # am I autistic wtf
+        target: /data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USR}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PWD}
+    ports:
+      - "27017:27017" # Leave ports for manual intervention
+
+  omniscient:
+    build: ./omniscient/
+    environment:
+      - MONGO_USR=${MONGO_USR}
+      - MONGO_PWD=${MONGO_PWD}
+    ports:
+      - "5003:5003"
+
+  api:
+    build: ./api/
+    environment:
+      - API_SECRET=$API_SECRET
+    ports:
+      - "5006:5006"
+
+  smartlife:
+    build: ./smartlife/
+    environment:
+      - STRIP_IP=$STRIP_IP
+      - CITY=$CITY
+      - PROD=$PROD
+    ports:
+      - "5002:5002"
+
