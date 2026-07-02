@@ -92,6 +92,10 @@ class ColoStrip:
             self.on()
         # turn off during the sleep-time (from 21:30 to 07:00)
         if ((now >= bed_time or now <= wake_time) and self.strip.on) or not state.owner_present:
+            if not state.owner_present:
+                log(f"The owner is absent.", "info", _print)
+            if (now >= bed_time or now <= wake_time):
+                log(f"Its bedtime.", "info", _print)
             self.off()
 
     # An interface tp on/off methods to decide which method (and logging) to use
