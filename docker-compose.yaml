@@ -30,7 +30,9 @@ services:
     ports:
       - "5003:5003"
     depends_on:
-      - mongodb
+      mongodb:
+        restart: true
+        condition: service_started
 
   api:
     build: ./api/
@@ -39,8 +41,12 @@ services:
     ports:
       - "5006:5006"
     depends_on:
-      - omniscient
-      - smartlife
+      omniscient:
+        restart: true
+        condition: service_started
+      smartlife:
+        restart: true
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://api:5006/health"]
       interval: 5s
