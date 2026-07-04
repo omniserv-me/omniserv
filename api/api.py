@@ -5,12 +5,18 @@ import uvicorn
 import common
 import asyncio
 import grpc
+import logging
 
 from protobufs import omniscient_pb2, omniscient_pb2_grpc
 from protobufs import smartlife_pb2, smartlife_pb2_grpc
 
 app = FastAPI()
 API_SECRET = common.api_secret
+excluded_endpoints = ["/", "/health"]
+
+def log_filter(record: logging.LogRecord) -> bool:
+    return record.args is not None and len(record.args) > 2 and record.args[2] not in excluded_endpoints
+
 
 @app.get("/")
 @app.get("/health")
@@ -82,6 +88,7 @@ def updBrightness(secret, new_brightness: int):
 async def runREST():
     config = uvicorn.config.Config(host="0.0.0.0", port=5006, app=app)
     server = uvicorn.Server(config)
+    logging.getLogger("uvicorn.access").addFilter(log_filter)
     await server.serve()
 
 # utility func to run different coroutines (should have done this in Golang lmao)
