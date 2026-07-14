@@ -81,7 +81,7 @@ class ColoStrip:
         self.strip.state()
         sunset = sun(self.city)["sunset"].astimezone(self.city_tz)
         now = datetime.now().astimezone(self.city_tz)
-        bed_time = now.replace(hour=21, minute=30, second=0, microsecond=0)
+        bed_time = now.replace(hour=23, minute=30, second=0, microsecond=0)
         wake_time = now.replace(hour=7, minute=0, second=0, microsecond=0)
 
         # owner_present: true if owner connected to home network, false otherwise
