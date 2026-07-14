@@ -1,0 +1,31 @@
+name: test-deploy
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  test-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: "Clean workspace"
+        run: sudo rm -rf $GITHUB_WORKSPACE/*
+
+      - name: "Code checkout"
+        uses: actions/checkout@v7.0.0
+
+      - name: "Run containers in a test environment"
+        run: docker compose -f ./test-compose.yml up -d --build --wait
+        env:
+          STRIP_IP: ${{ secrets.STRIP_IP }}
+          CITY: ${{ secrets.CITY }}
+          PROD: ${{ secrets.PROD }}
+          MONGO_USR: ${{ secrets.MONGO_USR }}
+          MONGO_PWD: ${{ secrets.MONGO_PWD }}
+          DATA_DIR: ${{ secrets.DATA_DIR  }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          COMPOSE_PROJECT_NAME: ${{ github.ref_name }}
+
+# ToDo: shut down containers after manual testing? Or are they idle enough?
+# ToDo: reuse the workflow for both deploy and test
