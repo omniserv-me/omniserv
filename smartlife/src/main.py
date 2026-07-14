@@ -1,7 +1,7 @@
 import sys
 import asyncio
 import traceback
-
+import threading
 import common
 from api import runApi
 from logger import log
@@ -171,7 +171,10 @@ async def kill():
 
 async def main():
     event.set()
-    await asyncio.gather(run(), runApi()) # Call listen_to_input() to enable cli
+    api_thread = threading.Thread(target=runApi)
+    api_thread.start()
+    await asyncio.gather(run()) # Call listen_to_input() to enable cli
+    api_thread.join()
 
 
 def exception_handler(loop, context):
