@@ -50,3 +50,4 @@ async def runApi():
     rpc_server.add_insecure_port(f"0.0.0.0:{RPC_PORT}")
     rpc_server.start()
     print(f"RPC server listening on port :{RPC_PORT}")
+    await rpc_server.wait_for_termination()
