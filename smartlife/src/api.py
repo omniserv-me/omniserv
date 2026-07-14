@@ -41,7 +41,7 @@ def updActive(new_active: bool):
 def updBrightness(new_brightness: int):
     cololight_strip.updBrightness(new_brightness)
 
-async def runApi():
+def runApi():
     rpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=3))
     smartlife_pb2_grpc.add_StateUpdateServicer_to_server(
         servicer=StatusUpdateServicer(),
