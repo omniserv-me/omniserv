@@ -1,22 +1,21 @@
 import sys
-import asyncio
+import time
 import traceback
 import threading
 import common
 from api import runApi
 from logger import log
-from asyncio import sleep
 from common import  state
 from devices import cololight_strip
 from data_handler import DataHandler
 
 
 async def run():
-    loop = asyncio.get_event_loop()
-    loop.set_exception_handler(exception_handler)
+    # loop = asyncio.get_event_loop() # ToDo: exception handling
+    # loop.set_exception_handler(exception_handler)
     while True:
         print("waiting for timer event")
-        await event.wait()
+        timer_event.wait()
         print("got timer event")
         if state.service_active:
             cololight_strip.check()
@@ -24,15 +23,13 @@ async def run():
         else:
             log(f"Inactive. Sleeping through the check", "info", __print)
         print("Entering sleep")
-        await sleep(600)
+        time.sleep(600)
         print("Awakening")
 
 
-async def listen_to_input():
-    loop = asyncio.get_event_loop()
-
+def listen_to_input():
     while True:
-        user_input = await loop.run_in_executor(None, input, "\r>>> ")
+        user_input = input("\r>>> ")
         log(f"User input: {user_input}", "info")
 
         input_arr = user_input.lower().split()
@@ -73,7 +70,7 @@ async def listen_to_input():
                 p1: int
                 p2: int
 
-                await kill()
+                kill_all_timers()
                 log("All timers have been killed.", "info", __print)
  
             case {"command":"city", "param1":p1, "param2":p2}:
@@ -130,70 +127,54 @@ def timer(duration: int):
     :param duration:
     :return:
     """
+    global timers
     if duration >= 0:
+        with timers_lock:
+            timers += 1
+        threading.Timer(duration * 60, timer_quit).start()
+        timer_event.clear()
         log(f"Timer of {duration} minutes has been set.", "info", __print)
-        extra_tasks.append(asyncio.create_task(wait(int(duration) * 60)))
     else:
         log(f"Duration of {duration} minutes is invalid for timer function", "error", __print)
 
+def timer_quit():
+    global timers
+    with timers_lock:
+        if timers > 0:
+            timers-=1
+            if timers == 0:
+                timer_event.set()
 
-async def wait(seconds):
-    await enter()
-    await asyncio.sleep(seconds)
-    log(f"Wait complete.",  "info", __print)
-    await release()
+def kill_all_timers():
+    global timers
+    with timers_lock:
+        timers = 0
+        timer_event.set()
 
+def main():
+    timer_event.set()
 
-async def enter():
-    global semaphore
-    async with lock:
-        semaphore += 1
-    event.clear()
-
-
-async def release():
-    global semaphore
-    async with lock:
-        semaphore -= 1
-        if semaphore <= 0:
-            event.set()
-
-
-async def kill():
-    global extra_tasks
-    global semaphore
-    async with lock:
-        for task in extra_tasks:
-            task.cancel()
-        semaphore = 0
-        event.set()
-
-
-async def main():
-    event.set()
+    # For now raw threads (fire and forget), later ThreadPoolExecutor for smarter features
     api_thread = threading.Thread(target=runApi)
+    # cli_thread = threading.Thread(target=listen_to_input)
+    background_thread = threading.Thread(target=run)
+    log("All threads initialized successfully.", "info", __print)
+
     api_thread.start()
-    await asyncio.gather(run()) # Call listen_to_input() to enable cli
+    # cli_thread.start() # start cli_thread to listen to user's input
+    background_thread.start()
+    log("All threads started successfully.", "info", __print)
+
     api_thread.join()
+    # cli_thread.join()
+    background_thread.join()
 
 
 def exception_handler(loop, context):
     exception = context.get("exception")
     message = context.get("message")
     if type(exception) is not SystemExit:
-        log(f"async exception has been raised: {exception} with message: {message}", "error", __print)
-
-
-def get_from_db(id):
-    pass
-
-
-def put_to_db(id, value):
-    pass
-
-
-def init_db():
-    pass
+        log(f"Async exception has been raised: {exception} with message: {message}", "error", __print)
 
 
 def __print(msg: str) -> None:
@@ -203,15 +184,15 @@ def __print(msg: str) -> None:
 if __name__ == "__main__":
     device_counter = 0
     devices = {}
-    event = asyncio.Event()
-    semaphore = 0
-    lock = asyncio.Lock()
-    extra_tasks = []
+    timers_lock = threading.Lock()
+    timers = 0
+    timer_event = threading.Event()
+    timer_event.set()
     data_handler = DataHandler()
 
     try:
         log("Starting the application.", "info", __print)
-        asyncio.run(main())
+        main()
     except SystemExit as e:
         print("\rExiting peacefully...", flush=True)
     except KeyboardInterrupt:
