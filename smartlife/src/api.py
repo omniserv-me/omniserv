@@ -4,6 +4,7 @@ from concurrent import futures
 from devices import cololight_strip
 from data_handler import DataHandler
 from protobufs import smartlife_pb2, smartlife_pb2_grpc
+from smartlife.src.logger import log
 
 data_handler = DataHandler()
 RPC_PORT = "5002"
@@ -30,11 +31,13 @@ class StatusUpdateServicer(smartlife_pb2_grpc.StateUpdateServicer):
 def updStatus(new_status: bool):
     # we change owner_present and immediate check
     state.owner_present = new_status
+    log(f"Owner status updated. New status: {state.owner_present}.", "info", print)
     cololight_strip.check()
 
 def updActive(new_active: bool):
     # we change active and if true -> immediate check
     state.service_active = new_active
+    log(f"Activity status updated. New status: {state.service_active}.", "info", print)
     if state.service_active:
         cololight_strip.check()
 
