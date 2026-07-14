@@ -4,7 +4,7 @@ from concurrent import futures
 from devices import cololight_strip
 from data_handler import DataHandler
 from protobufs import smartlife_pb2, smartlife_pb2_grpc
-from smartlife.src.logger import log
+from logger import log
 
 data_handler = DataHandler()
 RPC_PORT = "5002"
