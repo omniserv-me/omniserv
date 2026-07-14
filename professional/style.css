@@ -254,7 +254,8 @@ body{
     background:rgba(255,255,255,0.03);
     padding:0.25rem 0.5rem;
     border-radius:8px;
-    margin-right:0.3rem
+    margin-right:0.3rem;
+    margin-bottom:0.3rem
 }
 
 /* socials */
@@ -303,8 +304,7 @@ body{
     background:linear-gradient(135deg,black,black);
     left:-8%;
     top:-6%;
-    animation:blobMove 12s infinite alternate
-    hidden: true;
+    animation:blobMove 12s infinite alternate;
   }
   .blob-2{
     width:400px;
@@ -313,8 +313,7 @@ body{
     background:linear-gradient(135deg,black,black);
     right:-12%;
     top:6%;
-    animation:blobMove 14s infinite alternate
-    hidden: true;
+    animation:blobMove 14s infinite alternate;
   }
   .blob-3{
     width:260px;
