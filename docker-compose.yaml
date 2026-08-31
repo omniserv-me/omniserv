@@ -74,5 +74,4 @@ services:
 
 networks:
   omniserv:
-    name: omniserv
-    driver: bridge
+    external: true
