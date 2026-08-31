@@ -8,6 +8,8 @@ services:
       interval: 5s
       timeout: 1s
       retries: 3
+    networks:
+      - omniserv
 
   mongodb:
     image: mongo:8.0.6
@@ -21,6 +23,8 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PWD}
     ports:
       - "27017:27017" # Leave ports for manual intervention
+    networks:
+      - omniserv
 
   omniscient:
     build: ./omniscient/
@@ -33,6 +37,8 @@ services:
       mongodb:
         restart: true
         condition: service_started
+    networks:
+      - omniserv
 
   api:
     build: ./api/
@@ -52,6 +58,8 @@ services:
       interval: 5s
       timeout: 1s
       retries: 3
+    networks:
+      - omniserv
 
   smartlife:
     build: ./smartlife/
@@ -61,4 +69,9 @@ services:
       - PROD=$PROD
     ports:
       - "5002:5002"
+    networks:
+      - omniserv
 
+networks:
+  omniserv:
+    external: true
