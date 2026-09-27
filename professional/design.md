@@ -134,8 +134,14 @@ const h = location.hash.slice(1);
 if (LEGACY[h]) history.replaceState(null, '', '#' + LEGACY[h]);
 ```
 
-`replaceState` rather than a redirect, so the back button is not polluted. The `#hero` → `#identity`
-rename needs no entry: `#hero` was never linked from anywhere, including the old nav.
+`replaceState` rather than a redirect, so the back button is not polluted. Rewriting the hash is
+not the same as scrolling to it: `replaceState` does not re-run the browser's fragment-scroll, and
+the *original* incoming hash (e.g. `#about`) never matches an id once the rename ships, so nothing
+auto-scrolls without help. Once `smoother` exists (§9.1), boot must explicitly resolve
+`location.hash` — legacy-mapped or already-current — with `smoother.scrollTo(location.hash, false)`;
+native anchor-jump is unreliable against a ScrollSmoother-transformed document, for the same reason
+the WORKS pin needs its own `onFocusIn` handling (§9.7). The `#hero` → `#identity` rename needs no
+entry: `#hero` was never linked from anywhere, including the old nav.
 
 ---
 
@@ -207,7 +213,10 @@ Section vertical rhythm: `--s-21` desktop, `--s-13` tablet, `--s-8` mobile.
 ### 3.5 The beat grid
 
 The temporal counterpart to the spatial grid, and the single most load-bearing convention in this
-document. Base beat **τ = 0.12 s**. Every duration in the page is a Fibonacci multiple of τ:
+document. Base beat **τ = 0.12 s**. Every *choreographed* duration in the page is a Fibonacci
+multiple of τ. This governs animation timings; it does not extend to incidental constants like
+the CAST safety timeout (§9.3) or the idle-breathing loop periods (§9.4) — those are engineering
+and perceptual thresholds, not beats, and are exempt by design:
 
 | Beats | Seconds | Use |
 |---|---|---|
@@ -230,10 +239,11 @@ Every non-orthogonal angle on the page comes from this list. No other angles are
 
 | Angle | Use | Rationale |
 |---|---|---|
-| 12° | body-copy mask wipes | shallow enough to read as a wipe, not a diagonal |
-| 15° | mobile nav panel sweep | 105° − 90°, so it is the sheen angle's complement |
+| 12° | body-copy mask wipes (conceptual tilt) | shallow enough to read as a wipe, not a diagonal — see 102° below for the CSS-ready form |
+| 15° | mobile nav panel sweep | 105° − 90°; shares the sheen angle's off-vertical tilt |
 | 30° / 150° | lattice edge axes | triangular lattice; the only two axes plus vertical |
 | 45° | card chamfer, corner cuts | the one angle that reads as a machined bevel |
+| 102° | body-copy mask wipes, `linear-gradient()` form | 90° + 12°; the literal CSS angle for the row above |
 | 105° | all specular sheen sweeps | 90° + 15°; off-vertical enough to travel visibly across a wide card |
 | 168° | silver sheet gradient axis | near-vertical with a deliberate lean, so flat panels still catch a highlight |
 
@@ -495,7 +505,7 @@ the beat grid (§3.5) exists, and it gives the chain a reason to change state at
 |---|---|---|---|---|
 | 00 | `#cast` | CAST | overlay, 0 | single link, polishing |
 | 01 | `#identity` | IDENTITY | 100vh | enters top-left, bowing |
-| 02 | `#dossier` | DOSSIER | ~140vh | passes right, dims behind copy |
+| 02 | `#dossier` | DOSSIER | ~140vh | holds the left margin (cols 2–4) |
 | 03 | `#lattice` | LATTICE | ~120vh | branches into four |
 | 04 | `#works` | WORKS | pinned, ~310vh | horizontal, runs the track |
 | 05 | `#link` | LINK | ~100vh | coils into a closed loop |
@@ -654,8 +664,14 @@ A fixed hairline bar. Not a card, not a pill, not frosted glass — a rule with 
 - CTAs: `Selected work →` and `Dossier ↓ PDF`; scroll cue `02 About ↓`.
 
 **The portrait aperture** is the design's tightest link between motif and layout. The shape is a
-**stadium** — a rectangle capped by two semicircles, `border-radius: 50vh / 116px` on a 232×312
-box — which is precisely the inner void of a chain link. The portrait is framed by the negative
+**stadium** — a rectangle capped by two semicircles, `border-radius: 116px` on a 232×312
+box — which is precisely the inner void of a chain link. **Not** `50vh / 116px`: CSS's corner
+overlap-correction computes a single shared scale factor from whichever edge is tightest and
+applies it to both radius components together, so an oversized horizontal component silently
+shrinks the vertical one too, flattening the cap into an ellipse instead of a true semicircle. A
+single `116px` value — exactly half the 232px width — never triggers that correction on either
+axis, and it matches the SVG ring's own `rx="116"` (SVG rect rounding clamps `rx`/`ry`
+independently per axis, so it needs no such care). The portrait is framed by the negative
 space of the page's central motif. `object-fit: cover`, `object-position: 50% 42%` to keep the
 face in the upper third of the stadium. The ring around it is a single SVG `<rect>` with
 `pathLength="100"` so DrawSVG maths is in whole percent (§9.4).
@@ -667,29 +683,32 @@ The hero is the LCP element. Text paints from HTML and CSS alone; the canvas fad
 
 ### 6.4 Movement 02 — DOSSIER
 
-Asymmetric: copy on columns 2–7, fact plate on columns 9–12, chain running the gutter between.
+Asymmetric, alternating from IDENTITY per §3.4: all content — copy, principles strip and fact
+plate — sits on columns 5–12 (copy 5–9, fact plate nested at 10–12, within that same content
+side); the chain runs through columns 2–4, now the unused side.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│  02  ── A B O U T                                                      │
-│                                                                        │
-│  I build and run the infrastructure other       ┌────────────────────┐ │
-│  systems sit on — the full deployment           │ LOCATION           │ │
-│  lifecycle across cloud and self-hosted         │ Munich, Germany    │ │
-│  environments, and the backend services         │ ·················· │ │
-│  on top of it.                                  │ EDUCATION          │ │
-│                                                 │ Informatics BSc,   │ │
-│  The foundation is mathematical. …              │ minor Mathematics  │ │
-│                                                 │ TUM · 2024–2027    │ │
-│  Favourite domains: … Away from the             │ ·················· │ │
-│  terminal: …                                    │ LANGUAGES          │ │
-│                                                 │ EN C1 · DE C1 ·    │ │
-│  ┌──────────────────────────────────────┐       │ RU native · UK …   │ │
-│  │ PERFORMANCE · READABLE CODE ·        │       │ ·················· │ │
-│  │ PRAGMATIC DECISIONS                  │       │ CONTACT            │ │
-│  │ TESTING · AUTOMATION · COLLABORATION │       │ leo@omniserv.me    │ │
-│  └──────────────────────────────────────┘       └────────────────────┘ │
-│           principles strip                       fact plate            │
+│  ╲                                                                     │
+│   O    02  ── A B O U T                                                │
+│  ╱                                                                     │
+│  O          I build and run the infrastructure other  ┌─────────────┐ │
+│  ╲          systems sit on — the full deployment       │ LOCATION    │ │
+│   O         lifecycle across cloud and self-hosted     │ Munich, DE  │ │
+│  ╱          environments, and the backend services     │ ··········· │ │
+│  O          on top of it.                              │ EDUCATION   │ │
+│  ╲                                                      │ Informatics │ │
+│   O         The foundation is mathematical. …          │ BSc, minor  │ │
+│  ╱                                                      │ Mathematics │ │
+│  O          Favourite domains: … Away from the         │ TUM · 24–27 │ │
+│  ╲          terminal: …                                │ ··········· │ │
+│              ┌──────────────────────────────────┐      │ LANGUAGES   │ │
+│              │ PERFORMANCE · READABLE CODE ·    │      │ EN C1·DE C1 │ │
+│              │ PRAGMATIC DECISIONS              │      │ ··········· │ │
+│              │ TESTING · AUTOMATION · COLLAB.   │      │ CONTACT     │ │
+│              └──────────────────────────────────┘      │ leo@omniserv│ │
+│                     principles strip                   └─────────────┘ │
+│  chain, cols 2–4              copy, cols 5–9         fact plate, 10–12 │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -767,7 +786,7 @@ so the lattice rescales without redrawing.
 border on `--void`, mono label in `--silver`. Focusable `<button>` elements, not `<span>`, so the
 hover behaviour has a keyboard equivalent.
 
-**21 nodes in 4 clusters** (21 is the top of the spacing scale, §3.3 — the count is deliberate):
+**22 nodes in 4 clusters** — 8 backend, 8 infra/devops, 4 frontend, 2 tooling:
 
 | Cluster | Nodes |
 |---|---|
@@ -1041,8 +1060,9 @@ amp = 0.35 · linkOuterDiameter · min(|Δv| / 2000, 1)
 env = power2.out envelope over a 1.2 s lifetime
 ```
 
-`exp(−0.105k)` is a 0.9× decay per link; wavelength 6 links; travel 8 links/s. At most 3 concurrent
-ripples, oldest dropped.
+`exp(−0.105k)` is a 0.9× decay per link; wavelength 6 links; temporal frequency 8 Hz — the wave
+therefore propagates at wavelength × frequency = `6 × 8 = 48` links/s, not the 8 Hz term read in
+isolation. At most 3 concurrent ripples, oldest dropped.
 
 ### 7.3 Links
 
@@ -1057,7 +1077,7 @@ which is not a coincidence: the portrait frame and the link aperture are the sam
 |---|---|
 | Uniform scale `s` | `0.044·H / 1.28` → outer diameter = 4.4 % of viewport height |
 | Arc spacing | `0.72 × outerDiameter` = `0.0317·H` — closer than one diameter, so links visibly interlock |
-| Link count `N` | `ceil(1.6·H / spacing)`, clamped `[18, 56]`; ≈ 45 at 900 px viewport height |
+| Link count `N` | `ceil(1.6·H / spacing)`, clamped `[18, 51]`; ≈ 51 by this formula. `H` is set only by the fixed FOV/camera distance (§7.1), not by `window.innerHeight` in px, so this value is constant across viewport sizes |
 | Instancing | one `THREE.InstancedMesh`, `DynamicDrawUsage` on the matrix attribute |
 
 **Orientation — alternating, as a real chain.** Each link's plane contains the curve tangent, and
@@ -1128,7 +1148,7 @@ chain property that *is* tweened: a scrubbed GSAP tween on a plain object per se
 |---|---|---|
 | 00 CAST | — | one link only, centred, spinning at ω = 0.6 rad/s, roughness 0.60 → 0.12 |
 | 01 IDENTITY | `+0.26` | full spine enters from the top-left, bowing at full `A₀`; runs the gutter between tagline and portrait |
-| 02 DOSSIER | `+0.02` | crosses to the gutter between copy and fact plate; links behind copy go matte (§7.6) |
+| 02 DOSSIER | `−0.28` | migrates into the left margin (cols 2–4), vacated now that copy and fact plate both sit in the alternated content block on the right (§3.4, §6.4); the readability guard (§7.6) still applies if a link ever crosses behind copy |
 | 03 LATTICE | branch | spine splits into **four** short chains at `X = −0.30, −0.10, +0.14, +0.32`, one per cluster, each terminating at its cluster root node. Cross-faded over 8τ by animating a second `InstancedMesh`'s per-instance scale 0→1 while the primary fades out |
 | 04 WORKS | horizontal | the spine rotates to horizontal at `y = −0.40·H` and runs the full track width; **phase binds to the pin's horizontal progress instead of scrollY**, so cards and links travel locked together. Sag axis rotates with it — the chain now hangs *downward* between card anchors |
 | 05 LINK | loop | coils into a **closed 24-link loop**, radius `0.17·H`, centred at `X = +0.30`, rotating at ω = 0.12 rad/s. The curve is swapped for a `THREE.EllipseCurve` wrapped as a closed `CatmullRomCurve3`; `sag` is forced to 0 |
@@ -1178,12 +1198,12 @@ smoothed scroller moves content every frame and the reads would force layout eac
 
 ### 7.7 Performance
 
-56 links × 1152 tris ≈ 64.5 k triangles in one instanced draw call — negligible. The costs that
+51 links × 1152 tris ≈ 58.8 k triangles in one instanced draw call — negligible. The costs that
 matter are pixel-bound, so they scale by tier (§10.2):
 
 | Tier | DPR | Links | MSAA | Post | Clearcoat | Tethers |
 |---|---|---|---|---|---|---|
-| HIGH | `min(dpr, 2)` | 56 | 4× | full | yes | yes |
+| HIGH | `min(dpr, 2)` | 51 | 4× | full | yes | yes |
 | MED | `min(dpr, 1.5)` | 36 | off | streak taps 3 | no | no |
 | LOW | `1` | 18 | off | off | no | no |
 | NONE | — | canvas removed | — | — | — | — |
@@ -1504,8 +1524,9 @@ gsap.to(proxies, {
 | 10τ | aperture ring | `drawSVG '0 0' → '0 100'` | 8τ | mask | — |
 | 13τ | scroll cue | `opacity 0→1`, `y 6→0` | 3τ | — | — |
 
-Wall clock ≈ 1.92 s to full rest. The 13τ ceiling in §3.5 applies to a single tween, not to a
-composed timeline.
+Wall clock ≈ 2.52 s to full rest — set by the portrait image tween (starts 8τ, runs 13τ, ends at
+21τ), the longest row in the table above. The 13τ ceiling in §3.5 applies to a single tween, not
+to a composed timeline.
 
 **Idle breathing.** After 4 s with no scroll and no pointer movement, every character's `wdth`
 oscillates **±3 units on a 6 s sine**, phase-offset `i × 0.08 s` — a slow travelling wave through
@@ -1809,7 +1830,18 @@ the interpolation is typed:
 
 ```css
 @property --sweep { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-.rail__panel { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); }  /* → full, sheared 15° */
+
+.rail__panel {
+  /* horizontal run of a 15° lean over the panel's full height, scaled by how far open it is —
+     zero at rest (fully collapsed, matching the old static polygon), full run at --sweep: 100% */
+  --shear: calc(100vh * tan(15deg) * (var(--sweep) / 100%));
+  clip-path: polygon(
+    100% 0,
+    calc(100% - var(--sweep)) 0,
+    calc(100% - var(--sweep) - var(--shear)) 100%,
+    100% 100%
+  );
+}
 ```
 
 Panel open 5τ `ease.mask`; items `y 24→0` + `font-stretch 88%→100%`, 1τ each at 1τ stagger,
@@ -1886,7 +1918,11 @@ const tier = !gl                      ? 'NONE'
 ```
 
 Forced to `LOW` regardless of probe when `navigator.hardwareConcurrency <= 4`, or when
-`(pointer: coarse)` and `navigator.deviceMemory < 4`. Forced to `NONE` when WebGL2 context creation
+`(pointer: coarse)` and (`navigator.deviceMemory < 4` or `navigator.deviceMemory === undefined`).
+`deviceMemory` is Chromium-only — absent in Firefox, Safari, and Safari on iOS — so on those engines
+the comparison is `undefined < 4`, always `false`; treating `undefined` itself as "assume low" on a
+coarse-pointer device is what actually catches iOS Safari, the exact low-power-mobile population
+this heuristic exists for. Forced to `NONE` when WebGL2 context creation
 fails, when `signals.motion === 'reduced'`, or when the probe itself throws.
 
 Tier parameters are in §7.7; the selected tier is printed in the colophon (§6.8) so a performance
@@ -1959,7 +1995,9 @@ The current `<head>` has a title and a favicon. Everything else below is new.
 <meta property="og:url"         content="https://omniserv.me/">
 <meta property="og:title"       content="Leonid Yesaulov — AI &amp; Infrastructure Engineer">
 <meta property="og:description" content="Secure, scalable systems end to end.">
-<meta property="og:image"       content="https://omniserv.me/assets/og.png">
+<!-- og:image: switch to assets/og.png once it exists (§14 item 1). Until then this points at
+     assets/me.jpg so the share card is never a broken image. -->
+<meta property="og:image"       content="https://omniserv.me/assets/me.jpg">
 <meta name="twitter:card"       content="summary_large_image">
 
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -2078,7 +2116,7 @@ act rather than an invisible cache hazard.
 ### 12.3 Dockerfile — multi-stage
 
 ```dockerfile
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -2098,10 +2136,10 @@ CMD ["caddy", "run", "--config", "Caddyfile"]
 - `package-lock.json` must be committed. `npm ci` fails without it, which would break the deploy
   workflow on the self-hosted runner.
 - **`docker-compose.yaml` needs no changes.** `build: ./professional/` still finds the Dockerfile,
-  the port is still 5005, and the healthcheck still works: `caddy:2-alpine` is the same Alpine
-  lineage as the currently-untagged `caddy` image (verified: `caddy:latest` is Alpine, v2.11.4, and
-  ships `curl` at `/usr/bin/curl`), so `["CMD","curl","-f","http://webpage:5005"]` behaves exactly
-  as today.
+  the port is still 5005, and the healthcheck still works: `caddy:2-alpine` and the currently-untagged
+  `caddy:latest` both run **Alpine 3.23.6** underneath (confirmed directly, not inferred) and both ship
+  Caddy v2.11.4 with `curl` at `/usr/bin/curl`, so `["CMD","curl","-f","http://webpage:5005"]` behaves
+  exactly as today.
 - Only `dist/` reaches the final image. Source, `node_modules` and this document are confined to
   the build stage.
 
