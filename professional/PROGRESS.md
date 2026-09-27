@@ -56,7 +56,9 @@ the running log.
 
 - [ ] 9. Choreography C — LINK + colophon + nav rail — design.md §9.8–§9.10
       Scope: MorphSVG link-glyph hover, loop-snap once-per-visit, colophon reveal, nav
-      shrink/Flip indicator, mobile panel sweep.
+      shrink/Flip indicator, mobile panel sweep. Flip and MorphSVG are lazy (`core/lazy.js`):
+      read them via `late()?.Flip` / `late()?.MorphSVGPlugin`, and the indicator's first placement
+      must work without Flip (plain `appendChild`) — see checkpoint 4's log.
       Done when: glyph morph is clean (no wobble); loop snap + exposure flash fire once per visit;
       mobile panel opens/closes with focus trap and Escape handling.
 
@@ -441,24 +443,40 @@ sets no `smoothTouch`). The wrapper stays `position: relative` and nothing smoot
 `ui.primaryPointerCapabilities=6` and `ui.allPointerCapabilities=6` (fine + hover) to test as a
 desktop.
 
-**Open item: §12.7's 40 KB entry budget can't be met as specified.** The entry chunk is **75.6 kB
-gzipped**. Per-plugin gzip from `gsap/dist/*.min.js`:
+**§12.7 entry budget — resolved in a follow-up commit** (`refactor(webpage): checkpoint 4 —
+lazy-load Flip and MorphSVG, raise entry budget`). As first committed, the entry chunk was **75.6
+kB gzipped** against a 40 KB budget. Per-plugin gzip from `gsap/dist/*.min.js`:
 
-| Plugin | gzip |
-|---|---|
-| core | 28.3 KB |
-| ScrollTrigger | 18.0 KB |
-| Flip | 9.7 KB |
-| MorphSVG | 9.6 KB |
-| ScrollSmoother | 5.5 KB |
-| CustomEase | 3.7 KB |
-| SplitText | 3.7 KB |
-| DrawSVG | 2.2 KB |
+| Plugin | gzip | First needed |
+|---|---|---|
+| core | 28.3 KB | boot |
+| ScrollTrigger | 18.0 KB | boot |
+| Flip | 9.7 KB | nav indicator after the first section change (§9.9) |
+| MorphSVG | 9.6 KB | LINK glyph, last section (§9.8) |
+| ScrollSmoother | 5.5 KB | boot |
+| CustomEase | 3.7 KB | boot |
+| SplitText | 3.7 KB | boot (checkpoint 5) |
+| DrawSVG | 2.2 KB | hero, plate, link underlines — early |
 
-Core plus ScrollTrigger alone is ~46 KB. §9.1 registers all seven up front, so I did that too
-rather than deferring the ones only checkpoints 5/9 use. The realistic options are a raised budget
-(~80 KB, still inside the 220 KB total) or lazy-registering Flip/MorphSVG/DrawSVG in checkpoint 9.
-That decision belongs to checkpoint 11 or the owner; neither option is taken here.
+Owner decision: raise the budget and keep the entry lean for slow connections (the site is
+self-hosted at ~50 Mbps upstream). Flip and MorphSVG moved to `core/late.js`, loaded by
+`core/lazy.js` at idle *after* the `load` event. `requestIdleCallback` alone fired at 115 ms, before
+`load` at 136 ms, so the chunk would have held up the load event; now it's requested at ~200 ms.
+
+- **Measured:** the entry is **61.7 kB** (Vite gzip), the late chunk **14.6 kB**. Transfer sizes:
+  61.0 / 14.5 kB with gzip -6, 63.8 / 15.2 kB with zstd -3.
+- **Estimate vs reality:** I estimated the entry at ~56 kB. The shortfall is because the two
+  plugins share helpers with core, so moving them saved ~14 kB, not 19.
+- **Budget:** set to ≤ 64 KB entry and ≤ 16 KB late (design.md §12.7, §9.1 and §12.2 updated).
+  Total JS is ~61 + 131 + 15 ≈ 207 KB, inside 220.
+- **Runtime:** verified one request for the late chunk. `Flip.getState`/`Flip.from` work and
+  `morphSVG` is registered. Checkpoint 4's full suite re-passes on this build (toggle ×5 clean,
+  anchors, OS preference, resize, no-JS).
+- **Not changed, noted for checkpoint 11:** Caddy's `encode zstd gzip` prefers zstd, which at
+  Caddy's default level is ~4 % *larger* than gzip for these bundles (+2.7 kB on the entry). The
+  owner chose to keep §12.5 as written.
+- **Flip isn't a tween plugin,** so it never appears in `gsap.plugins`. Test it functionally, not
+  by key.
 
 **Known and accepted:** each smoother re-creation leaves one stale `_proxies` pair behind (the
 GSAP bug above). That's two array entries per toggle, harmless since lookups hit the newest entry

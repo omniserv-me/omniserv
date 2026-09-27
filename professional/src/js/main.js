@@ -16,6 +16,7 @@ import { boot as bootRegistry } from './core/registry.js';
 import { scrollToHash, bindAnchors } from './core/smoothscroll.js';
 import { resolveMotion } from './util/prefers.js';
 import { initFooter } from './sections/footer.js';
+import { loadLate } from './core/lazy.js';
 
 /* §2.3 — legacy anchors. Applied before ScrollTrigger initialises; step 5 then
    resolves the (possibly rewritten) hash, since replaceState does not scroll. */
@@ -45,6 +46,16 @@ async function main() {
   scrollToHash(location.hash);
 
   // 6. Veil — §9.3.
+
+  // Flip + MorphSVG (§12.7) at idle after the load event — a dynamic import
+  // started earlier is waited on by `load` (verified: rIC alone fired first).
+  // Both motion modes: the nav indicator is feedback and survives reduced
+  // motion (§10.1). A failure only costs the animation; every consumer degrades
+  // to static until late() resolves.
+  const idle = window.requestIdleCallback ?? ((f) => setTimeout(f, 200));
+  const prefetch = () => idle(() => loadLate().catch(() => {}));
+  if (document.readyState === 'complete') prefetch();
+  else window.addEventListener('load', prefetch, { once: true });
 
   if (new URLSearchParams(location.search).has('debug')) {
     import('./util/debug.js').then((m) => m.mountDebug());

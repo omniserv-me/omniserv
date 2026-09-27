@@ -1333,8 +1333,16 @@ license — verified, no separate install or licence step:
 
 ```js
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText,
-                    CustomEase, Flip, DrawSVGPlugin, MorphSVGPlugin);
+                    CustomEase, DrawSVGPlugin);          // core/easings.js — entry chunk
+gsap.registerPlugin(Flip, MorphSVGPlugin);               // core/late.js   — lazy chunk
 ```
+
+**Flip and MorphSVG load late.** Neither is needed before the first section change — Flip drives
+only the nav indicator (§9.9), whose first placement at boot is static, and MorphSVG only the LINK
+glyph (§9.8), in the last movement — so they live in their own chunk, fetched at idle after the
+`load` event via `core/lazy.js` (`loadLate()`, memoised; `late()` is the synchronous check). Until
+`late()` resolves, the indicator moves by plain `appendChild` and the glyph hover is a no-op: both
+degrade to static feedback, which §10.1 already accepts. Owner decision, 2026-09-27 (§12.7).
 
 **Smoother.**
 
@@ -2082,6 +2090,7 @@ professional/
     js/
       main.js
       core/      easings.js  signals.js  smoothscroll.js  split.js  tiers.js
+                 registry.js  late.js  lazy.js
       sections/  preloader.js nav.js hero.js about.js stack.js projects.js contact.js footer.js
       gl/        stage.js  chain.js  lattice.js
       gl/passes/ metal.js
@@ -2212,7 +2221,8 @@ reads as if it were doing something.
 
 | Metric | Budget |
 |---|---|
-| Entry JS chunk (compressed) | ≤ 40 KB |
+| Entry JS chunk (compressed) | ≤ 64 KB |
+| Late plugins chunk — Flip + MorphSVG (compressed, idle after `load`) | ≤ 16 KB |
 | `three` chunk (compressed) | ≤ 180 KB |
 | Total JS (compressed) | ≤ 220 KB |
 | CSS (compressed) | ≤ 14 KB |
@@ -2221,6 +2231,13 @@ reads as if it were doing something.
 | CLS | 0 — fixed portrait box, explicit image dimensions, `font-display: swap` with metric-compatible fallbacks |
 | First WebGL frame | after LCP; the canvas fades in over 8τ on `requestIdleCallback` |
 | Draw calls | ≤ 3 |
+
+The entry budget was 40 KB until checkpoint 4 measured it: GSAP core + ScrollTrigger alone are
+~46 KB gzipped, and everything else in the entry (ScrollSmoother, SplitText, CustomEase, DrawSVG)
+is needed by the first frame of motion. Raised to 64 KB by owner decision (2026-09-27) — ~61 KB
+measured, with ~3 KB of headroom for the project's own code — with Flip and MorphSVG moved to the
+late chunk (§9.1). The entry is a deferred module, so its size moves when motion starts, not when
+the hero paints.
 
 The ordering rule: **the hero must be readable before the stage exists.** The canvas starts at
 `opacity: 0` and is faded in once the first frame has rendered, so WebGL initialisation can never

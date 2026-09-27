@@ -4,19 +4,22 @@
    Registration lives here rather than in main.js because ES imports hoist: this
    is the first module every other one imports, so it is evaluated before any
    code that touches a plugin — and CustomEase must be registered before the
-   CustomEase.create() calls below. */
+   CustomEase.create() calls below.
+
+   Flip and MorphSVGPlugin are the exception: they are registered lazily by
+   core/late.js (loaded at idle via core/lazy.js), because neither is needed
+   before the first section change and together they are ~19 KB gzipped of the
+   entry chunk (§12.7). */
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollSmoother } from 'gsap/ScrollSmoother';
 import { SplitText } from 'gsap/SplitText';
 import { CustomEase } from 'gsap/CustomEase';
-import { Flip } from 'gsap/Flip';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
-import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText,
-                    CustomEase, Flip, DrawSVGPlugin, MorphSVGPlugin);
+                    CustomEase, DrawSVGPlugin);
 
 /* §3.5 — base beat τ. Durations are written as `5 * T`, never `0.6`, so the
    Fibonacci relationship stays visible in the source. */
@@ -39,4 +42,4 @@ export const ease = {
   chain: 'back.out(1.8)',   // anything that seats: tags, nodes, buttons, link snap
 };
 
-export { gsap, ScrollTrigger, ScrollSmoother, SplitText, CustomEase, Flip, DrawSVGPlugin, MorphSVGPlugin };
+export { gsap, ScrollTrigger, ScrollSmoother, SplitText, CustomEase, DrawSVGPlugin };
