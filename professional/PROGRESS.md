@@ -23,7 +23,7 @@ the running log.
       Done when: page is complete, styled and readable with **zero JavaScript beyond the hash-map
       snippet** — this is invariant I1/I3's baseline. Every row of design.md §2.1 is accounted for.
 
-- [ ] 4. GSAP rig — design.md §9.1
+- [x] 4. GSAP rig — design.md §9.1
       Scope: `easings.js`, `signals.js`, `smoothscroll.js` (ScrollSmoother), `matchMedia`
       scaffolding, `saveStyles`, context registry, motion toggle wiring in colophon.
       Done when: smooth scroll works; a debug overlay shows `velocity`/`pointer`/`axis`/`tier`/
@@ -347,3 +347,124 @@ fallback stacks (Arial Narrow / system-ui / ui-monospace) — the hero's width-a
 until then (checkpoint 5's note in checkpoint 2's log still stands), and the mono roles are wider
 than JetBrains Mono will be. `public/assets/favicon.svg` and `og.png` remain unprovided (§11, §14).
 The rail's chain-link mark is two interlocked stadiums authored here; §11's favicon should reuse it.
+
+### Checkpoint 4 — GSAP rig
+
+**2026-09-27** · commit `refactor(webpage): checkpoint 4 — GSAP rig`
+
+`src/js/` exists now. `main.js` boots in §9.1's order (steps 1, 2, 4 and 5 are live; the tier probe,
+splits and veil are marked with the checkpoints that own them). `core/easings.js` registers all
+seven plugins and defines `T` plus the five §9.2 curves, exported as `ease.{mask,glyph,metal,catenary,shut,chain}`.
+`core/signals.js` holds the five §9.1 signals. `core/smoothscroll.js` owns the smoother, hash
+resolution and anchors. `core/registry.js` holds the contexts and the matchMedia branches.
+`sections/footer.js` covers the year, the motion toggle and the tier readout.
+`util/prefers.js` implements §10.1's two inputs, and `util/lerp.js` has `lerp`/`clamp`.
+`?debug` lazy-loads `util/debug.js` as a 0.76 kB side chunk, so it's never in the entry. It draws
+the overlay and exposes `window.__rig`.
+
+**The API later checkpoints bind to:**
+
+| Hook | For |
+|---|---|
+| `register({ name, selectors, desktopFull, mobileFull, staticStates })` from `core/registry.js`, called **before** `boot()` (it throws after). `selectors` feed `ScrollTrigger.saveStyles`; each branch runs inside its own `gsap.context()`. | checkpoints 5, 7–9 |
+| `signals.{velocity,pointer,axis,tier,motion}`: each is `{ value, set(v), subscribe(fn) }`. Per-frame consumers read `.value` in a ticker callback. `signals.axis.set([1,0])` works as §9.7 writes it. | 6, 8, 10 |
+| `signals.tier` is `null` (the colophon reads `—`) until `tiers.js` sets it. The colophon readout is already subscribed. | 6 |
+| `setFocusIn(fn)` from `core/smoothscroll.js` plugs §9.7's card handler into the smoother's `onFocusIn` without recreating it. | 8 |
+| `getSmoother()`, for `scrollTop()` in the §7.6 guard and `paused(true)` in the §9.9 panel. It is `null` under reduced motion. | 6, 9 |
+| `<html data-motion="full|reduced">` for CSS to key reduced-motion styling off. | 11 |
+
+**Deviations from design.md, all deliberate:**
+
+1. **One matchMedia handler dispatches §9.1's three branches, instead of three `mm.add` queries.**
+   §10.1 lets the stored toggle override the OS preference in both directions, and a media query
+   can't see `localStorage`. The conditions are `{desktop: (min-width: 901px), mobile: (max-width:
+   900px), osReduced: (prefers-reduced-motion: reduce)}`. `resolveMotion()` applies the override
+   and dispatches to `desktopFull` / `mobileFull` / `staticStates`. matchMedia still owns
+   reversion, so an OS or breakpoint change reverts and rebuilds.
+2. **§2.3's legacy-hash map moved from the inline `<script>` into `main.js`**, as §2.3 specifies
+   and checkpoint 3's comment anticipated. `dist/index.html` now has exactly one `<script>`, the
+   module entry. Nothing on the page depends on it for content.
+3. **Two files not in §12.2's layout**: `core/registry.js` (the context registry had no home,
+   and `footer.js` needs it without a cycle through `main.js`) and `util/debug.js`.
+4. **Same-page anchors are resolved through the smoother.** §2.3 only covers the hash at load.
+   Verified broken without this: native fragment navigation measures the *transformed* content
+   and scrolls the nearest scroll container, which is the `overflow: hidden` `#smooth-wrapper`, not
+   the window. A nav click left the wrapper at `scrollTop` 2606 with the smoother still at 0, a
+   desync the wheel couldn't recover from. The skip link (whose target is above) didn't move the
+   view at all. While a smoother exists, `bindAnchors()` handles three cases:
+   - it intercepts same-page `a[href^="#"]` clicks (pushState, `scrollTo(target, true, 'top top')`,
+     and focus moved to the target with a temporary `tabindex=-1`)
+   - it re-resolves on `hashchange`
+   - it folds any stray wrapper scroll (e.g. find-in-page) back into the smoother
+   With reduced motion it does nothing, and the browser's own jump runs.
+
+**Bug found and fixed during verification: a ScrollTrigger must not outlive the smoother.** The
+velocity trigger was first created once at boot. ScrollSmoother re-initialises existing triggers
+onto its `#smooth-wrapper` proxy, and on `kill()` its `ScrollTrigger.scrollerProxy(wrapper)` call
+splices `_scrollers` but **never removes the `_proxies` entry** (gsap 3.15.0,
+`ScrollTrigger.js:2183`). So after toggling OFF, every refresh called the dead smoother's
+`scrollHeight`, which rewrote `body.style.height` and `#smooth-content { overflow: visible }`. The
+velocity signal also went dead in reduced mode, because it was bound to a wrapper that no longer
+scrolled. The fix is `trackVelocity()`, which the registry calls inside each mode *after*
+`createSmoother()`, so the trigger binds to the live scroller and is reverted with that mode's
+context. **Every later checkpoint must follow the same rule:** create ScrollTriggers only inside
+a registered branch, never at module level. A trigger built before the smoother is re-bound to a
+proxy that outlives it.
+
+**Verified**, in headless Firefox 156 (puppeteer-core over WebDriver BiDi) against `vite preview`:
+- **Smooth scroll.** Content transform trails scrollY and settles (−959 → −1800 over ~1.3 s at
+  `smooth: 1.2`).
+- **Signals.** `velocity` is signed (+0.93 / −0.82) and decays to exactly 0 at rest. `pointer`
+  reaches the NDC corners (±0.999) and follows the y-up convention. `axis.set([1,0])` shows in the
+  overlay. `tier` reads `—` and `motion` reads `full`.
+- **Toggle.** Five OFF→ON cycles by keyboard from the colophon at scrollY 3994:
+  - Counts stay constant: ScrollTriggers 1 in both modes; global-timeline children 5 ON / 1 OFF.
+  - OFF leaves `style` empty on `#smooth-content`, `#smooth-wrapper` and `<body>`, even through a
+    forced `refresh()` and a resize.
+  - Scroll position and focus are kept; `aria-pressed` and the label follow.
+  - The one extra child at first boot (6 vs 5) is the live smoother's paused 1.20 s scrub tween,
+    created lazily on the first scroll. It isn't a leak.
+- **Motion preference.** A reload respects the stored value. With `ui.prefersReducedMotion=1` and
+  nothing stored, motion is `reduced` with no smoother, and the toggle overrides it to `full`.
+- **Resize.** Four 900↔1200 crossings are stable (1 trigger, 6 children), and velocity is live at
+  900px.
+- **Hashes.** Fresh loads of `#about` (→ `#dossier`), `#works` and `#link` land at `top: 0`. Nav
+  clicks land exactly, and the wheel works afterwards. The skip link scrolls to the top, focuses
+  `#identity`, and the next Tab reaches the hero CTA; the tabindex is removed on blur. Typed hashes
+  and back/forward resolve through the smoother.
+- **No JS** (`javascript.enabled=false`): all five sections, controls hidden, no inline styles.
+  I1/I3 hold.
+
+**Test-harness pitfall, for every later session:** headless Firefox matches `(hover: none)`, so
+`ScrollTrigger.isTouch === 1`, and ScrollSmoother then *correctly* disables smoothing (the spec
+sets no `smoothTouch`). The wrapper stays `position: relative` and nothing smooths. Launch with
+`ui.primaryPointerCapabilities=6` and `ui.allPointerCapabilities=6` (fine + hover) to test as a
+desktop.
+
+**Open item: §12.7's 40 KB entry budget can't be met as specified.** The entry chunk is **75.6 kB
+gzipped**. Per-plugin gzip from `gsap/dist/*.min.js`:
+
+| Plugin | gzip |
+|---|---|
+| core | 28.3 KB |
+| ScrollTrigger | 18.0 KB |
+| Flip | 9.7 KB |
+| MorphSVG | 9.6 KB |
+| ScrollSmoother | 5.5 KB |
+| CustomEase | 3.7 KB |
+| SplitText | 3.7 KB |
+| DrawSVG | 2.2 KB |
+
+Core plus ScrollTrigger alone is ~46 KB. §9.1 registers all seven up front, so I did that too
+rather than deferring the ones only checkpoints 5/9 use. The realistic options are a raised budget
+(~80 KB, still inside the 220 KB total) or lazy-registering Flip/MorphSVG/DrawSVG in checkpoint 9.
+That decision belongs to checkpoint 11 or the owner; neither option is taken here.
+
+**Known and accepted:** each smoother re-creation leaves one stale `_proxies` pair behind (the
+GSAP bug above). That's two array entries per toggle, harmless since lookups hit the newest entry
+first.
+
+**Resumed after an interrupted session:** before continuing, the working tree was checked. HEAD was
+still checkpoint 3, all nine files were complete, `dist/` post-dated every source edit, and no
+stray processes were left. Every result above comes from runs made after the resume, on the final
+code.

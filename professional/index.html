@@ -504,12 +504,8 @@
     </div>
   </div>
 
-  <!-- §2.3 legacy-hash map. Runs before first paint; checkpoint 4 moves it into
-       main.js's boot, where smoother.scrollTo() resolves the hash afterwards. -->
-  <script>
-    const LEGACY = { about: 'dossier', stack: 'lattice', projects: 'works', socials: 'link' };
-    const h = location.hash.slice(1);
-    if (LEGACY[h]) history.replaceState(null, '', '#' + LEGACY[h]);
-  </script>
+  <!-- The rig (§9.1). Owns the §2.3 legacy-hash map too. Nothing it does is
+       load-bearing for content: with it dead the page above is complete (I1/I3). -->
+  <script type="module" src="/src/js/main.js"></script>
 </body>
 </html>
