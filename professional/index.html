@@ -1,131 +1,515 @@
 <!doctype html>
 <!--
-  PLACEHOLDER. Checkpoint 2 (design tokens + base/layout CSS) needs a page that
-  exercises the three sheets so the grid, the √2 type scale and the §4.3 contrast
-  floors can be seen in a browser. Checkpoint 3 replaces this file wholesale with
-  the six movements of design.md §6, the final copy, and the rest of the §11 head.
-  The <style> block below is scaffolding for this checkpoint only — it belongs to
-  no section of design.md and is deleted with the rest of the file.
+  index.html — the six movements of design.md §6, with the final copy of §6.2–6.8.
 
-  The stylesheet order (tokens → base → layout, then components) is not a
-  placeholder: it is the loading pattern checkpoint 3 inherits. Plain <link>
-  elements, so the page is styled with zero JavaScript (invariant I1/I3).
+  Invariant I1/I3 (§1.3): every word on the page is in this file. The only script
+  served is the legacy-hash map of §2.3 at the foot of <body>; nothing in the
+  layout or the copy depends on it. Animation initial states belong to motion.css
+  under @media (scripting: enabled) (§10.3) — never to the four sheets linked here.
+
+  Stylesheet order tokens → base → layout → components is load-bearing.
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- §11. Canonical, OG, JSON-LD and the favicon are checkpoint 11. -->
   <title>Leonid Yesaulov — AI &amp; Infrastructure Engineer</title>
+  <meta name="description" content="AI &amp; Infrastructure Engineer in Munich. Secure, scalable backend services and deployment pipelines — Python, Go, gRPC, Docker, CI/CD.">
   <meta name="theme-color" content="#05070A">
+
   <link rel="stylesheet" href="/src/css/tokens.css">
   <link rel="stylesheet" href="/src/css/base.css">
   <link rel="stylesheet" href="/src/css/layout.css">
-  <style>
-    /* Placeholder scaffolding — checkpoint 2 only. Tokens only, no literals. */
-    .probe-label { font-family: var(--font-mono); font-size: var(--t--2);
-      letter-spacing: 0.18em; text-transform: uppercase; color: var(--silver); }
-    .probe-rule { border-top: 1px solid var(--hairline); margin-block: var(--s-3); }
-    .probe-ladder { display: grid; gap: var(--s-1); }
-    .probe-ladder > div { font-family: var(--font-display); color: var(--chrome);
-      line-height: var(--lh-display); white-space: nowrap; overflow: hidden; }
-    .probe-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-      gap: var(--s-1); }
-    .probe-swatches > div { padding: var(--s-1); border: 1px solid var(--hairline);
-      font-family: var(--font-mono); font-size: var(--t--2); }
-    .probe-grid { grid-column: 1 / -1; display: grid;
-      grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--gutter); }
-    .probe-grid > span { height: var(--s-3); background: var(--graphite);
-      border-top: 1px solid var(--hairline-blue); }
-    .probe-fill { display: inline-block; padding: var(--s-1) var(--s-3);
-      background-image: var(--silver-fill); color: var(--ink);
-      font-family: var(--font-mono); font-size: var(--t--1); letter-spacing: 0.14em;
-      text-transform: uppercase; text-decoration: none; }
-    .probe-sheet { block-size: var(--s-21); background-image: var(--silver-sheet); }
-    .probe-dim { opacity: var(--dim-floor); }
-  </style>
+  <link rel="stylesheet" href="/src/css/components.css">
 </head>
 <body>
   <a class="skip" href="#identity">Skip to content</a>
+
+  <!-- §6.1 shell. Both are inert until §7 and §8.5 fill them; the canvas is
+       aria-hidden and pointer-events: none throughout. -->
+  <canvas id="stage" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ══ Navigation rail — §6.2. Outside #smooth-content (§9.9), or the
+       smoother's transform would drag it up the page. ══ -->
+  <header class="rail" data-rail>
+    <a class="rail__mark" href="#identity" aria-label="Leo — home">
+      <svg class="rail__glyph" viewBox="0 0 24 16" aria-hidden="true">
+        <!-- two interlocked links: the stadium of §6.3, twice -->
+        <rect x="1.5" y="4" width="12" height="8" rx="4"/>
+        <rect x="10.5" y="4" width="12" height="8" rx="4"/>
+      </svg>
+      <span>LEO</span>
+    </a>
+
+    <nav class="rail__nav" aria-label="Sections">
+      <ul>
+        <li><a href="#dossier"><i>02</i> About</a></li>
+        <li><a href="#lattice"><i>03</i> Stack</a></li>
+        <li><a href="#works"><i>04</i> Work</a></li>
+        <li><a href="#link"><i>05</i> Link</a></li>
+      </ul>
+      <span class="rail__indicator" data-indicator aria-hidden="true"></span>
+    </nav>
+
+    <a class="rail__cta" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
+      Dossier <span aria-hidden="true">↓</span>
+    </a>
+
+    <!-- The ☰ text character of the old page is three 1px hairlines, 20/14/20. -->
+    <button class="rail__toggle" data-nav-toggle aria-expanded="false" aria-controls="rail-panel">
+      <span class="sr-only">Menu</span>
+      <svg viewBox="0 0 20 12" aria-hidden="true">
+        <line x1="0" y1="0.5" x2="20" y2="0.5"/>
+        <line x1="0" y1="6" x2="14" y2="6"/>
+        <line x1="0" y1="11.5" x2="20" y2="11.5"/>
+      </svg>
+    </button>
+
+  </header>
+
+  <!-- Mobile panel (§9.9). A sibling of the rail, not a child: the compact
+       rail's backdrop-filter would make it the containing block for fixed
+       descendants and trap the panel inside a 56px bar. inert + collapsed
+       --sweep at rest; checkpoint 9 owns opening it, the trap and Escape. -->
+  <div class="rail__panel" id="rail-panel" data-nav-panel inert>
+    <nav aria-label="Sections (mobile)">
+      <ul>
+        <li><a href="#dossier"><i>02</i> About</a></li>
+        <li><a href="#lattice"><i>03</i> Stack</a></li>
+        <li><a href="#works"><i>04</i> Work</a></li>
+        <li><a href="#link"><i>05</i> Link</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--metal" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
+      Dossier <span class="mono" aria-hidden="true">↓ PDF</span>
+    </a>
+  </div>
+
   <div id="smooth-wrapper">
     <div id="smooth-content">
       <main>
+
+        <!-- ══ 01 IDENTITY — §6.3 ══════════════════════════════════════════ -->
         <section id="identity" aria-labelledby="identity-h">
-          <div class="probe-grid" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span><span></span>
-          </div>
+          <div class="hero__text col-left">
+            <p class="meta mono">Munich, DE <span aria-hidden="true">·</span> 48.1375° N 11.5755° E</p>
 
-          <div class="col-left">
-            <p class="probe-label">Munich, DE <span aria-hidden="true">·</span> 48.1375° N 11.5755° E</p>
-            <h1 id="identity-h" class="silver-type"
-                style="font-size:var(--t-hero);font-weight:800;letter-spacing:-0.02em;text-transform:uppercase">
-              Leonid<br>Yesaulov
-            </h1>
-            <div class="probe-rule"></div>
-            <p class="measure" style="font-size:var(--t-1);line-height:var(--lh-lead)">
+            <h1 id="identity-h" class="hero__name silver-type" data-split="name">Leonid Yesaulov</h1>
+
+            <p class="hero__role mono" data-role>AI &amp; Infrastructure Engineer</p>
+
+            <p class="hero__tagline lead measure" data-split="lines" data-copy>
               Secure, scalable systems end to end — backend services, deployment
-              lifecycles, and the mathematics underneath. This paragraph is capped at
-              the §3.4 measure: 66ch, hard cap 704px.
+              lifecycles, and the mathematics underneath.
             </p>
-            <p style="margin-top:var(--s-3)">
-              <a class="probe-fill" href="/files/Yesaulov_CV.pdf">Dossier ↓ PDF</a>
-            </p>
+
+            <div class="hero__actions">
+              <a class="btn btn--metal" href="#works">Selected work <span aria-hidden="true">→</span></a>
+              <a class="btn btn--ghost" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
+                Dossier <span class="mono" aria-hidden="true">↓ PDF</span>
+              </a>
+            </div>
+
+            <a class="hero__cue mono" href="#dossier"><i>02</i> About <span aria-hidden="true">↓</span></a>
           </div>
 
-          <div class="col-aside">
-            <div class="probe-sheet" aria-hidden="true"></div>
-            <p class="probe-label" style="margin-top:var(--s-1)">cols 9–12 · sheet metal, no text</p>
-          </div>
+          <figure class="hero__portrait col-aside" data-portrait>
+            <div class="aperture">
+              <img src="/assets/me.jpg" width="762" height="762" alt="Leonid Yesaulov"
+                   fetchpriority="high" decoding="async">
+            </div>
+            <svg class="aperture__ring" viewBox="0 0 240 320" aria-hidden="true">
+              <rect x="4" y="4" width="232" height="312" rx="116" pathLength="100"/>
+            </svg>
+          </figure>
         </section>
 
+        <!-- ══ 02 DOSSIER — §6.4 ═══════════════════════════════════════════ -->
         <section id="dossier" aria-labelledby="dossier-h">
-          <div class="col-right">
-            <h2 id="dossier-h" style="font-size:var(--t-heading);letter-spacing:-0.015em;text-transform:uppercase">
-              Type scale
-            </h2>
-            <div class="probe-rule"></div>
-            <div class="probe-ladder">
-              <div style="font-size:var(--t--2)">t−2 · 11.31 · telemetry</div>
-              <div style="font-size:var(--t--1)">t−1 · 13.45 · labels</div>
-              <div style="font-size:var(--t-0)">t0 · 16.00 · body</div>
-              <div style="font-size:var(--t-1)">t1 · 19.03 · lead</div>
-              <div style="font-size:var(--t-2)">t2 · 22.63</div>
-              <div style="font-size:var(--t-3)">t3 · 26.91</div>
-              <div style="font-size:var(--t-4)">t4 · 32.00</div>
-              <div style="font-size:var(--t-6)">t6 · 45.25</div>
-              <div style="font-size:var(--t-8)">t8 · 64.00</div>
+          <header class="head col-right">
+            <p class="head__index mono">02</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="dossier-h" class="head__title" data-split="heading">About</h2>
+          </header>
+
+          <div class="dossier__inner col-right">
+            <div class="dossier__copy" data-copy>
+              <p class="lead measure">
+                I build and run the infrastructure other systems sit on — the full deployment
+                lifecycle across cloud and self-hosted environments, and the backend services
+                on top of it.
+              </p>
+              <p class="measure">
+                The foundation is mathematical. I read Informatics with a minor in Mathematics
+                at TUM, and what draws me to machine learning is the mathematics of it, applied
+                to real infrastructure problems rather than benchmarks.
+              </p>
+              <p class="measure">
+                Favourite domains: data and AI, backend systems, developer tools. Away from the
+                terminal: arts — music and literature — bonsai gardens, and tabletop games.
+              </p>
+
+              <!-- Principles strip: the values clause of the old about paragraph, designed. -->
+              <div class="principles mono">
+                <ul class="principles__row">
+                  <li>Performance</li>
+                  <li>Readable code</li>
+                  <li>Pragmatic decisions</li>
+                </ul>
+                <ul class="principles__row">
+                  <li>Testing</li>
+                  <li>Automation</li>
+                  <li>Collaboration</li>
+                </ul>
+              </div>
+            </div>
+
+            <aside class="plate" data-copy>
+              <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M0 0 L24 24" pathLength="100"/>
+              </svg>
+              <svg class="plate__frame" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 0 H100" pathLength="100"/>
+                <path d="M100 0 V100" pathLength="100"/>
+                <path d="M100 100 H0" pathLength="100"/>
+                <path d="M0 100 V0" pathLength="100"/>
+              </svg>
+              <dl class="plate__rows">
+                <div class="plate__row">
+                  <dt class="plate__label">Location</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value">Munich, Germany</dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Education</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value">Informatics BSc, minor Mathematics — TUM, 2024–2027 (expected)</dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Languages</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value">English C1 <span aria-hidden="true">·</span> German C1
+                    <span aria-hidden="true">·</span> Russian native <span aria-hidden="true">·</span> Ukrainian native</dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Contact</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value"><a href="mailto:leo@omniserv.me">leo@omniserv.me</a></dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Web</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value"><a href="https://omniserv.me">omniserv.me</a></dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ══ 03 LATTICE — §6.5 ═══════════════════════════════════════════
+             Four labelled columns of capsules is the authored state: it is the
+             `s` breakpoint layout, the no-WebGL fallback, and — since node
+             positions are lattice coordinates resolved in JS — the no-JS layout
+             too. The edge SVG and the triangular placement arrive with §9.6. -->
+        <section id="lattice" aria-labelledby="lattice-h">
+          <header class="head col-full">
+            <p class="head__index mono">03</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="lattice-h" class="head__title" data-split="heading">Stack</h2>
+          </header>
+
+          <div class="lattice col-full" data-lattice>
+            <div class="cluster" data-cluster="backend">
+              <h3 class="cluster__label mono">Backend</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Python</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">FastAPI</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Go</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">gRPC</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Java</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">C/C++</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">SQL</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">MongoDB</span></button></li>
+              </ul>
+            </div>
+
+            <div class="cluster" data-cluster="infra">
+              <h3 class="cluster__label mono">Infra &amp; DevOps</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Docker</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">CI/CD</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Traefik</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Caddy</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">AWS</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Google Cloud</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Linux (Arch, Debian)</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Cloudflare</span></button></li>
+              </ul>
+            </div>
+
+            <div class="cluster" data-cluster="frontend">
+              <h3 class="cluster__label mono">Frontend</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Flutter/Dart</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">HTML</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">CSS</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">JavaScript</span></button></li>
+              </ul>
+            </div>
+
+            <div class="cluster" data-cluster="tooling">
+              <h3 class="cluster__label mono">Tooling</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Git</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Make</span></button></li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="lattice__readout mono col-full">
+            <span class="sr-only">Selected cluster:</span>
+            <span data-readout>22 nodes <span aria-hidden="true">·</span> 4 clusters</span>
+          </p>
+        </section>
+
+        <!-- ══ 04 WORKS — §6.6 ═════════════════════════════════════════════
+             The track is a native horizontal scroller here, so all four cards
+             are reachable with JS dead (I3). Checkpoint 8's pin takes over `x`
+             and clips the viewport instead. ≤900px is a vertical stack (§9.7). -->
+        <section id="works" aria-labelledby="works-h">
+          <header class="head head--split col-full">
+            <p class="head__index mono">04</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="works-h" class="head__title" data-split="heading">Work</h2>
+            <p class="works__count mono" data-progress-label>01 / 04</p>
+          </header>
+
+          <div class="works__bar col-full" aria-hidden="true">
+            <span class="works__bar-fill" data-progress-bar></span>
+          </div>
+
+          <div class="works__viewport col-full" data-works-viewport>
+            <div class="works__track" data-track>
+
+              <a class="card__link" href="https://github.com/omniserv-me/omniserv"
+                 target="_blank" rel="noopener">
+                <article class="card" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">01</p>
+                    <h3 class="card__title" data-split="title">Omniserv</h3>
+                  </header>
+                  <p class="card__kicker mono">Self-hosted <span aria-hidden="true">·</span> Infrastructure</p>
+                  <p class="card__body" data-copy>
+                    Home server running reliable automations, a secure VPN and always-on web
+                    capacity. Automated deployment and managed service lifecycles with Docker
+                    and CI/CD; local network routing, DNS resolution via Pi-hole, security
+                    protocols. Accounting and smart-home systems that digitalise day-to-day
+                    processes.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">Python</li>
+                    <li class="tag">Docker</li>
+                    <li class="tag">GitHub Actions</li>
+                    <li class="tag">Linux</li>
+                    <li class="tag">Cloudflare</li>
+                  </ul>
+                  <p class="card__go mono">github <span aria-hidden="true">↗</span></p>
+                </article>
+              </a>
+
+              <!-- No public link (§14 item 3), so no anchor and no hover lift. -->
+              <article class="card" data-card>
+                <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M0 0 L24 24" pathLength="100"/>
+                </svg>
+                <header class="card__head">
+                  <p class="card__index mono">02</p>
+                  <h3 class="card__title" data-split="title">uWeMe</h3>
+                </header>
+                <p class="card__kicker mono">Startup <span aria-hidden="true">·</span> Mobile MVP
+                  <span aria-hidden="true">·</span> 06.2024 – 10.2024</p>
+                <p class="card__body" data-copy>
+                  Took an initial prototype to a functional MVP: stripped placeholders, resolved
+                  core bugs, engineered both ends — Flutter front, Golang back. Shipped into the
+                  Apple ecosystem through TestFlight.
+                </p>
+                <ul class="card__tags">
+                  <li class="tag">Golang</li>
+                  <li class="tag">Flutter/Dart</li>
+                  <li class="tag">TestFlight</li>
+                </ul>
+              </article>
+
+              <!-- No link (§14 item 2). -->
+              <article class="card" data-card>
+                <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M0 0 L24 24" pathLength="100"/>
+                </svg>
+                <header class="card__head">
+                  <p class="card__index mono">03</p>
+                  <h3 class="card__title" data-split="title">Secure Memory Unit</h3>
+                </header>
+                <p class="card__kicker mono">Academic <span aria-hidden="true">·</span> Embedded simulation</p>
+                <p class="card__body" data-copy>
+                  Monolithic SMU module: controller logic, latency simulation, parity checking
+                  and fault-injection tests.
+                </p>
+                <ul class="card__tags">
+                  <li class="tag">C/C++</li>
+                  <li class="tag">Hardware</li>
+                </ul>
+              </article>
+
+              <a class="card__link" href="https://github.com/leoyesaulov/professional"
+                 target="_blank" rel="noopener">
+                <article class="card" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">04</p>
+                    <h3 class="card__title" data-split="title">This page</h3>
+                  </header>
+                  <p class="card__kicker mono">Web <span aria-hidden="true">·</span> The thing you are looking at</p>
+                  <p class="card__body" data-copy>
+                    Silver, chain and kinetic type. GSAP over a three.js metal stage, laid out on
+                    a √2 grid and cut to a 0.12-second beat.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">GSAP</li>
+                    <li class="tag">three.js</li>
+                    <li class="tag">WebGL</li>
+                    <li class="tag">Vite</li>
+                  </ul>
+                  <p class="card__go mono">github <span aria-hidden="true">↗</span></p>
+                </article>
+              </a>
+
             </div>
           </div>
         </section>
 
-        <section id="lattice" aria-labelledby="lattice-h">
-          <div class="col-left">
-            <h2 id="lattice-h" style="font-size:var(--t-heading);letter-spacing:-0.015em;text-transform:uppercase">
-              Palette
-            </h2>
-            <div class="probe-rule"></div>
-            <div class="probe-swatches">
-              <div style="background:var(--ink);color:var(--silver-light)">ink 12.74</div>
-              <div style="background:var(--void);color:var(--silver-light)">void 12.29</div>
-              <div style="background:var(--graphite);color:var(--silver-light)">graphite 10.91</div>
-              <div style="background:var(--steel);color:var(--ink)">steel</div>
-              <div style="background:var(--silver-shadow);color:var(--ink)">silver-shadow</div>
-              <div style="background:var(--silver);color:var(--ink)">silver</div>
-              <div style="background:var(--silver-light);color:var(--ink)">silver-light</div>
-              <div style="background:var(--chrome);color:var(--ink)">chrome</div>
-              <div style="background:var(--white);color:var(--ink)">white</div>
-              <div style="background:var(--blue);color:var(--white)">blue</div>
-              <div style="color:var(--blue-lift)">blue-lift 7.46</div>
-            </div>
-            <p class="measure probe-dim" style="margin-top:var(--s-3)">
-              This paragraph rests at the dim floor (0.60) in --silver-light: 4.95:1 on
-              --ink, still AA. Only this token may be dimmed.
-            </p>
-            <p style="margin-top:var(--s-3)"><a href="/LICENSE.txt">Text and design CC BY 3.0</a></p>
-          </div>
+        <!-- ══ 05 LINK — §6.7 ══════════════════════════════════════════════ -->
+        <section id="link" aria-labelledby="link-h">
+          <header class="head col-left">
+            <p class="head__index mono">05</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="link-h" class="head__title" data-split="heading">Link</h2>
+          </header>
+
+          <p class="lead measure col-left" data-copy>Four ways in. The first three are read daily.</p>
+
+          <ul class="rows col-left" data-copy>
+            <li class="row">
+              <a class="row__link" href="https://github.com/leoyesaulov" target="_blank" rel="noopener">
+                <span class="row__index mono">01</span>
+                <span class="row__label mono">GitHub</span>
+                <span class="row__value">leoyesaulov</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <!-- matched point counts, one hidden: MorphSVG needs identical
+                       path data structure to interpolate without wobble (§9.8). -->
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+
+            <li class="row">
+              <a class="row__link" href="https://www.linkedin.com/in/leonid-yesaulov-836b98217/"
+                 target="_blank" rel="noopener">
+                <span class="row__index mono">02</span>
+                <span class="row__label mono">LinkedIn</span>
+                <span class="row__value">leonid-yesaulov</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+
+            <li class="row row--email">
+              <div class="row__link row__link--static">
+                <span class="row__index mono">03</span>
+                <span class="row__label mono">Email</span>
+                <span class="row__value">leo@omniserv.me</span>
+              </div>
+              <!-- Both mailto intents the old page distinguished, kept distinct. -->
+              <p class="row__chips">
+                <a class="chip mono" href="mailto:leo@omniserv.me?subject=New%20Offer&amp;body=Hi,%20Leo!%0A%0A">New offer</a>
+                <a class="chip mono" href="mailto:leo@omniserv.me?subject=Personal%20Inquiry&amp;body=Hi,%20Leo!%0A%0A">Personal inquiry</a>
+              </p>
+            </li>
+
+            <li class="row">
+              <a class="row__link" href="https://omniserv.me" target="_blank" rel="noopener">
+                <span class="row__index mono">04</span>
+                <span class="row__label mono">Web</span>
+                <span class="row__value">omniserv.me</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+          </ul>
+
+          <a class="btn btn--metal link__cta col-left" href="/files/Yesaulov_CV.pdf"
+             target="_blank" rel="noopener">
+            <span class="link__cta-label">Dossier <span aria-hidden="true">↓</span></span>
+            <span class="link__cta-sub mono">A4 <span aria-hidden="true">·</span> 1:√2 <span aria-hidden="true">·</span> PDF</span>
+          </a>
         </section>
+
       </main>
+
+      <!-- ══ Colophon — §6.8 ═══════════════════════════════════════════════ -->
+      <footer id="colophon" class="shell">
+        <div class="colophon__col col-left">
+          <p>© <span id="year">2026</span> Leonid Yesaulov</p>
+          <p>Text and design <a href="/LICENSE.txt">CC BY 3.0</a>.</p>
+          <p class="mono">√2 grid <span aria-hidden="true">·</span> 0.12 s beat.</p>
+        </div>
+        <div class="colophon__col col-aside">
+          <p>Part of Omniserv.</p>
+          <p>Built with GSAP and three.js.</p>
+          <p class="colophon__controls mono">
+            <button class="toggle" type="button" data-motion-toggle aria-pressed="true">
+              Motion <span class="toggle__state" data-motion-state>on</span>
+            </button>
+            <span class="tier">Tier <span aria-hidden="true">·</span> <span data-tier>—</span></span>
+          </p>
+        </div>
+      </footer>
     </div>
   </div>
+
+  <!-- §2.3 legacy-hash map. Runs before first paint; checkpoint 4 moves it into
+       main.js's boot, where smoother.scrollTo() resolves the hash afterwards. -->
+  <script>
+    const LEGACY = { about: 'dossier', stack: 'lattice', projects: 'works', socials: 'link' };
+    const h = location.hash.slice(1);
+    if (LEGACY[h]) history.replaceState(null, '', '#' + LEGACY[h]);
+  </script>
 </body>
 </html>
