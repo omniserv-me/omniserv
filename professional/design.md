@@ -49,7 +49,7 @@ These override any aesthetic decision, always:
 
 - **I1 — Content exists before JavaScript.** Every word is in the served HTML. JavaScript adds
   the veil, the motion and the canvas; it never supplies content. The only text JS writes is the
-  copyright year and the diagnostic tier readout.
+  copyright year and the diagnostic tier readout. *(errata E6)*
 - **I2 — No text animates below AA contrast.** Any element that is still on screen holds at
   least 4.5:1 against its background. Dim states have a hard floor (§4.3). Text may animate
   *from* invisible on entry; it may never *rest* below the floor.
@@ -58,7 +58,7 @@ These override any aesthetic decision, always:
 
 ### 1.4 Non-goals
 
-- **No scroll-jacked narrative beyond one section.** Exactly one pinned section (§6.5). The rest
+- **No scroll-jacked narrative beyond one section.** Exactly one pinned section (§6.5). *(errata E11)* The rest
   of the page scrolls natively.
 - **No bloom, no glassmorphism, no gradient-mesh blobs.** These are what the current page does
   and what everything else does. Silver's drama comes from hard specular clipping (§8.3).
@@ -169,7 +169,7 @@ steps multiply by √2. Sizes are declared in `rem`; px values shown for referen
 | `--t-2` | 16·2^(2/4) | 22.63 | card title (mobile), blockquote |
 | `--t-3` | 16·2^(3/4) | 26.91 | card title |
 | `--t-4` | 16·2 | 32.00 | section heading (mobile) |
-| `--t-5` | 16·2^(5/4) | 38.06 | — |
+| `--t-5` | 16·2^(5/4) | 38.06 *(errata E12)* | — |
 | `--t-6` | 16·2^(6/4) | 45.25 | section heading |
 | `--t-8` | 16·4 | 64.00 | hero name (mobile) |
 | `--t-10` | 16·2^(10/4) | 90.51 | hero name (tablet) |
@@ -205,7 +205,7 @@ Section vertical rhythm: `--s-21` desktop, `--s-13` tablet, `--s-8` mobile.
   pinned works track (§6.6).
 - Body measure `66ch`, hard cap `--s-8 * 11 = 704px`. Never full-bleed body copy.
 - Breakpoints: `s ≤ 640px`, `m 641–900px`, `l 901–1280px`, `xl > 1280px`. These three numbers
-  match the existing CSS breakpoints so nothing regresses silently.
+  match the existing CSS breakpoints so nothing regresses silently. *(errata E14)*
 - **Asymmetry rule:** section content sits on columns 2–8 or 5–12, alternating down the page.
   The unused side is where the chain runs (§7.5). The layout's asymmetry exists to make room for
   the chain, which is why it never looks arbitrary.
@@ -303,7 +303,7 @@ immediately adjacent to a dark one, which is the only thing that reads as metal 
 --silver-fill: linear-gradient(168deg,
   #B4BAC0 0%, #E8EBEE 46%, #C9CED4 62%, #9DA4AB 100%);
 
-/* Travelling highlight band. Animated via background-position (§9.4). */
+/* Travelling highlight band. Animated via background-position (§9.4). (errata E21) */
 --silver-sheen: linear-gradient(105deg,
   rgba(232,235,238,0) 42%, rgba(232,235,238,0.55) 50%, rgba(232,235,238,0) 58%);
 
@@ -338,7 +338,7 @@ prefixed one:
 ### 4.3 Contrast and the dim floor
 
 All ratios below are computed WCAG 2.1 values, not estimates. `--ink` has relative luminance
-0.0021; `--void` 0.0043; `--graphite` 0.0094.
+0.0021; `--void` 0.0043; `--graphite` 0.0094. *(errata E12)*
 
 **Against `--ink`** (the page ground):
 
@@ -413,7 +413,7 @@ register — indices, coordinates, tier readouts.
 
 **Verify at install time:** confirm the actual axis ranges in the downloaded `woff2` (Archivo's
 `wdth` range has differed between releases). If `wdth` is narrower than 62–125, scale the
-animation targets in §9.3 proportionally rather than clamping — the *relative* width travel is
+animation targets in §9.3 *(errata E11)* proportionally rather than clamping — the *relative* width travel is
 what reads, not the absolute values.
 
 ### 5.2 Self-hosting
@@ -429,7 +429,7 @@ the second decisive:
 
 Setup:
 
-- Variable `woff2` only, in `src/fonts/`, imported from CSS so Vite fingerprints them.
+- Variable `woff2` only, in `src/fonts/`, imported from CSS so Vite fingerprints them. *(errata E2)*
 - `@font-face` with `font-display: swap`, and the full variable range declared:
   `font-weight: 100 900; font-stretch: 62% 125%;`
 - `<link rel="preload" as="font" type="font/woff2" crossorigin>` for **Archivo only** — it
@@ -783,7 +783,7 @@ authored once as lattice coordinates in `js/sections/stack.js` and resolved to p
 so the lattice rescales without redrawing.
 
 **Node form.** A capsule — the chain-link stadium again, at small scale — 1 px `--hairline`
-border on `--void`, mono label in `--silver`. Focusable `<button>` elements, not `<span>`, so the
+border on `--void`, mono label in `--silver` *(errata E5)*. Focusable `<button>` elements, not `<span>`, so the
 hover behaviour has a keyboard equivalent.
 
 **22 nodes in 4 clusters** — 8 backend, 8 infra/devops, 4 frontend, 2 tooling:
@@ -1057,7 +1057,7 @@ this is what a real chain does when you stop pulling it:
 ```
 ripple(k, t) = amp · exp(−0.105·k) · sin( 2π · (k/6 − 8·(t − t₀)) ) · env(t − t₀)
 amp = 0.35 · linkOuterDiameter · min(|Δv| / 2000, 1)
-env = power2.out envelope over a 1.2 s lifetime
+env = power2.out envelope over a 1.2 s lifetime      (errata E3)
 ```
 
 `exp(−0.105k)` is a 0.9× decay per link; wavelength 6 links; temporal frequency 8 Hz — the wave
@@ -1142,14 +1142,14 @@ No shadow maps. Nothing casts onto anything.
 
 `X` is the spine's lateral anchor as a fraction of visible world width (0 = centre). It is the one
 chain property that *is* tweened: a scrubbed GSAP tween on a plain object per section boundary,
-`ease.metal` (§9.2), so the chain visibly migrates between movements rather than cutting.
+`ease.metal` (§9.2) *(errata E15)*, so the chain visibly migrates between movements rather than cutting.
 
 | Movement | `X` | State |
 |---|---|---|
 | 00 CAST | — | one link only, centred, spinning at ω = 0.6 rad/s, roughness 0.60 → 0.12 |
 | 01 IDENTITY | `+0.26` | full spine enters from the top-left, bowing at full `A₀`; runs the gutter between tagline and portrait |
 | 02 DOSSIER | `−0.28` | migrates into the left margin (cols 2–4), vacated now that copy and fact plate both sit in the alternated content block on the right (§3.4, §6.4); the readability guard (§7.6) still applies if a link ever crosses behind copy |
-| 03 LATTICE | branch | spine splits into **four** short chains at `X = −0.30, −0.10, +0.14, +0.32`, one per cluster, each terminating at its cluster root node. Cross-faded over 8τ by animating a second `InstancedMesh`'s per-instance scale 0→1 while the primary fades out |
+| 03 LATTICE | branch *(errata E9)* | spine splits into **four** short chains at `X = −0.30, −0.10, +0.14, +0.32`, one per cluster, each terminating at its cluster root node. Cross-faded over 8τ by animating a second `InstancedMesh`'s per-instance scale 0→1 while the primary fades out |
 | 04 WORKS | horizontal | the spine rotates to horizontal at `y = −0.40·H` and runs the full track width; **phase binds to the pin's horizontal progress instead of scrollY**, so cards and links travel locked together. Sag axis rotates with it — the chain now hangs *downward* between card anchors |
 | 05 LINK | loop | coils into a **closed 24-link loop**, radius `0.17·H`, centred at `X = +0.30`, rotating at ω = 0.12 rad/s. The curve is swapped for a `THREE.EllipseCurve` wrapped as a closed `CatmullRomCurve3`; `sag` is forced to 0 |
 | colophon | loop | loop idles, unchanged |
@@ -1204,7 +1204,7 @@ matter are pixel-bound, so they scale by tier (§10.2):
 | Tier | DPR | Links | MSAA | Post | Clearcoat | Tethers |
 |---|---|---|---|---|---|---|
 | HIGH | `min(dpr, 2)` | 51 | 4× | full | yes | yes |
-| MED | `min(dpr, 1.5)` | 36 | off | streak taps 3 | no | no |
+| MED | `min(dpr, 1.5)` | 36 | off | streak taps 3 *(errata E16)* | no | no |
 | LOW | `1` | 18 | off | off | no | no |
 | NONE | — | canvas removed | — | — | — | — |
 
@@ -1245,7 +1245,7 @@ uniform vec2  uResolution;
 uniform vec2  uAxis;       // scroll axis: (0,1) vertical, (1,0) during the pinned track
 uniform float uVelocity;   // smoothed, signed, clamped to [-1, 1]
 uniform float uExposure;   // 1.0; 1.25 for 2τ on the LINK snap (§9.8)
-uniform float uStreak;     // 1.0 HIGH, 0.6 MED, 0.0 off
+uniform float uStreak;     // 1.0 HIGH, 0.6 MED, 0.0 off   (errata E16)
 varying vec2 vUv;
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
@@ -1313,7 +1313,7 @@ and it is very noticeable when wrong.
 ### 8.5 The CSS grain sheet
 
 The canvas can only dither its own pixels. The CSS silver gradients behind it (`--silver-sheet` on
-panels, the page's background ramp) band for the same reason and need the same fix. `.grain` from
+panels, the page's background ramp *(errata E18)*) band for the same reason and need the same fix. `.grain` from
 §6.1 is a `position: fixed; inset: 0` element with a 64×64 base64 PNG of monochrome noise,
 `background-repeat: repeat`, `opacity: 0.028`, `mix-blend-mode: overlay`, `pointer-events: none`,
 `z-index: 1` — above the canvas, below content. Inline as a data URI; it is under 1 KB, and a
@@ -1407,7 +1407,7 @@ on 40 split characters — it is a per-element compositing layer and the memory 
 
 ### 9.2 Named easings
 
-Five `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page.
+Five `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page. *(errata E3, E-ease)*
 
 ```js
 CustomEase.create('mask',     'M0,0 C0.16,1 0.3,1 1,1');      // ≈ expo.out  — wipes, apertures, draws
@@ -1424,11 +1424,11 @@ CustomEase.create('shut',     'M0,0 C0.7,0 0.84,0.06 1,1');   // ≈ expo.in   �
 | `glyph` | every type animation: character rises, width morphs, tracking |
 | `chain` = `back.out(1.8)` | anything that *seats*: tags, nodes, buttons, link snap |
 | `metal` | sheen sweeps, exposure flash, blur, colour crossfades |
-| `catenary` | chain slack relaxation only |
+| `catenary` | chain slack relaxation only *(errata E22)* |
 | `shut` | apertures closing, hero exit |
 
 Scrubbed animations always use `ease: 'none'`. An eased scrub means the content lags the scroll
-non-linearly, which reads as broken rather than smooth.
+non-linearly, which reads as broken rather than smooth. *(errata E4)*
 
 ### 9.3 Movement 00 — CAST (preloader)
 
@@ -1438,7 +1438,7 @@ created only if `document.readyState !== 'complete'` when the module runs, and i
 own load event is a broken page.
 
 **Content.** A mono counter `000`, a 1 px hairline, and the single spinning link from the WebGL
-stage in its CAST state (§7.5).
+stage in its CAST state (§7.5). *(errata E17)*
 
 **Progress** is weighted across the three things actually worth waiting for, reported into one
 value:
@@ -1523,7 +1523,7 @@ gsap.to(proxies, {
 | 1τ | name chars, line 1 | `y 100%→0`, `wdth 62→100` | 5τ | glyph | 0.5τ |
 | 3τ | name chars, line 2 | same | 5τ | glyph | 0.5τ |
 | 5τ | role line | `letter-spacing 0.6em→0.18em`, `opacity 0→1` | 8τ | glyph | — |
-| 5τ | role hairline | `scaleX 0→1`, origin left | 8τ | mask | — |
+| 5τ | role hairline *(errata E20)* | `scaleX 0→1`, origin left | 8τ | mask | — |
 | 6τ | tagline | 102° mask wipe (§9.5), `y 12→0` | 5τ | mask | — |
 | 8τ | portrait aperture | stadium hole `height 0→100%` | 8τ | mask | — |
 | 8τ | portrait image | `scale 1.18→1` | 13τ | glyph | — |
@@ -1538,14 +1538,14 @@ to a composed timeline.
 
 **Idle breathing.** After 4 s with no scroll and no pointer movement, every character's `wdth`
 oscillates **±3 units on a 6 s sine**, phase-offset `i × 0.08 s` — a slow travelling wave through
-the name. `repeat: -1, yoyo: true, ease: 'sine.inOut'`. Killed on any input, restarted after
+the name. `repeat: -1, yoyo: true, ease: 'sine.inOut'` *(errata E3)*. Killed on any input, restarted after
 another 4 s of quiet. Never runs under reduced motion. This is the detail that makes the headline
 feel alive rather than finished.
 
 **Pointer parallax**, amplitudes straight from §3.7: name 4 px, portrait 8 px, chain 11.31 px,
 background 22.63 px — all inverted relative to pointer direction, lerped at 0.08.
 
-**Scroll-out** — `trigger: '#identity', start: 'top top', end: 'bottom top', scrub: 0.6`:
+**Scroll-out** — `trigger: '#identity', start: 'top top', end: 'bottom top', scrub: 0.6` *(errata E4)*:
 
 | Target | Change | Note |
 |---|---|---|
@@ -1638,7 +1638,7 @@ propagation.
 | cluster readout | `textContent` swap to the hovered node's cluster | — | none |
 
 Leave/blur reverses over 2τ. The dim floor is the hard limit here — non-focused labels stay
-readable at 4.6:1, which is why this interaction is permitted at all.
+readable at 4.6:1 *(errata E21)*, which is why this interaction is permitted at all.
 
 **Optional, HIGH value:** arrow-key traversal between graph-adjacent nodes (←/→ within a cluster,
 ↑/↓ between clusters). It costs about 30 lines and makes the lattice feel like an instrument rather
@@ -1784,7 +1784,7 @@ value `opacity 0→1` 2τ.
 | label | `x 0→8px`, `font-stretch 100%→108%` | 1τ | glyph | — |
 | underline | `drawSVG 0→100` in `--blue` | 3τ | mask | — |
 | value | `--silver → --blue-lift` | 2τ | metal | — |
-| email chips (row 03) | `scale 0.9→1`, `opacity 0→1` | 1τ | chain | 0.5τ |
+| email chips (row 03) *(errata E8)* | `scale 0.9→1`, `opacity 0→1` | 1τ | chain | 0.5τ |
 
 The glyph closing on hover is the page's thesis in one gesture: **pointing at a link closes the
 chain link.** Both morph targets are authored as two paths with identical point counts in the same
@@ -1825,7 +1825,7 @@ ScrollTrigger.create({
 ```js
 const state = Flip.getState(indicator);
 item.appendChild(indicator);
-Flip.from(state, { duration: 3 * T, ease: 'power3.out' });
+Flip.from(state, { duration: 3 * T, ease: 'power3.out' });   // errata E3
 ```
 
 Flip is used rather than measuring offsets because nav labels have different widths and the
@@ -1842,7 +1842,7 @@ the interpolation is typed:
 .rail__panel {
   /* horizontal run of a 15° lean over the panel's full height, scaled by how far open it is —
      zero at rest (fully collapsed, matching the old static polygon), full run at --sweep: 100% */
-  --shear: calc(100vh * tan(15deg) * (var(--sweep) / 100%));
+  --shear: calc(100vh * tan(15deg) * (var(--sweep) / 100%));   /* errata E13 */
   clip-path: polygon(
     100% 0,
     calc(100% - var(--sweep)) 0,
@@ -1864,7 +1864,7 @@ it up the page.
 Colophon: top hairline `scaleX 0→1` 8τ origin left; then rows `opacity 0→1`, `y 8→0`, 2τ, 1τ
 stagger.
 
-**Global micro-states** — everything interactive on the page, for consistency:
+**Global micro-states** — everything interactive on the page, for consistency *(errata E-ease)*:
 
 | Element | Trigger | Change | Dur |
 |---|---|---|---|
@@ -1906,7 +1906,7 @@ What `reduced` means, concretely:
 | Entrance timelines | `gsap.set` to final states; nothing animates in |
 | Scrubbed animations | not created |
 | WORKS pin | not created; vertical stack |
-| Chain | one static frame rendered, then the ticker callback is removed |
+| Chain | one static frame rendered, then the ticker callback is removed *(errata E1)* |
 | Idle breathing, scramble, sheen, ripples | never created |
 | Hover states | colour and border changes only; no transforms, no dimming |
 | Focus rings, nav indicator | unchanged — these are feedback, not decoration |
@@ -1931,7 +1931,7 @@ Forced to `LOW` regardless of probe when `navigator.hardwareConcurrency <= 4`, o
 the comparison is `undefined < 4`, always `false`; treating `undefined` itself as "assume low" on a
 coarse-pointer device is what actually catches iOS Safari, the exact low-power-mobile population
 this heuristic exists for. Forced to `NONE` when WebGL2 context creation
-fails, when `signals.motion === 'reduced'`, or when the probe itself throws.
+fails, when `signals.motion === 'reduced'` *(errata E1)*, or when the probe itself throws.
 
 Tier parameters are in §7.7; the selected tier is printed in the colophon (§6.8) so a performance
 report from a real visitor is actionable.
@@ -1945,7 +1945,7 @@ Both resolve to the same static page, and both must look finished rather than br
   `@media (scripting: enabled)` — **this is the load-bearing detail.** If `opacity: 0` initial
   states were unconditional, a JS failure would produce a blank page. The canvas element is inert.
 - **No WebGL (tier `NONE`):** the canvas is removed from the DOM. A CSS fallback layer takes over:
-  a fixed sheet combining a `--silver-sheet` radial at 18 % opacity and a static inline-SVG chain
+  a fixed sheet combining a `--silver-sheet` radial *(errata E19)* at 18 % opacity and a static inline-SVG chain
   strip at 0.18 opacity, positioned where the spine would run. The motif survives; the motion does
   not.
 
@@ -1960,7 +1960,7 @@ Both resolve to the same static page, and both must look finished rather than br
 | Re-split safety | `autoSplit: true` + `onSplit` returning the timeline; re-splits on font load and resize without leaking tweens |
 | Contrast | §4.3 table; dim floor 0.60 enforced as a token, never bypassed |
 | Focus visible | 2 px `--blue-lift` outline + 2 px offset + 1 px `--ink` inset ring, so it reads on both dark ground and silver fills |
-| Focus order | DOM order throughout; the WORKS pin's `focusin` handler (§9.7) keeps view and focus in agreement |
+| Focus order | DOM order throughout; the WORKS pin's `focusin` handler (§9.7) *(errata E7)* keeps view and focus in agreement |
 | Targets | ≥ 44 × 44 px for every interactive element, including lattice nodes and contact rows |
 | Keyboard parity | every hover state has a `:focus-visible` equivalent; lattice nodes are `<button>`, not `<span>` |
 | Motion control | persisted toggle in the colophon, reachable by keyboard |
@@ -1978,7 +1978,7 @@ Both resolve to the same static page, and both must look finished rather than br
 @media (forced-colors: active) {
   #stage, .grain { display: none; }
   .silver-type  { color: CanvasText; background-image: none; }
-  .hairline, .card, .plate { border-color: CanvasText; }
+  .hairline, .card, .plate { border-color: CanvasText; }   /* errata E10 */
   .rail__indicator { background: Highlight; }
 }
 ```
@@ -2061,7 +2061,7 @@ CustomEase, Flip, DrawSVGPlugin, MorphSVGPlugin — in the one package, under th
 "no charge" license. No registry token, no separate Club install. Verified against the published
 tarball.
 
-Three addons are imported through the `three/addons/*` subpath, which the package's `exports` map
+Three addons *(errata E11)* are imported through the `three/addons/*` subpath, which the package's `exports` map
 resolves to `examples/jsm/*`:
 
 ```js
@@ -2106,7 +2106,7 @@ export default {
     assetsDir: '_',          // hashed bundles land in dist/_/ so they cannot collide
                              // with the verbatim public/assets/ tree
     target: 'es2022',
-    rollupOptions: { output: { manualChunks: { three: ['three'] } } },
+    rollupOptions: { output: { manualChunks: { three: ['three'] } } },   // errata E13
   },
 };
 ```
@@ -2246,6 +2246,14 @@ delay or shift the largest text on the page.
 ---
 
 ## 13. Implementation order
+
+> **Superseded for execution** by the checkpoint list in `PROGRESS.md`, whose **Ownership map**
+> names the one checkpoint that owns each section of this document. Phase → checkpoint: 1 → 1–3 ·
+> 2 → 4 · 3 → 5a–5b · 4 → 6a–6b · 5 → 7a–9b · 6 → 10 (plus §9.3 CAST) · 7 → 11a–11b. The table
+> below is kept as the original rationale.
+>
+> **Contradictions** inside this document are tracked in `PROGRESS.md`'s **Errata** table and
+> marked `(errata E#)` where they occur. The checkpoint that owns a row corrects the text here.
 
 Seven phases. Each ends in a state that could ship.
 

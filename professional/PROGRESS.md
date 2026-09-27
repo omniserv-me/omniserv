@@ -30,49 +30,282 @@ the running log.
       `motion` updating correctly; toggling motion off and back on reverts cleanly with no leaked
       state.
 
-- [ ] 5. Kinetic type — design.md §5.4, §9.4 (split parts only)
-      Scope: `split.js` with `document.fonts.ready` gate, hero name split+width morph, section
-      heading splits, card title splits, the 102° mask-wipe utility.
-      Done when: headlines animate on load with no visible reflow; resizing/re-splitting leaks no
-      tweens (check `gsap.globalTimeline.getChildren()` count is stable).
+Checkpoints 5–11 were split into session-sized halves (5a/5b … 11a/11b) on 2026-09-28 so every
+part of design.md has exactly one owner — see the **Ownership map** below. A letter suffix is a
+full checkpoint: own session, own commit, own box. Code comments written before the split say
+"checkpoint 6", "checkpoint 8" etc.; the map says which half that now means.
 
-- [ ] 6. Chain stage (WebGL) — design.md §7
-      Scope: `js/gl/stage.js`, `chain.js`, catenary curve + phase spring + ripples, instanced
-      links + material/env, `aDim` readability guard, tier probe (`tiers.js`).
-      Done when: chain renders, bows at rest (~9% of H), snaps taut on fast scroll, visibly
-      dims/mattes behind copy; tier probe correctly downgrades under forced LOW.
+- [ ] 5a. Fonts + split rig — design.md §5.1 (install check), §5.2, §5.4, §9.1 step 3
+      Scope: download and subset the three variable faces to `public/fonts/*-v1.woff2` (§5.2,
+      §12.2 — resolve **E2**); the subset is every non-ASCII character actually in `index.html`,
+      not just §5.2's list (it misses `©` `°` `–` `↗`), with the mono face's tabular digits kept;
+      **verify Archivo's real `wdth` range** and record it in the log (§5.1 — scale §9.4's
+      targets if it differs); `@font-face` blocks with the full ranges, `font-display: swap`, plus
+      metric-compatible fallback faces (`size-adjust` / `ascent-override` etc.; §12.7's CLS row
+      depends on them); `<link rel="preload">` for Archivo only. `core/split.js` behind the `document.fonts.ready`
+      gate, with `autoSplit` + `onSplit` (§9.4 config); splits for the hero name, section headings
+      (`data-split="heading"`) and card titles (`data-split="title"`) — the splits only, no
+      choreography. The 102° `.wipe` utility (§9.5 CSS). **Create `src/css/motion.css`** with every
+      initial state inside `@media (scripting: enabled)` (§10.3) — later checkpoints add to it.
+      Done when: fonts ≤ 140 KB total (§12.7) and the page renders in Archivo/Inter/JetBrains Mono;
+      CLS 0 on load; splits produce no visible reflow; resizing/re-splitting leaks no tweens
+      (`gsap.globalTimeline.getChildren()` count stable); no-JS page still complete.
 
-- [ ] 7. Choreography A — DOSSIER + LATTICE — design.md §9.5, §9.6
-      Scope: section-header reveal, fact-plate draw + wipes, principles strip; lattice graph
-      growth (BFS edge draws), hover/focus dim-and-highlight.
-      Done when: both sections animate per spec; lattice hover never dims a label below the 0.60
-      floor; keyboard focus on lattice nodes matches hover behaviour.
+- [ ] 5b. IDENTITY choreography — design.md §9.4 (everything but the split config), §3.7
+      Scope: `sections/hero.js`. The §9.4 entrance timeline (every row, incl. per-char width morph,
+      role tracking, role hairline, tagline wipe, portrait stadium aperture + image scale, buttons,
+      ring DrawSVG, scroll cue). The role hairline has no element yet — resolve **E20** (a
+      decorative, `aria-hidden` element plus its `motion.css` state). It starts on its own at boot when there is no CAST; 10 later rewires the start
+      to CAST t = 5τ. Idle breathing (resolve **E3**'s `sine.inOut`); scroll-out (resolve **E4**).
+      Settle **E-ease**, the rule for a "—" in an Ease column, before writing the first such row.
+      **The depth module** §9.1 asks for ("one module owns the depths and applies them to both")
+      owns §3.7's amplitudes for pointer and scroll parallax. It wires the hero layers now and
+      exposes the per-layer API that 6b (chain), 7a (headings, plate), 8a (cards) and 10
+      (background) apply. Hero pointer parallax. Reduced-motion branch: `gsap.set` to final states.
+      Done when: hero animates per §9.4's table and rests at ≈ 21τ; breathing starts after 4 s idle
+      and dies on input; scroll-out never leaves text resting below 0.60; LCP < 2.0 s (§12.7) with
+      the hero readable before any JS runs; motion toggle reverts it cleanly.
 
-- [ ] 8. Choreography B — WORKS pinned track — design.md §9.7
-      Scope: the pin (`containerAnimation`), card entrances, index scramble, hover/tether,
-      progress readout, **the `onFocusIn` handler**.
-      Done when: pin travels 1:1 with scroll; tabbing through cards never strands focus off-screen;
-      vertical-stack fallback at ≤900px works; progress readout never lags.
+- [ ] 6a. Chain core (WebGL) — design.md §7.1–7.4, §7.6, §7.7, §10.2
+      Scope: `gl/stage.js`, `gl/chain.js`: renderer/camera, catenary + velocity sag, phase spring,
+      reversal ripples, instanced links + alternating orientation, `RoomEnvironment` tint + three
+      lights, `aDim` readability guard with its document-space rect cache in `util/rect.js`
+      (§7.6). Ripple envelope ease (resolve **E3**'s `power2.out`). Resolve **E22**, the unused
+      `catenary` ease. Render loop on `gsap.ticker`
+      (§9.1 "one clock"). `core/tiers.js` probe + forced LOW/NONE rules, setting `signals.tier`
+      (§9.1 boot step 1). Decide how the renderer is created given that `antialias` is fixed at
+      context creation, while the tier that decides it (§8.1: on at MED/LOW) comes from a probe
+      that needs a renderer; log the choice. Resolve **E1**, what reduced motion does to the chain.
+      Tier params for DPR/links/clearcoat (§7.7). Canvas fades in over 8τ after the first frame
+      on idle (§12.7). Vertical spine at IDENTITY's `X` only — movement states are 6b.
+      Done when: chain renders, bows at rest (~9 % of H), snaps taut on fast scroll, visibly
+      dims/mattes behind copy; tier probe downgrades under forced LOW; colophon shows the tier;
+      draw calls ≤ 3; `three` chunk ≤ 180 KB; reduced motion behaves as E1's resolution says.
 
-- [ ] 9. Choreography C — LINK + colophon + nav rail — design.md §9.8–§9.10
-      Scope: MorphSVG link-glyph hover, loop-snap once-per-visit, colophon reveal, nav
-      shrink/Flip indicator, mobile panel sweep. Flip and MorphSVG are lazy (`core/lazy.js`):
-      read them via `late()?.Flip` / `late()?.MorphSVGPlugin`, and the indicator's first placement
-      must work without Flip (plain `appendChild`) — see checkpoint 4's log.
-      Done when: glyph morph is clean (no wobble); loop snap + exposure flash fire once per visit;
-      mobile panel opens/closes with focus trap and Escape handling.
+- [ ] 6b. Chain movement states — design.md §7.5, §3.7 (chain rows)
+      Scope: every row of §7.5 except CAST's preloader behaviour (10): the IDENTITY spine entering
+      from the top-left at full `A₀`; scrubbed `X` migrations for IDENTITY → DOSSIER (their ease is
+      **E15**: `ease.metal` vs scrubs-are-`none`); the LATTICE four-way branch (`gl/lattice.js`,
+      second `InstancedMesh` cross-fade), including what it does at the `s` breakpoint (resolve
+      **E9**), with a **branch-roots setter** fed from CP3's column layout for now — 7b re-feeds it
+      with the lattice-resolved root positions; the **horizontal mode API**
+      (rotation to `y = −0.40·H`, phase driven by an external progress value) for 8a to bind, and
+      a way back to vertical for 8a's ≤ 900 px branch (§9.7); the LINK closed 24-link loop +
+      colophon idle, with a `snapFinalLink()` hook for 9b. The degenerate-tangent guard at the
+      loop top. The §3.4 asymmetry rule: the spine runs on the unused column side. Chain
+      pointer/scroll parallax (foreground n=3, mid n=4) from 5b's depth module.
+      Done when: the chain migrates (never cuts) at every boundary; branch terminates at the four
+      cluster roots; loop closes and idles; horizontal mode can be driven from a debug slider.
 
-- [ ] 10. Post-processing — design.md §8
-      Scope: `EffectComposer` wiring, `metal.js` shader pass, `OutputPass`, exposure-flash
-      uniform, CSS grain sheet.
-      Done when: silver reads as brushed metal, no colour banding in dark ramps; `uAxis` flips to
-      horizontal during the WORKS pin; MED/LOW tiers correctly drop the composer.
+- [ ] 7a. Choreography — DOSSIER — design.md §9.5
+      Scope: `sections/about.js`. The section-header reveal (index, rule, heading chars) as a
+      reusable helper that 7b, 8a and 9b call. The helper also applies the headings' §3.7 depth
+      (n=0: 4 px pointer, 16 px scroll) through 5b's module, so all four sections get it. The three
+      body wipes; principles strip; fact-plate border (four DrawSVG segments), rows, leaders
+      drawn L→R (§6.4), value wipes, sheen; plate parallax, scroll (±22.6 px) and pointer (5.66 px).
+      Done when: DOSSIER animates per §9.5's tables; body copy never parallaxes; no resting text
+      below the dim floor; toggle reverts cleanly.
 
-- [ ] 11. Degradation, a11y & SEO — design.md §10, §11, §14
-      Scope: reduced-motion branches, `NONE`-tier CSS fallback, forced-colours block, focus-ring
-      audit, JSON-LD + OG meta, `og.png` (flag as open item if no asset provided).
-      Done when: every row of §10.4 verified; no-JS and no-WebGL both render complete, readable
-      pages; Lighthouse a11y ≥ 95.
+- [ ] 7b. LATTICE — design.md §6.5 (geometry), §9.6
+      Scope: lattice coordinates in `sections/stack.js` resolved to px (pitch 88 px desktop, 62 px
+      tablet), the edge SVG (`pathLength="100"`, 30°/150°/90° only), absolute placement on top of
+      CP3's markup — the four-column layout stays for `s`, no-JS and no-WebGL. Growth (BFS order,
+      origin-at-edge-start nodes), hover/focus dim-and-highlight, cluster readout, reduced/LOW
+      branch. Feed the resolved cluster-root positions to 6b's branch-roots setter (§7.5), on every
+      resize. Arrow-key traversal (§9.6) is **optional and deferred** — build only if time remains.
+      Done when: every edge sits on a permitted axis; hover never dims a label below 0.60; keyboard
+      focus matches hover; `s` breakpoint shows the columns with no edges.
+
+- [ ] 8a. WORKS pin — design.md §6.6 (pinned geometry), §9.7 (pin, entrances, branches)
+      Scope: `sections/projects.js`. Flip `.works__viewport` from native scroller to clipped when the pin owns `x`; the pin
+      (`invalidateOnRefresh`, function `end`/`x`), `signals.axis` on toggle; card triggers via
+      `containerAnimation`; card entrance table incl. title split and chamfer draw; index scramble
+      (`util/scramble.js`, 12 fps); bind 6b's horizontal chain mode to the pin's progress; the
+      ≤ 900 px vertical-stack branch (cards trigger on vertical position, chain switched back to
+      vertical via 6b's API). Cards' §3.7 depth (n=1) through 5b's module; if it fights the
+      pinned track, drop it while pinned and log the call. The pin's scroll extent (§6.1, ~310 vh)
+      is whatever `D` gives; record the measured value in the log.
+      Done when: pin travels 1:1 with scroll and survives resize; each card fires on its own
+      horizontal position; chain and cards travel locked; vertical stack works at ≤ 900 px.
+
+- [ ] 8b. WORKS interaction — design.md §9.7 (focus, hover, readout, deep links)
+      Scope: **the `onFocusIn` handler** via `setFocusIn()` (resolve **E7**); card deep links (hash naming a card
+      jumps the pin); hover lift, border, pointer-following sheen, tag borders; the chain tether
+      (HIGH only); progress readout written in `onUpdate`; reduced-motion and LOW-tier branches.
+      Done when: tabbing through every card never strands focus off-screen (test manually, every
+      card — see SESSIONS.md); progress readout never lags; cards are never scaled; LOW drops
+      tether and sheen.
+
+- [ ] 9a. Nav rail — design.md §9.9
+      Scope: `sections/nav.js`. Shrink via `toggleClass`, which also drives §6.2's at-rest → compact
+      ground, blur and bottom hairline fade. Active indicator per section: a static first placement
+      at boot (CP3 hides it as `display: none` while it's still a child of `.rail__nav`), then Flip
+      via `late()?.Flip`, plain `appendChild` until the late chunk lands (checkpoint 4's log);
+      resolve **E3**'s `power3.out`. The indicator keeps moving under reduced motion — §10.1 lists
+      it as feedback, not decoration. Item hover; mobile panel open/
+      close with the typed `--sweep` (**as fixed in checkpoint 3's log — the spec's `/ 100%` form
+      is invalid**), focus trap, Escape returns focus, `smoother.paused(true)` while open. Panel
+      stays a sibling of `.rail`.
+      Done when: indicator lands exactly on each item; panel opens/closes with trap and Escape;
+      scroll locked while open; indicator works before the late chunk loads.
+
+- [ ] 9b. LINK + colophon + micro-states — design.md §9.8, §9.10
+      Scope: `sections/contact.js`. LINK header + row entrances; row hover/focus (MorphSVG glyph
+      via `late()?.MorphSVGPlugin` — matched point counts, static until loaded; label, underline,
+      value, email chips — resolve **E8**); the loop snap once per visit, calling 6b's `snapFinalLink()` and a
+      stage `flash()` hook (the `uExposure` uniform it drives arrives in 10); the LINK section's
+      Dossier CTA sheen (§9.8). Colophon reveal (in CP4's `sections/footer.js`). **Every §9.10
+      global micro-state** (text-link underline — CP3 authored an SVG rule only for LINK rows, so
+      author the underline element for inline text links such as the colophon's `CC BY 3.0` and
+      the plate's two links; `.btn--metal`,
+      `.btn--ghost`, tag, toggle crossfade). Focus rings already exist (CP2) — do not animate them.
+      Done when: glyph morph is clean (no wobble); loop snap and `flash()` fire exactly once per
+      visit; every hover state has a `:focus-visible` twin.
+
+- [ ] 10. Post-processing + CAST — design.md §8, §9.3
+      Scope: `EffectComposer` + MSAA target, `gl/passes/metal.js`, `OutputPass`, `uStreak` and
+      `uVelocity` fed from tier and `signals.velocity` (MED's streak vs "no composer at MED" is
+      **E16**); wire 9b's
+      `flash()` to `uExposure`; `uAxis` from `signals.axis`; MSAA/streak per tier (§7.7). The §8.5
+      grain sheet and the page's background ramp (the §3.7 depth-5 "background gradient sheet",
+      parallaxed through 5b's module; never specified — resolve **E18**). **CAST** (`sections/preloader.js`): JS-injected veil only
+      when `readyState !== 'complete'`, hard 3 s timeout, weighted progress (fonts/PMREM/me.jpg),
+      counter + hairline, the single-link CAST state (§7.5's CAST row; spin ω = 0.6 rad/s, roughness
+      polishing 0.60 → 0.12 across progress), the SVG-mask exit that takes over the start of 5b's
+      hero timeline at 5τ; §9.1 boot step 6. Resolve **E17**: CAST with no stage, under reduced
+      motion, and before the tier probe resolves.
+      Done when: silver reads as brushed metal, no banding in dark ramps; `uAxis` flips during the
+      WORKS pin; exposure flash visible once on the LINK snap; MED/LOW drop the composer; CAST never
+      outlives 3 s, never appears on a cached reload that is already complete, never exists with JS
+      off; draw calls still ≤ 3.
+
+- [ ] 11a. Degradation — design.md §10.1–10.3, §10.5
+      Scope: audit §10.1's reduced table against every section built so far and fill gaps; verify
+      §10.2's forced LOW/NONE rules on real conditions; the NONE-tier CSS fallback (silver-sheet
+      radial + static inline-SVG chain strip — resolve **E19**); §10.5 reduced-transparency and forced-colours blocks
+      (extend CP3's additions; resolve **E10**). Styling keyed off CP4's `<html data-motion>`.
+      Done when: no-JS, no-WebGL, reduced-motion and LOW all render complete, readable, deliberate
+      pages; forced colours is a plain readable document.
+
+- [ ] 11b. A11y, SEO & final audit — design.md §10.4, §11, §12.7, §14, cross-cutting rules
+      Scope: every §10.4 row verified (focus ring audited, not rewritten), including 200 % zoom; the
+      rest of §11 — canonical, OG/Twitter, JSON-LD, `apple-touch-icon`, `public/assets/favicon.svg`
+      (the rail's chain mark); §14 item 1 (`og.png` — flag if no asset, keep `me.jpg` fallback),
+      items 2–3 left as the spec handles them; full §12.7 budget table measured, with transfer sizes
+      taken under Caddy's actual `zstd` encoding (checkpoint 4's log); §6.1's scroll extents
+      measured against the ≈ 810 vh total; the **cross-cutting audit** (see map); the spec-text
+      errata **E5, E6, E11, E12, E13, E14, E21** fixed in design.md.
+      Done when: every §10.4 row verified; Lighthouse a11y ≥ 95; every §12.7 budget met or logged;
+      cross-cutting audit clean or logged; every Errata row is marked resolved.
+
+## Ownership map
+
+Every `##`/`###` heading of design.md, with the checkpoint that owns it. "Done" means an earlier
+checkpoint already built it; its log is the record. A row split across checkpoints names each part.
+Chapter headings (§1–§10, §12) are owned through their subsections — their intro prose adds no
+requirement of its own (§7's "everything lives in `js/gl/`" → 6a/6b; §9's "every animation in
+multiples of `T`" → cross-cutting).
+
+**Cross-cutting rules — every checkpoint obeys them for the code it adds; 11b owns the final
+audit:** §1.3 invariants I1–I3 (re-verify no-JS at every checkpoint, per SESSIONS.md), §1.4
+non-goals, §3.5 beat grid (durations as `n * T` / `var(--beat-n)`) and staggers, §3.6 angle
+whitelist, §4.1 no colour outside the palette, §4.3 dim floor, §4.4 colour/blue budget, §5.3
+`tabular-nums` on every mono number, §5.4 never `letter-spacing` and `wdth` on one element at once,
+§9.1 `will-change` hygiene, §9.2 easing whitelist + scrubs are `none` (and whatever rule **E-ease**
+settles for a "—"), §10.1 every animation ships its reduced-motion branch, §10.4 ≥ 44 px targets and
+a `:focus-visible` twin for every hover, §12.7 budgets for whatever chunk the checkpoint grows, and
+checkpoint 4's rule: **ScrollTriggers are created only inside a registered branch, never at module
+level.**
+
+**Pre-split numbers.** Checkpoint 1–4 logs and code comments use the old numbering. Read them as:
+5 → 5a (fonts, splits) / 5b (hero); 6 → 6a (tier, `getSmoother()` in the guard) / 6b; 7 → 7a / 7b;
+8 → 8a (pin) / 8b (`setFocusIn`); 9 → 9a (panel, `paused`) / 9b; 11 → 11a (`data-motion`, degradation)
+/ 11b (focus-ring audit, favicon, zstd).
+
+| design.md | Owner |
+|---|---|
+| §1.1 What this page is · §1.2 Aesthetic thesis | narrative — no implementation; realised by all |
+| §1.3 Readability invariants · §1.4 Non-goals | cross-cutting (above) → 11b audit; I1's wording → E6, §1.4's § ref → E11 |
+| §2.1 Content that moves | 3 (every copy/markup row) · 1 (CV, LICENSE, README, Caddyfile/Dockerfile/.dockerignore rows) · 11b (`og:image` source) — done except 11b |
+| §2.2 Content retired on purpose | 1 (`@notData`) · 3 (blobs, particles, `.reveal`, `theme-dark`, `.accent`, Google Fonts link, `.blob-3`) — done |
+| §2.3 Anchor migration | 3 (map) · 4 (moved to `main.js`, smoother hash resolution) — done; card deep links → 8b |
+| §3.1 Why √2 · §3.2 Type scale · §3.3 Spacing · §3.4 Grid and measure · §3.6 Fixed angles | 2 — done; §3.4's asymmetry rule for the chain → 6b; spec slips → E12 (§3.2), E14 (§3.4) |
+| §3.5 Beat grid | 2 (`--beat*`) · 4 (`T`) — done; usage cross-cutting |
+| §3.7 Parallax depths | 2 (tokens, done) · 5b (depth module; name, portrait) · 7a (headings via the header helper; plate) · 8a (cards) · 6b (chain fore/mid) · 10 (background sheet) |
+| §4.1 Palette · §4.2 Silver gradient tokens · §4.3 Contrast and the dim floor | 2 — done; §4.1's no-other-colour rule and §4.3's dim floor are also cross-cutting; §4.3's luminance misprint → E12; §4.2's sheen § ref → E21 |
+| §4.4 Colour budget | cross-cutting → 11b audit |
+| §5.1 Families | 2 (stacks, done) · 5a (axis-range check at install); wrong § ref → E11 |
+| §5.2 Self-hosting | 5a (incl. E2, full subset) |
+| §5.3 Roles | 3 — done |
+| §5.4 Animating the width axis | 5a (mechanism) · used by 5b, 7a, 7b, 8a, 9a, 9b |
+| §6.1 Overview / DOM shell | 3 — done · scroll extents: 8a (pin) · 11b (measured) · chain-state column → §7.5 owners |
+| §6.2 Navigation rail | 3 (markup, CSS, done) · 9a (shrink, ground/hairline fade, indicator) |
+| §6.3 IDENTITY | 3 (markup, copy, aperture CSS, done) · 5b (animation) |
+| §6.4 DOSSIER | 3 — done |
+| §6.5 LATTICE | 3 (columns markup, fallback, done) · 7b (geometry, coordinates, edges); node-label colour → E5 |
+| §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry) · 8b (readout, linking behaviour) |
+| §6.7 LINK · §6.8 Colophon | 3 (markup, copy, done) · 4 (year, toggle, tier readout, done) |
+| §7.1 Stage · §7.2 Catenary · §7.3 Links · §7.4 Material · §7.6 Guard | 6a (§7.3's degenerate-tangent guard → 6b, it fires only at the loop top) |
+| §7.5 Per-movement choreography | 6b (IDENTITY → colophon rows, incl. E9, E15; branch-roots setter) · 7b (feeds lattice-resolved roots) · 8a (bind WORKS row to pin, ≤ 900 px return to vertical) · 9b (trigger loop snap) · 10 (CAST row) |
+| §7.7 Performance | 6a (DPR, links, clearcoat) · 10 (MSAA, post, incl. E16) · 8b (tethers) |
+| §8.1 Pass chain · §8.2 Metal pass · §8.3 Why these four · §8.4 Exposure flash | 10 (§8.4's trigger → 9b; §8.1's MED/LOW `antialias` depends on 6a's renderer decision; MED streak vs no composer → E16) |
+| §8.5 CSS grain sheet | 10 (plus the background ramp, incl. E18) |
+| §9.1 Global rig | 4 — done, except: step 1 tier probe → 6a · step 3 splits → 5a · step 6 veil → 10 · "one clock" → 6a · depth module → 5b · `axis` signal set by 8a · `will-change` cross-cutting |
+| §9.2 Named easings | 4 — done; usage cross-cutting; off-list eases elsewhere → E3, E4, E15, E-ease; unused `catenary` → E22 (6a) |
+| §9.3 CAST | 10 (incl. E17) |
+| §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
+| §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest; header helper reused by 7b/8a/9b) |
+| §9.6 LATTICE | 7b (arrow keys optional/deferred); "4.6:1" → E21 |
+| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
+| §9.8 LINK | 9b (incl. E8; exposure uniform → 10) |
+| §9.9 Navigation rail | 9a (incl. E3's `power3.out`; `--sweep` spec text → E13) |
+| §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
+| §10.1 Motion preference | 4 (resolution, done) · each checkpoint's reduced branch (cross-cutting; nav indicator row → 9a) · chain row → 6a via E1 · 11a audit |
+| §10.2 Quality tiers | 6a (incl. E1) · 11a verification |
+| §10.3 No-JS / no-WebGL | 3 (baseline, done) · 5a (`motion.css` rule) · 11a (NONE fallback, incl. E19) |
+| §10.4 Accessibility | 2/3 (focus ring, targets, done) · 5a (split text, re-split safety rows) · 11b audit; `focusin` wording → E7 |
+| §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
+| §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
+| §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
+| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP) · 6a (three chunk, canvas fade-in, draw calls) · 11b full audit (zstd transfer) |
+| §13 Implementation order | superseded by this checklist (see note in design.md §13) |
+| §14 Open items | 11b (items 1–3; item 4 closed by 3) |
+| Appendix | reference only |
+
+## Errata
+
+Places where design.md contradicts itself or its own code, so neither side of the conflict has an
+owner until it is assigned here. The owning checkpoint's session puts the row to the user at kickoff
+and gets a decision; no session raises or resolves another checkpoint's rows (SESSIONS.md,
+**Errata**). It then implements the decision, logs it, and **corrects design.md's text**, removing
+the marker (a spec-text-only row just needs the text corrected). Then it marks the row resolved. design.md marks each spot `(errata E#)`. 11b cannot close until every row is
+resolved.
+
+| # | design.md | Contradiction | Owner | Status |
+|---|---|---|---|---|
+| E1 | §10.1 vs §10.2 | Reduced motion: "one static frame rendered, then the ticker callback is removed" vs "forced to `NONE` when `signals.motion === 'reduced'`", which removes the canvas | 6a | open |
+| E2 | §5.2 vs §12.2 | Fonts "in `src/fonts/`, imported from CSS so Vite fingerprints them" vs `public/fonts/*-v1.woff2`, deliberately unhashed. 5a's scope already follows §12.2 | 5a | open |
+| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | open |
+| E-ease | §9.4–§9.8 tables | An Ease column of "—" (button labels, scroll cue, section index, plate row labels, node labels, colophon rows) is undefined, and §9.10's micro-state table has no Ease column at all (CSS transitions, so the rule must also give `cubic-bezier` forms, as §9.9 does for `ease.metal`); GSAP's default `power1.out` is not on the §9.2 list. Settle the rule once (`none`, or a `gsap.defaults` ease); it is cross-cutting after that | 5b | open |
+| E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | open |
+| E5 | §6.5 vs §5.3 / §4.3 | Node label "mono label in `--silver`" vs `--silver-light` (dimmable, AA at the floor). Code already follows §5.3 (`components.css`, `.node__label`) | 11b (text) | resolved in code by 3 |
+| E6 | §1.3 I1 | "The only text JS writes is the copyright year and the diagnostic tier readout", but the CAST counter, card index scramble, WORKS progress label and lattice cluster readout also write text. Reword to what I1 means: JS never supplies *content* | 11b (text) | open |
+| E7 | §10.4 vs §9.7 | "the WORKS pin's `focusin` handler" vs "Do not add a `focusin` listener", i.e. use the smoother's `onFocusIn` | 8b | open |
+| E8 | §9.8 | Email chips `scale 0.9→1, opacity 0→1` on row hover imply hidden chips at rest: unreachable on touch and invisible without hover, against I1/I3 and CP3's "nothing hides content" | 9b | open |
+| E9 | §7.5 × §6.5 | The LATTICE chain branch terminates at cluster root nodes, but at `s` the lattice is four plain columns with no edges; the chain's behaviour there is unspecified | 6b | open |
+| E10 | §10.5 | Block targets a `.hairline` class that does not exist, and `.card { backdrop-filter: none }` although cards have none | 11a | open |
+| E11 | §1.4, §5.1, §12.1 | Wrong references: §1.4 "one pinned section (§6.5)" → §6.6; §5.1 "animation targets in §9.3" → §9.4; §12.1 "Three addons" lists five | 11b (text) | open |
+| E12 | §4.3, §3.2 | `--void`/`--graphite` luminances misprinted (0.0043/0.0094 → 0.0040/0.0108); `--t-5` 38.06 → 38.05 (checkpoint 2's log) | 11b (text) | resolved in code by 2 |
+| E13 | §9.9, §12.2 | `--sweep / 100%` is invalid CSS (checkpoint 3's log); `manualChunks` object form fails under vite 8 (checkpoint 1's log) | 11b (text) | resolved in code by 1, 3 |
+| E14 | §3.4 | "These three numbers match the existing CSS breakpoints" is false: the old sheet had 768/900, no 640 (checkpoint 2's log) | 11b (text) | open |
+| E15 | §7.5 vs §9.2 | The `X` migration is "a scrubbed GSAP tween … `ease.metal`", but "scrubbed animations always use `ease: 'none'`". E4 covers only §9.4's scroll-out | 6b | open |
+| E16 | §7.7, §8.2 vs §8.1 | MED tier lists "Post: streak taps 3" and `uStreak` "0.6 MED", but §8.1 drops the composer entirely at MED and LOW, so no pass exists for the streak to run in; the shader also has no tap-count parameter | 10 | open |
+| E17 | §9.3 × §10.1, §10.2, §7.7 | CAST shows "the single spinning link from the WebGL stage", but its behaviour with no stage (tier NONE, WebGL failure, reduced motion forced to NONE per E1) and its exit under reduced motion are unspecified. The tier probe runs *after* first paint while CAST renders *from* it, and no rule says which tier's parameters apply until the probe resolves | 10 (with 6a's renderer decision) | open |
+| E18 | §8.5, §3.7 | "The page's background ramp" / the depth-5 "background gradient sheet" is referenced but never specified: no gradient, stops, angle or element | 10 | open |
+| E19 | §10.3 | NONE fallback uses "a `--silver-sheet` radial", but `--silver-sheet` is a 168° linear gradient, so the radial form is undefined; the static chain strip is "positioned where the spine would run", but the spine's `X` changes per movement | 11a | open |
+| E20 | §9.4 × §6.3 | The entrance table animates a "role hairline" and §6.3's wireframe draws one, but §6.3's markup has no such element, and neither does CP3's `index.html` | 5b | open |
+| E21 | §9.6, §4.2 | Spec-text slips outside E11/E12: §9.6's dimmed labels at "4.6:1" vs §4.3's 4.96:1 on `--void` (the nodes' ground); §4.2's `--silver-sheen` "animated via background-position (§9.4)", but §9.4 has no sheen (§9.5/§9.7/§9.8 do) | 11b (text) | open |
+| E22 | §9.2 | The `catenary` ease ("chain slack relaxation only") has no consumer: sag reads velocity directly with no tween (§7.2) and nothing in §7/§9 names it. Give it one or strike it from §9.2 | 6a | open |
 
 ## Log
 
