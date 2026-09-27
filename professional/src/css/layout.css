@@ -1,0 +1,107 @@
+/* ============================================================================
+   layout.css — the spatial system: the global DOM shell of design.md §6.1, the
+   12-column grid and asymmetry rule of §3.4, and the measure cap. Consumes
+   tokens.css and declares no values of its own.
+
+   The four column utilities below (.col-left, .col-right, .col-aside,
+   .col-full) plus .measure and .track are the layout API the movements in
+   §6.3–§6.8 are built against.
+   ========================================================================== */
+
+/* ── Global shell — §6.1 ───────────────────────────────────────────────────
+   The canvas is fixed behind content and outside the smoothed subtree, so
+   ScrollSmoother never transforms it. */
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-stage);
+  pointer-events: none;   /* also aria-hidden in the markup (§10.4) */
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-grain);
+  pointer-events: none;
+}
+
+/* ScrollSmoother requires the wrapper/content pair; both are inert until the
+   rig exists (§9.1), and the page scrolls natively without it. */
+#smooth-wrapper {
+  position: relative;
+  z-index: var(--z-content);
+  overflow: hidden;
+}
+
+#smooth-content { will-change: transform; }
+
+.rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-rail);
+}
+
+/* Skip link — §10.4: first in <body>, visible on focus, targets #identity. */
+.skip {
+  position: fixed;
+  top: var(--s-2);
+  left: var(--s-2);
+  z-index: calc(var(--z-rail) + 1);
+  padding: var(--s-1) var(--s-2);
+  background: var(--graphite);
+  color: var(--silver-light);      /* 10.91:1 on --graphite (§4.3) */
+  border: 1px solid var(--hairline-strong);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--s-5)));
+}
+.skip:focus,
+.skip:focus-visible { transform: none; }
+
+/* ── Section grid — §3.4 ───────────────────────────────────────────────────
+   12 columns, gutter 24px, page margin 40px / 24px mobile, container 1280px.
+   Section vertical rhythm is --s-section (168 / 104 / 64px by breakpoint). */
+
+main > section,
+.shell {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap: var(--gutter);
+  row-gap: var(--s-5);
+  align-content: start;
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--page-margin);
+  padding-block: var(--s-section);
+}
+
+/* The asymmetry rule: content sits on columns 2–8 or 5–12, alternating down
+   the page. The unused side is where the chain runs (§7.5) — the asymmetry
+   exists to make room for it, which is why it never looks arbitrary. */
+.col-left  { grid-column: 2 / 9; }    /* cols 2–8 */
+.col-right { grid-column: 5 / 13; }   /* cols 5–12 */
+.col-aside { grid-column: 9 / 13; }   /* cols 9–12 — hero portrait (§6.3) */
+.col-full  { grid-column: 1 / -1; }
+
+/* Body copy is never full-bleed: 66ch, hard-capped at --s-8 × 11 = 704px. */
+.measure { max-width: min(var(--measure), var(--measure-max)); }
+
+/* The one wide exception: the pinned WORKS track (§6.6). */
+.track {
+  max-width: var(--container-wide);
+  margin-inline: auto;
+}
+
+/* m and below — the 12-column asymmetry collapses to a single column; the
+   chain moves behind the content rather than beside it (§7.5). */
+@media (max-width: 900px) {
+  .col-left,
+  .col-right,
+  .col-aside,
+  .col-full { grid-column: 1 / -1; }
+}

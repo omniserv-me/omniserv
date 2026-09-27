@@ -11,7 +11,7 @@ the running log.
       Done when: `npm run build` and `docker build` succeed on a minimal placeholder `index.html`;
       `/files/Yesaulov_CV.pdf` and `/LICENSE.txt` resolve in the built output at their old paths.
 
-- [ ] 2. Design tokens + base/layout CSS — design.md §3, §4
+- [x] 2. Design tokens + base/layout CSS — design.md §3, §4
       Scope: `src/css/tokens.css`, `base.css`, `layout.css` — the √2 type scale, spacing, colour
       tokens, grid/breakpoints, fixed angles.
       Done when: tokens compute correctly (spot-check a few px values against the tables); a
@@ -127,3 +127,92 @@ expected, not a regression.
 **Still unprovided (not blocking, owned by later checkpoints):** `public/fonts/*.woff2` (§5.2),
 `public/assets/favicon.svg` and `public/assets/og.png` (§11, §14 item 1). `public/` currently holds
 only `files/`, `assets/me.jpg`, `LICENSE.txt` and `robots.txt`.
+
+### Checkpoint 2 — Design tokens + base/layout CSS
+
+**2026-09-27** · commit `refactor(webpage): checkpoint 2 — design tokens + base/layout CSS`
+
+**The layout API checkpoint 3 must build against.** design.md §6's markup carries no layout
+classes, so `layout.css` had to name them. Six classes, and nothing later should invent more:
+
+| Class | Meaning |
+|---|---|
+| `.col-left` | grid columns 2–8 (§3.4 asymmetry, left phase) |
+| `.col-right` | grid columns 5–12 (right phase) |
+| `.col-aside` | grid columns 9–12 — the hero portrait slot per §6.3's diagram |
+| `.col-full` | full bleed, `1 / -1` |
+| `.measure` | `min(66ch, 704px)` body-copy cap (§3.4) |
+| `.track` | `--container-wide: 1568px`, the one wide exception (§6.6) |
+
+The grid itself is on `main > section` (also available as `.shell` for the `<footer>`), so a
+section needs no wrapper div. All four `.col-*` collapse to full width at ≤ 900px. Shell
+selectors `#stage`, `.grain`, `#smooth-wrapper`, `#smooth-content`, `.rail`, `.skip` and the
+`.sr-only` / `.silver-type` utilities are already styled positionally, matching §6.1's markup
+verbatim.
+
+**Verified numerically, not by eye.** A scratch WCAG/arithmetic script reproduced every table in
+§3.2, §3.3, §3.5, §3.7, §4.1 and §4.3 against the literals in `tokens.css`: all twelve type steps,
+the seven spacing steps, the beat multiples, the parallax amplitudes, all eleven hexes, the seven
+ratios against `--ink`, the `--void`/`--graphite` columns (including `--silver-shadow` at exactly
+3.70:1, which is why it may never carry small text), the three dim-floor composites (4.95 / 4.96 /
+4.72:1) and the gradient claims (`--silver-sheet` 4.32:1 at 38 %, 1.95:1 at 100 %; `--silver-fill`
+worst stop 8.00:1). Every value matches the spec.
+
+**Two spec slips found by that check, neither acted on:**
+
+1. **§4.3's stated luminances for `--void` and `--graphite` are wrong** — 0.0043 and 0.0094, where
+   the hexes actually give 0.0040 and 0.0108. Every *ratio* §4.3 quotes is right and matches the
+   real luminances, so the hexes are authoritative and only the two luminance figures are
+   misprinted. `--ink` (0.0021) is correct.
+2. **§3.2's `--t-5` is printed as 38.06 px**; `16·2^(5/4)` is 38.0546 → 38.05. The token is
+   declared as `2.3784rem` (the exact value); the scale rounds, the spec's table does not. `--t-5`
+   has no assigned use, so nothing depends on it.
+
+**Deliberate scope decisions, all recorded here rather than left implicit:**
+
+- **Typographic roles (§5.3) are *not* in these sheets** — they belong to `components.css` in
+  checkpoint 3. `base.css` sets element defaults only (body = Inter/`--t-0`/`--silver-light`,
+  headings = Archivo/`--chrome`), which is what those roles are exceptions to.
+- **No `@font-face`.** §5.2 is unowned by any checkpoint and the `woff2` files still do not exist
+  (see checkpoint 1's log). `tokens.css` declares the three §5.1 stacks, so the page currently
+  renders in the fallbacks — Arial Narrow / system-ui / ui-monospace. Whoever lands §5.2 adds the
+  `@font-face` blocks and `public/fonts/*-v1.woff2`; no token changes are needed for it.
+  **Note for checkpoint 5:** the hero's width-axis morph is inert until then, because no fallback
+  in the display stack has a `wdth` axis.
+- **The §10.4 focus ring is pulled in early** (2 px `--blue-lift` outline, 2 px offset, 1 px
+  `--ink` inset ring). §10.4 is checkpoint 11's section, but shipping a base sheet without a focus
+  style would make checkpoint 3's static page an accessibility regression the moment it lands.
+  Checkpoint 11 should audit it rather than write it.
+- **`::selection` is `--chrome` ground with `--ink` text** (16.85:1). `--blue` with `--chrome`
+  measures 4.39:1 and fails AA; `--blue` with `--white` passes at 5.25:1 but spends the §4.4 blue
+  budget and stretches `--white`'s "specular clip only" role. Silver-on-silver costs nothing.
+- **`--beat-1 … --beat-21`** were added alongside `--beat` so CSS transitions can be written as
+  `var(--beat-3)` rather than `0.36s`, which is the CSS counterpart of §3.5's `5 * T` rule for JS.
+- **Three non-palette hexes appear in `tokens.css`** — `#8A9199`, `#9DA4AB`, `#B4BAC0` — solely as
+  intermediate stops inside the §4.2 gradient definitions, transcribed from the spec's own code
+  block. They are not tokens and must not be used as colours anywhere else. Apart from these, a
+  grep confirms every hex, `rgba()` and angle in `src/css/` is either a §4.1 token, a
+  palette-derived hairline/sheen, or one of §3.6's eight permitted angles (`180deg` on
+  `--silver-text` is orthogonal, which §3.6 does not govern).
+
+**§3.4's breakpoint claim is only two-thirds true.** It says 640 / 900 / 1280 "match the existing
+CSS breakpoints so nothing regresses silently"; the old `style.css` actually uses 900 px and
+768 px, with no 640 px breakpoint at all. The spec's own three numbers are implemented as written —
+the old 768 px breakpoint dies with `style.css` in checkpoint 3 — but the reassurance in that
+sentence should not be relied on when the old page's behaviour is being compared.
+
+**Verified end to end:** `npm run build` succeeds; Vite concatenates the three sheets into a single
+5.37 kB (2.11 kB gzipped) `dist/_/index-*.css` **in link order** (tokens → base → layout), which is
+the loading pattern checkpoint 3 inherits when it adds `components.css`. `dist/index.html` contains
+**zero `<script>` tags** and both load-bearing links (`/files/Yesaulov_CV.pdf`, `/LICENSE.txt`)
+still resolve — the I1/I3 baseline holds trivially at this checkpoint, since there is no JS at all.
+Headless Firefox at 1440 / 1280 / 900 / 640 px confirms the grid: 12 columns, 24 px gutters, 40 px
+margins (24 px at ≤ 640), content alternating 2–8 / 5–12 with the portrait slot on 9–12, measure
+capped at 704 px, section rhythm stepping 168 → 104 → 64 px, no horizontal overflow at any width,
+and the gradient-text, `--silver-fill` and `--silver-sheet` surfaces all rendering as metal.
+
+**Carried forward to checkpoint 3:** `index.html` is still a placeholder — now one that exercises
+the grid, the type ladder and the palette — and is still to be replaced wholesale, along with
+deleting the root `style.css` and `script.js` (per checkpoint 1's log). Its `<style>` block is
+checkpoint-2 scaffolding with no counterpart in design.md and goes with it. Keep the three `<link>`
+elements and their order.

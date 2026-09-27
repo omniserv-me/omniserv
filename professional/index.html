@@ -1,8 +1,15 @@
 <!doctype html>
 <!--
-  PLACEHOLDER. Checkpoint 1 (scaffold & build config) only needs a Vite entry that builds.
-  Checkpoint 3 replaces this file wholesale with the six movements of design.md §6 and the
-  rest of the §11 head. Nothing here is design.
+  PLACEHOLDER. Checkpoint 2 (design tokens + base/layout CSS) needs a page that
+  exercises the three sheets so the grid, the √2 type scale and the §4.3 contrast
+  floors can be seen in a browser. Checkpoint 3 replaces this file wholesale with
+  the six movements of design.md §6, the final copy, and the rest of the §11 head.
+  The <style> block below is scaffolding for this checkpoint only — it belongs to
+  no section of design.md and is deleted with the rest of the file.
+
+  The stylesheet order (tokens → base → layout, then components) is not a
+  placeholder: it is the loading pattern checkpoint 3 inherits. Plain <link>
+  elements, so the page is styled with zero JavaScript (invariant I1/I3).
 -->
 <html lang="en">
 <head>
@@ -10,13 +17,115 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Leonid Yesaulov — AI &amp; Infrastructure Engineer</title>
   <meta name="theme-color" content="#05070A">
+  <link rel="stylesheet" href="/src/css/tokens.css">
+  <link rel="stylesheet" href="/src/css/base.css">
+  <link rel="stylesheet" href="/src/css/layout.css">
+  <style>
+    /* Placeholder scaffolding — checkpoint 2 only. Tokens only, no literals. */
+    .probe-label { font-family: var(--font-mono); font-size: var(--t--2);
+      letter-spacing: 0.18em; text-transform: uppercase; color: var(--silver); }
+    .probe-rule { border-top: 1px solid var(--hairline); margin-block: var(--s-3); }
+    .probe-ladder { display: grid; gap: var(--s-1); }
+    .probe-ladder > div { font-family: var(--font-display); color: var(--chrome);
+      line-height: var(--lh-display); white-space: nowrap; overflow: hidden; }
+    .probe-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+      gap: var(--s-1); }
+    .probe-swatches > div { padding: var(--s-1); border: 1px solid var(--hairline);
+      font-family: var(--font-mono); font-size: var(--t--2); }
+    .probe-grid { grid-column: 1 / -1; display: grid;
+      grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr)); column-gap: var(--gutter); }
+    .probe-grid > span { height: var(--s-3); background: var(--graphite);
+      border-top: 1px solid var(--hairline-blue); }
+    .probe-fill { display: inline-block; padding: var(--s-1) var(--s-3);
+      background-image: var(--silver-fill); color: var(--ink);
+      font-family: var(--font-mono); font-size: var(--t--1); letter-spacing: 0.14em;
+      text-transform: uppercase; text-decoration: none; }
+    .probe-sheet { block-size: var(--s-21); background-image: var(--silver-sheet); }
+    .probe-dim { opacity: var(--dim-floor); }
+  </style>
 </head>
-<body style="background:#05070A;color:#C9CED4;font-family:system-ui,sans-serif;margin:40px">
-  <h1>Leonid Yesaulov</h1>
-  <p>AI &amp; Infrastructure Engineer — page under reconstruction.</p>
-  <ul>
-    <li><a style="color:#6C9BFF" href="/files/Yesaulov_CV.pdf">Dossier (PDF)</a></li>
-    <li><a style="color:#6C9BFF" href="/LICENSE.txt">Text and design CC BY 3.0</a></li>
-  </ul>
+<body>
+  <a class="skip" href="#identity">Skip to content</a>
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+      <main>
+        <section id="identity" aria-labelledby="identity-h">
+          <div class="probe-grid" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+
+          <div class="col-left">
+            <p class="probe-label">Munich, DE <span aria-hidden="true">·</span> 48.1375° N 11.5755° E</p>
+            <h1 id="identity-h" class="silver-type"
+                style="font-size:var(--t-hero);font-weight:800;letter-spacing:-0.02em;text-transform:uppercase">
+              Leonid<br>Yesaulov
+            </h1>
+            <div class="probe-rule"></div>
+            <p class="measure" style="font-size:var(--t-1);line-height:var(--lh-lead)">
+              Secure, scalable systems end to end — backend services, deployment
+              lifecycles, and the mathematics underneath. This paragraph is capped at
+              the §3.4 measure: 66ch, hard cap 704px.
+            </p>
+            <p style="margin-top:var(--s-3)">
+              <a class="probe-fill" href="/files/Yesaulov_CV.pdf">Dossier ↓ PDF</a>
+            </p>
+          </div>
+
+          <div class="col-aside">
+            <div class="probe-sheet" aria-hidden="true"></div>
+            <p class="probe-label" style="margin-top:var(--s-1)">cols 9–12 · sheet metal, no text</p>
+          </div>
+        </section>
+
+        <section id="dossier" aria-labelledby="dossier-h">
+          <div class="col-right">
+            <h2 id="dossier-h" style="font-size:var(--t-heading);letter-spacing:-0.015em;text-transform:uppercase">
+              Type scale
+            </h2>
+            <div class="probe-rule"></div>
+            <div class="probe-ladder">
+              <div style="font-size:var(--t--2)">t−2 · 11.31 · telemetry</div>
+              <div style="font-size:var(--t--1)">t−1 · 13.45 · labels</div>
+              <div style="font-size:var(--t-0)">t0 · 16.00 · body</div>
+              <div style="font-size:var(--t-1)">t1 · 19.03 · lead</div>
+              <div style="font-size:var(--t-2)">t2 · 22.63</div>
+              <div style="font-size:var(--t-3)">t3 · 26.91</div>
+              <div style="font-size:var(--t-4)">t4 · 32.00</div>
+              <div style="font-size:var(--t-6)">t6 · 45.25</div>
+              <div style="font-size:var(--t-8)">t8 · 64.00</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="lattice" aria-labelledby="lattice-h">
+          <div class="col-left">
+            <h2 id="lattice-h" style="font-size:var(--t-heading);letter-spacing:-0.015em;text-transform:uppercase">
+              Palette
+            </h2>
+            <div class="probe-rule"></div>
+            <div class="probe-swatches">
+              <div style="background:var(--ink);color:var(--silver-light)">ink 12.74</div>
+              <div style="background:var(--void);color:var(--silver-light)">void 12.29</div>
+              <div style="background:var(--graphite);color:var(--silver-light)">graphite 10.91</div>
+              <div style="background:var(--steel);color:var(--ink)">steel</div>
+              <div style="background:var(--silver-shadow);color:var(--ink)">silver-shadow</div>
+              <div style="background:var(--silver);color:var(--ink)">silver</div>
+              <div style="background:var(--silver-light);color:var(--ink)">silver-light</div>
+              <div style="background:var(--chrome);color:var(--ink)">chrome</div>
+              <div style="background:var(--white);color:var(--ink)">white</div>
+              <div style="background:var(--blue);color:var(--white)">blue</div>
+              <div style="color:var(--blue-lift)">blue-lift 7.46</div>
+            </div>
+            <p class="measure probe-dim" style="margin-top:var(--s-3)">
+              This paragraph rests at the dim floor (0.60) in --silver-light: 4.95:1 on
+              --ink, still AA. Only this token may be dimmed.
+            </p>
+            <p style="margin-top:var(--s-3)"><a href="/LICENSE.txt">Text and design CC BY 3.0</a></p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
 </body>
 </html>
