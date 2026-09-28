@@ -1,12 +1,32 @@
 /* footer.js — colophon wiring. design.md §6.8, §9.10, §10.1, §10.2.
 
-   The year (script.js:2's one surviving job), the persisted motion toggle, and
-   the tier readout. The colophon's reveal (§9.10) is checkpoint 9's; nothing
-   here animates except the toggle's 1τ label crossfade. */
+   The year (script.js:2's one surviving job), the persisted motion toggle, the
+   tier readout, the toggle's 1τ label crossfade, and §9.10's reveal: the top
+   hairline draws (8τ mask, origin left, via --rule), then the rows rise in,
+   2τ at 1τ stagger. The reveal is once per page and hides nothing in CSS (as
+   7a); `clamp()` keeps its start reachable, since the colophon ends the page
+   and its top may never climb to the 72 % line. Reduced motion builds nothing. */
 
 import { gsap, T, ease } from '../core/easings.js';
 import { motion, tier } from '../core/signals.js';
-import { setMotion } from '../core/registry.js';
+import { register, setMotion } from '../core/registry.js';
+
+let revealed = false;
+
+function reveal() {
+  const foot = document.getElementById('colophon');
+  if (revealed || !foot) return;
+  gsap.timeline({
+    scrollTrigger: { trigger: foot, start: 'clamp(top 72%)' },
+    onStart: () => { revealed = true; },
+  })
+    .fromTo(foot, { '--rule': 0 }, { '--rule': 1, duration: 8 * T, ease: ease.mask, clearProps: '--rule' })
+    .fromTo(foot.querySelectorAll('p'), { opacity: 0, y: 8 }, {
+      opacity: 1, y: 0, duration: 2 * T, ease: ease.glyph, stagger: 1 * T, clearProps: 'opacity,transform',
+    });
+}
+
+register({ name: 'colophon', desktopFull: reveal, mobileFull: reveal });
 
 export function initFooter() {
   const year = document.getElementById('year');

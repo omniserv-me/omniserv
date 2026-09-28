@@ -112,7 +112,7 @@ a {
   color: var(--blue-lift);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
-  transition: color var(--beat-2) ease;
+  transition: color var(--beat-2) var(--ease-metal);
 }
 
 /* Mono carries the technical register. tabular-nums is mandatory, not

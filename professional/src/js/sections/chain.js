@@ -15,7 +15,9 @@
    stage chunk — and three — into the sections chunk. The last value is held,
    so a stage that lands mid-pin picks it up. The hover tether (§9.7, 8b)
    travels the same way: tetherChain() holds the hovered card's left-edge
-   reader, and the stage decides whether its tier draws one. */
+   reader, and the stage decides whether its tier draws one. The §9.8 loop
+   snap (9b) is the same again: snapLoop() asks once; a stage that lands later
+   honours a pending ask, and only while the loop is closed. */
 
 import { register, getContexts } from '../core/registry.js';
 
@@ -25,6 +27,8 @@ let drive = null;
 let drivePx = null;
 let tether = null;
 let tetherFn = null;
+let snap = null;
+let snapAsked = false;
 
 const run = (name) => () => {
   branch = name;
@@ -51,12 +55,22 @@ export function tetherChain(fn) {
   tether?.(fn);
 }
 
-export function setChainBuilder(fn, driveFn, tetherTo) {
+/** §9.8 — the loop's final link snaps shut and the stage flashes (9b). Once
+ *  per visit: the caller asks once; a later ask is ignored. */
+export function snapLoop() {
+  if (snapAsked) return;
+  snapAsked = true;
+  snap?.();
+}
+
+export function setChainBuilder(fn, driveFn, tetherTo, snapFn) {
   builder = fn;
   drive = driveFn;
   tether = tetherTo;
+  snap = snapFn;
   drive?.(drivePx);
   tether?.(tetherFn);
+  if (snapAsked) snap?.();
   const ctx = getContexts().get('chain');
   if (ctx && branch) ctx.add(() => fn(branch));
 }

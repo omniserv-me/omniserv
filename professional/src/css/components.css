@@ -266,11 +266,48 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: transform var(--beat-1) ease;
+  position: relative;
+  isolation: isolate;          /* the sheen's z-index −1 paints above the fill, below the text */
+  overflow: hidden;
+  transition: transform var(--beat-1) var(--ease-glyph);
+}
+
+/* §9.10: the sheen sweep, repeated on every hover (errata E47: 8τ, as every
+   sheen sweep — §9.10's 1τ is the lift's). --silver-sheen over --silver-fill
+   only lightens the ground, so --ink holds its ≥ 8:1 (§4.3) under the band at
+   full strength. 180 % wide with §9.5's ends, so the band is off the button at
+   rest; --sheen-x lets sections/contact.js run the LINK CTA's entrance sweep. */
+.rail__cta::after,
+.btn--metal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--silver-sheen);
+  background-size: 180% 100%;
+  background-repeat: no-repeat;
+  background-position: var(--sheen-x, -120%) 0;
+  pointer-events: none;
+}
+
+@keyframes sheen {
+  from { background-position: -120% 0; }
+  to   { background-position: 220% 0; }
 }
 
 .rail__cta:hover,
-.btn--metal:hover { transform: translate3d(0, -2px, 0); }
+.rail__cta:focus-visible,
+.btn--metal:hover,
+.btn--metal:focus-visible { transform: translate3d(0, -2px, 0); }
+
+.rail__cta:hover::after,
+.rail__cta:focus-visible::after,
+.btn--metal:hover::after,
+.btn--metal:focus-visible::after { animation: sheen var(--beat-8) var(--ease-metal); }
+
+/* §10.1: hover is colour and border only — no lift, no sheen. */
+html[data-motion="reduced"] :is(.rail__cta, .btn--metal):is(:hover, :focus-visible) { transform: none; }
+html[data-motion="reduced"] :is(.rail__cta, .btn--metal)::after { animation: none; }
 
 .btn--ghost {
   display: inline-flex;
@@ -286,7 +323,7 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: border-color var(--beat-1) ease, color var(--beat-1) ease;
+  transition: border-color var(--beat-1) var(--ease-metal), color var(--beat-1) var(--ease-metal);
 }
 
 .btn--ghost:hover,
@@ -824,19 +861,23 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
 .tag {
   padding: calc(var(--u) / 2) var(--s-1);
   border: 1px solid var(--hairline);
-  transition: border-color var(--beat-1) ease;
+  transition: border-color var(--beat-1) var(--ease-metal);
 }
 
-/* §9.7: tags take the card's hover in 2τ metal. The tag's own §9.10 micro-state
-   (the base rule above) is 9b's. */
+/* §9.10's tag micro-state is the base rule's 1τ metal. A tag is neither a link
+   nor focusable: it lights only with a linked card (below), whose hover has its
+   :focus-visible twin — never on its own, so an unlinked card stays inert (§6.6). */
+
+/* §9.7: tags take the card's hover in 2τ metal. */
 .card__link:hover .tag,
 .card__link:focus-visible .tag {
   border-color: var(--hairline-blue);
   transition: border-color var(--beat-2) var(--ease-metal);
 }
 
-.card__go { align-self: end; color: var(--silver); }
-.card__link:hover .card__go { color: var(--blue-lift); }
+.card__go { align-self: end; color: var(--silver); transition: color var(--beat-1) var(--ease-metal); }
+.card__link:hover .card__go,
+.card__link:focus-visible .card__go { color: var(--blue-lift); }
 
 /* ≤900px: no pin, plain vertical stack (§9.7's branch table). */
 @media (max-width: 900px) {
@@ -874,8 +915,22 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
 
 .rows { margin-top: var(--s-5); }
 
-.row { border-bottom: 1px solid var(--hairline); }
-.row:first-child { border-top: 1px solid var(--hairline); }
+/* The hairlines as elements rather than borders, so §9.8's entrance can draw
+   them (scaleX 0→1, origin left) without scaling the row: --rule defaults to 1,
+   drawn, and only sections/contact.js takes it lower (as 7a's principles). */
+.row { position: relative; }
+.row::after,
+.row:first-child::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px solid var(--hairline);
+  transform: scaleX(var(--rule, 1));
+  transform-origin: left center;
+  pointer-events: none;
+}
+.row::after { bottom: 0; }
+.row:first-child::before { top: 0; }
 
 .row__link {
   position: relative;
@@ -887,14 +942,19 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
   padding-block: var(--s-1);
   color: var(--silver-light);
   text-decoration: none;
-  transition: color var(--beat-2) ease;
+  transition: color var(--beat-2) var(--ease-metal);
 }
 
 .row__index { color: var(--silver-shadow); }
 
-.row__label { transition: transform var(--beat-1) ease, font-stretch var(--beat-1) ease; }
+/* §9.8 label: x 0→8px and a weight settle (errata E40: JetBrains Mono has only
+   a wght axis, so §9.8's font-stretch did nothing). The rail's +160 step, from
+   the label's 600. A monospace advance doesn't change with weight: no reflow. */
+.row__label {
+  transition: transform var(--beat-1) var(--ease-glyph), font-weight var(--beat-1) var(--ease-glyph);
+}
 
-.row__value { color: var(--silver); transition: color var(--beat-2) ease; }
+.row__value { color: var(--silver); transition: color var(--beat-2) var(--ease-metal); }
 
 .row__glyph {
   width: calc(3.5 * var(--u));
@@ -905,13 +965,15 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
 }
 
 /* Two paths, identical structure, one hidden: MorphSVG interpolates cleanly
-   only between matched path data (§9.8). The CSS crossfade below is the
-   pre-GSAP stand-in, and keeps hover/focus parity at this checkpoint. */
-.row__glyph-closed { opacity: 0; transition: opacity var(--beat-3) ease; }
-.row__glyph-open { transition: opacity var(--beat-3) ease; }
+   only between matched path data (§9.8). This crossfade is the stand-in until
+   the late chunk brings MorphSVG, and under reduced motion; once
+   sections/contact.js morphs the open path itself, .rows.is-morph retires it. */
+.row__glyph-closed { opacity: 0; transition: opacity var(--beat-3) var(--ease-metal); }
+.row__glyph-open { transition: opacity var(--beat-3) var(--ease-metal); }
 
-/* The blue underline is decoration, not content: hidden at rest by design, and
-   it never spends the §4.4 blue budget until pointed at. */
+/* §9.8 underline: drawn 0→100 in --blue, 3τ mask — the dash in the line's
+   pathLength="100" units (errata E25's mechanism). Decoration, not content: it
+   never spends the §4.4 blue budget until pointed at. */
 .row__rule {
   position: absolute;
   left: 0;
@@ -920,10 +982,9 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
   height: 1px;
   stroke: var(--blue);
   stroke-width: 1;
-  opacity: 0;
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform var(--beat-3) ease, opacity var(--beat-1) ease;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset var(--beat-3) var(--ease-mask);
 }
 
 .row__link:hover,
@@ -931,13 +992,18 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
 .row__link:hover .row__value,
 .row__link:focus-visible .row__value { color: var(--blue-lift); }
 .row__link:hover .row__label,
-.row__link:focus-visible .row__label { transform: translateX(8px); font-stretch: 108%; }
-.row__link:hover .row__glyph-open,
-.row__link:focus-visible .row__glyph-open { opacity: 0; }
-.row__link:hover .row__glyph-closed,
-.row__link:focus-visible .row__glyph-closed { opacity: 1; }
+.row__link:focus-visible .row__label { transform: translateX(8px); font-weight: 760; }
+.rows:not(.is-morph) .row__link:hover .row__glyph-open,
+.rows:not(.is-morph) .row__link:focus-visible .row__glyph-open { opacity: 0; }
+.rows:not(.is-morph) .row__link:hover .row__glyph-closed,
+.rows:not(.is-morph) .row__link:focus-visible .row__glyph-closed { opacity: 1; }
 .row__link:hover .row__rule,
-.row__link:focus-visible .row__rule { opacity: 1; transform: scaleX(1); }
+.row__link:focus-visible .row__rule { stroke-dashoffset: 0; }
+
+/* §10.1: hover is colour only — no shift, no weight, the underline appears
+   rather than draws. */
+html[data-motion="reduced"] .row__link:is(:hover, :focus-visible) .row__label { transform: none; font-weight: 600; }
+html[data-motion="reduced"] .row__rule { transition: none; }
 
 /* The dossier's third and final placement. The sub-label states the page's own
    organising ratio at the moment the document is offered (§6.7). */
@@ -947,14 +1013,33 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
   gap: 0;
   margin-top: var(--s-5);
   padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  transition: transform var(--beat-1) var(--ease-glyph), border-color var(--beat-1) var(--ease-metal);
 }
+
+/* §9.8: on hover the sweep repeats (the .btn--metal rule) and the border goes
+   --hairline-blue. */
+.link__cta:hover,
+.link__cta:focus-visible { border-color: var(--hairline-blue); }
 
 .link__cta-label { font-size: var(--t--1); letter-spacing: 0.14em; }
 .link__cta-sub { font-size: var(--t--2); letter-spacing: 0.18em; }
 
 /* ── §6.8 Colophon ───────────────────────────────────────────────────────── */
 
-#colophon { border-top: 1px solid var(--hairline); }
+/* The top hairline as an element, so §9.10's reveal can draw it (scaleX 0→1,
+   origin left) without scaling the colophon; --rule defaults to 1, drawn. */
+#colophon { position: relative; }
+#colophon::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  border-top: 1px solid var(--hairline);
+  transform: scaleX(var(--rule, 1));
+  transform-origin: left center;
+  pointer-events: none;
+}
 
 .colophon__col { display: grid; gap: var(--s-1); align-content: start; }
 .colophon__col p { font-size: var(--t--1); color: var(--silver); }
@@ -969,19 +1054,64 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
   letter-spacing: inherit;
   text-transform: inherit;
   color: var(--silver-light);
-  transition: color var(--beat-1) ease;
+  transition: color var(--beat-1) var(--ease-metal);
 }
 
 .toggle::before { content: "["; margin-right: 0.5ch; color: var(--silver-shadow); }
 .toggle::after { content: "]"; margin-left: 0.5ch; color: var(--silver-shadow); }
-.toggle:hover { color: var(--chrome); }
-.toggle__state { color: var(--chrome); }
+.toggle:hover,
+.toggle:focus-visible { color: var(--chrome); }
+/* inline-flex drops the whitespace between "Motion" and the state, so the
+   gap is a margin. */
+.toggle__state { margin-left: 1ch; color: var(--chrome); }
 
 /* Both are written by JS (§1.3's single exception, plus the tier probe §10.2);
    with scripting off the toggle controls nothing, so it does not appear. */
 @media (scripting: none) {
   .colophon__controls { display: none; }
 }
+
+/* ── §9.10 Text links (errata E46) ─────────────────────────────────────────
+   Inline links in running text: the plate's two values and the colophon's
+   licence. At rest --silver-light over a static --hairline-strong underline —
+   the underline is what marks it as a link (colour alone can't, WCAG 1.4.1),
+   and it spends no §4.4 blue. On hover / focus-visible the colour goes
+   --blue-lift (1τ metal) and a --blue line draws over the hairline (3τ mask),
+   in its pathLength="100" units (errata E25). Both lines are in the HTML, so
+   the resting underline needs neither JS nor the late chunk. */
+.tlink {
+  position: relative;
+  display: inline-block;
+  color: var(--silver-light);
+  text-decoration: none;
+  transition: color var(--beat-1) var(--ease-metal);
+}
+
+.tlink__u {
+  position: absolute;
+  left: 0;
+  bottom: -0.12em;
+  width: 100%;
+  height: 1px;
+  overflow: visible;
+  stroke-width: 1;
+  pointer-events: none;
+}
+.tlink__rest { stroke: var(--hairline-strong); }
+.tlink__draw {
+  stroke: var(--blue);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset var(--beat-3) var(--ease-mask);
+}
+
+.tlink:hover,
+.tlink:focus-visible { color: var(--blue-lift); }
+.tlink:hover .tlink__draw,
+.tlink:focus-visible .tlink__draw { stroke-dashoffset: 0; }
+
+/* §10.1: colour only — the blue line appears rather than draws. */
+html[data-motion="reduced"] .tlink__draw { transition: none; }
 
 /* ── §10.5 Forced colours and reduced transparency ───────────────────────── */
 
@@ -991,7 +1121,10 @@ html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
 
 @media (forced-colors: active) {
   #stage, .grain, .plate::before, .card::after { display: none; }
-  .principles::before, .principles::after { border-color: CanvasText; }
+  .principles::before, .principles::after,
+  .row::after, .row:first-child::before, #colophon::before { border-color: CanvasText; }
+  .rail__cta::after, .btn--metal::after { display: none; }
+  .tlink__rest, .tlink__draw { stroke: LinkText; }
   .card, .plate, .node, .tag { border-color: CanvasText; }
   .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
   .lattice__edges .is-lit { stroke: Highlight; }

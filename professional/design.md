@@ -1372,7 +1372,9 @@ and it is very noticeable when wrong.
 ### 8.4 Exposure flash
 
 `uExposure` rests at `1.0`. The only thing that moves it is the final link snapping shut in
-`05 LINK` (§9.8): `1.0 → 1.25 → 1.0` over 2τ, `ease.metal`. One flash, once per visit.
+`05 LINK` (§9.8): `1.0 → 1.25 → 1.0` over 2τ, `ease.metal`. One flash, once per visit. The stage
+owns the value as `stage.exposure.value`, tweened by `stage.flash()` (never under reduced motion),
+and the metal pass binds its uniform to it.
 
 ### 8.5 The CSS grain sheet
 
@@ -1712,7 +1714,8 @@ paths are exactly 100 long in their viewBox, so DrawSVG is right for them.
 **The sheen passes behind text, so it is capped.** At the band's full 0.55 `--chrome` over
 `--graphite`, the plate's text would drop to about 2:1 (I2). The sweep layer (`.plate::before`,
 under the rows) runs at opacity 0.22, so the band peaks at 0.121 `--chrome`. There the weakest text
-on the plate, the `--blue-lift` links, still measures 4.61:1, and the `--silver` labels 5.55:1. The
+on the plate, the `--silver` labels, still measures 5.55:1; the two links rest at `--silver-light`
+(§9.10's text links, 7.90:1), and even hovered to `--blue-lift` hold 4.63:1. The
 image is 180 % of the plate wide. A larger-than-box image makes the percentage sweep run right to
 left, and it keeps the whole band, which leans 15° across the plate's full height, off the plate
 at both ends.
@@ -1957,24 +1960,40 @@ This is the documented cost of the pinned design.
 
 ### 9.8 Movement 05 — LINK
 
-Header as §9.5. Rows enter with their hairlines: `scaleX 0→1` 3τ origin left, 1τ stagger; label and
-value `opacity 0→1` 2τ.
+Header as §9.5 (`sections/contact.js`). Rows enter with their hairlines on the list's `top 72%`:
+`scaleX 0→1` 3τ `mask` origin left, 1τ stagger, each row's label and value `opacity 0→1` 2τ `glyph`
+with its hairline. The hairlines are `.row::after` (and the first row's `::before`) scaled by
+`--rule`, not borders, so drawing them never scales the text; they rest drawn, so a dead chunk
+leaves them in place.
 
 **Row hover / focus-visible:**
 
 | Target | Change | Dur | Ease | Stagger |
 |---|---|---|---|---|
 | link glyph | MorphSVG open `C` → closed `O` | 3τ | chain | — |
-| label | `x 0→8px`, `font-stretch 100%→108%` *(errata E40)* | 1τ | glyph | — |
-| underline | `drawSVG 0→100` in `--blue` | 3τ | mask | — |
+| label | `x 0→8px`, `font-weight 600→760` | 1τ | glyph | — |
+| underline | drawn 0→100 in `--blue` (`stroke-dashoffset` in `pathLength` units) | 3τ | mask | — |
 | value | `--silver → --blue-lift` | 2τ | metal | — |
 
 The glyph closing on hover is the page's thesis in one gesture: **pointing at a link closes the
 chain link.** Both morph targets are authored as two paths with identical point counts in the same
 SVG, one hidden — MorphSVG interpolates cleanly only between matched path data, and letting it
-guess produces a wobble.
+guess produces a wobble. The morph targets the open path itself with `shapeIndex: 0`; until the late
+chunk brings MorphSVG, and under reduced motion, a CSS crossfade of the two paths stands in, and
+`.rows.is-morph` retires it once JS morphs. `back.out`'s overshoot carries the seam end about 0.6
+viewBox units past the closed point before it settles — the seat, not a mapping wobble.
 
-**The loop snap.** Once per visit, when `#link` reaches `top 60%`:
+The label is JetBrains Mono, which has only a `wght` axis (§5.1), so the width morph first written
+here (`font-stretch 100%→108%`) would do nothing. It takes the rail items' weight settle instead
+(§9.9), the same +160 step from the label's resting 600. A monospace advance doesn't change with
+weight, so nothing in the row moves. The label, underline and value are CSS transitions, so they
+work with JS dead. Reduced motion changes the colour only: no shift, no weight, the underline
+appears without drawing.
+
+**The loop snap.** Once per visit, as the loop closes: `#link` at `top center`, where §7.5's loop
+scrub ends. The scrub and the snap's trigger share that frame in either order, so the stage waits on
+the ticker for `loop = 1` (up to 3 s; a reader who has already scrolled away gets none). At an
+earlier line the loop is still open, and the final link has no seam to seat in:
 
 | Target | Change | Dur | Ease |
 |---|---|---|---|
@@ -1984,8 +2003,10 @@ guess produces a wobble.
 The chain that has run the entire document closes, and the whole stage flashes once. That is the
 ending, and it happens exactly when the reader is being asked to make contact.
 
-**Dossier CTA:** one sheen sweep 8τ on section enter; on hover the sweep repeats and the border
-goes `--hairline-blue`.
+**Dossier CTA:** one sheen sweep 8τ `metal` (`--sheen-x −120% → 220%`) as the CTA itself reaches
+the `top 72%` line, since the section's top is a screen above it; on hover / focus-visible the 8τ
+sweep repeats (§9.10's `.btn--metal` row) and a 1 px border goes `--hairline-blue`, 1τ metal. The
+sheen only lightens `--silver-fill`, so `--ink` holds ≥ 12.35:1 under the band at full strength.
 
 ### 9.9 Navigation rail
 
@@ -2061,22 +2082,37 @@ it up the page.
 
 ### 9.10 Colophon and global micro-states
 
-Colophon: top hairline `scaleX 0→1` 8τ origin left; then rows `opacity 0→1`, `y 8→0`, 2τ, 1τ
-stagger.
+Colophon (`sections/footer.js`): top hairline `scaleX 0→1` 8τ `mask` origin left; then rows
+`opacity 0→1`, `y 8→0`, 2τ `glyph`, 1τ stagger, in DOM order. The trigger is `clamp(top 72%)`:
+the colophon ends the page, and its top may never climb to the 72 % line. The hairline is
+`#colophon::before` scaled by `--rule`, drawn at rest.
 
 **Global micro-states** — everything interactive on the page, for consistency. Eases per §9.2's
 rule: CSS transitions use the `--ease-*` tokens, GSAP the named curves.
 
 | Element | Trigger | Change | Dur | Ease |
 |---|---|---|---|---|
-| text link | hover / focus | `--silver-light → --blue-lift`; underline `drawSVG 0→100` | 1τ | metal (colour), mask (underline) |
-| `.btn--metal` | hover | sheen sweep repeats; `translate3d(0,−2px,0)` | 1τ | metal (sheen), glyph (lift) |
+| text link | hover / focus | `--silver-light → --blue-lift` 1τ; a `--blue` underline draws 0→100 over the resting hairline, 3τ | 1τ / 3τ | metal (colour), mask (underline) |
+| `.btn--metal` | hover / focus | sheen sweep repeats, 8τ; `translate3d(0,−2px,0)`, 1τ | 8τ / 1τ | metal (sheen), glyph (lift) |
 | `.btn--ghost` | hover | border `--hairline → --hairline-blue`; text → `--chrome` | 1τ | metal |
 | tag | hover | border → `--hairline-blue` | 1τ | metal |
 | any focusable | `:focus-visible` | 2 px `--blue-lift` outline, 2 px offset, 1 px `--ink` inset ring | 0 (instant) | — |
 | toggle | click | label swap, 1τ crossfade | 1τ | metal |
 
 Focus rings are **instant**. An animated focus ring lags keyboard navigation and feels broken.
+
+**Text links** are the inline links in running text: the plate's two values and the colophon's
+licence (`a.tlink`). At rest they are `--silver-light` over a static 1 px `--hairline-strong`
+underline. The underline is what marks them as links, since `--silver-light` against the
+surrounding `--silver` is only 1.41:1 and colour alone can't (WCAG 1.4.1), and it spends none of
+§4.4's blue. Both lines are SVG in the HTML (`.tlink__u`: `.tlink__rest`, `.tlink__draw`,
+`pathLength="100"`), so the resting underline needs neither JS nor the late chunk. Unclassed links
+keep §4.1's `--blue-lift`.
+
+**Sheen sweeps are 8τ** (§3.5), hover repeats included. On `.btn--metal` and the rail CTA the sweep
+is a `::after` layer (`--silver-sheen`, 180 % wide, §9.5's ends) and a CSS `@keyframes` run, which
+restarts on each hover and focus. Reduced motion has no sweep and no lift. The table's 1τ for
+`.btn--metal` is the lift's.
 
 **Motion toggle mechanics.** Every movement's animations are created inside a `gsap.context()`
 held in a registry. Toggling motion calls `revert()` on all contexts, flips the stored preference,

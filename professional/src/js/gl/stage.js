@@ -201,6 +201,32 @@ export async function initStage() {
     if (mode !== 'full') requestStill();
   });
 
+  /* §8.4 / §9.8 — the exposure flash. `exposure.value` rests at 1.0; checkpoint
+     10 binds it to the metal pass's uExposure. One flash, 1 → 1.25 → 1 over
+     2τ metal, and only with the snap below. */
+  const exposure = { value: 1 };
+  const flash = () => (mode === 'full'
+    ? gsap.timeline()
+      .to(exposure, { value: 1.25, duration: 1 * T, ease: ease.metal })
+      .to(exposure, { value: 1, duration: 1 * T, ease: ease.metal })
+    : null);
+
+  /* §9.8 (errata E45): the snap fires as the loop closes. The ask comes as
+     #link crosses `top center`, where §7.5's scrub ends, but the scrub and the
+     ask share a frame in either order, so it waits on the ticker for loop = 1
+     — for up to 3 s, after which a reader who has scrolled away gets none. */
+  const snapLoop = () => {
+    const until = gsap.ticker.time + 3;
+    const check = () => {
+      if (mode !== 'full' || gsap.ticker.time > until) return gsap.ticker.remove(check);
+      if (chain.state.loop < 1) return undefined;
+      gsap.ticker.remove(check);
+      if (chain.snapFinalLink()) flash();
+      return undefined;
+    };
+    gsap.ticker.add(check);
+  };
+
   stage = {
     get renderer() { return renderer; },
     get canvas() { return canvas; },
@@ -216,11 +242,15 @@ export async function initStage() {
     drive: chain.drive,
     /** §9.8 — the loop's final link seats; returns the timeline (9b). */
     snapFinalLink: () => (mode === 'full' ? chain.snapFinalLink() : null),
+    /** §8.4 — `exposure.value`, 1.0 at rest, for checkpoint 10's uExposure. */
+    exposure,
+    /** §8.4 — one 2τ exposure flash; returns the timeline, or null (reduced). */
+    flash,
   };
 
   /* §7.5 — the movement states, before the first visible frame, so the
      IDENTITY entrance starts from its offset rather than from rest. */
-  setChainBuilder(movements(stage), chain.drive, tether.to);
+  setChainBuilder(movements(stage), chain.drive, tether.to, snapLoop);
 
   /* §12.7 — the first frame is rendered before the canvas is shown, then it
      fades in over 8τ (a crossfade: metal). Reduced motion shows it at once. */

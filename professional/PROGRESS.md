@@ -149,7 +149,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Done when: indicator lands exactly on each item; panel opens/closes with trap and Escape;
       scroll locked while open; indicator works before the late chunk loads.
 
-- [ ] 9b. LINK + colophon + micro-states — design.md §9.8, §9.10
+- [x] 9b. LINK + colophon + micro-states — design.md §9.8, §9.10
       Scope: `sections/contact.js`. LINK header + row entrances; row hover/focus (MorphSVG glyph
       via `late()?.MorphSVGPlugin` — matched point counts, static until loaded; label, underline,
       value — **E8** is moot, the email chips were removed in 8b's session); the loop snap once per visit, calling 6b's `snapFinalLink()` and a
@@ -258,9 +258,9 @@ level.**
 | §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest, incl. E35, E36, E37's plate part; header helper reused by 7b/8a/9b) |
 | §9.6 LATTICE | 7b (done, incl. E25's edges, E40's part; arrow keys deferred, not built); "4.6:1" → E21 |
 | §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch, incl. E37's card part, E41 — done) · 8b (focus incl. E7, deep links incl. E44, hover incl. E42, tether incl. E43, readout, reduced/LOW branches — done) |
-| §9.8 LINK | 9b (E40's row-label part; exposure uniform → 10; E8 moot — chips removed in 8b's session) |
+| §9.8 LINK | 9b (done, incl. E40's row-label part, E45, E47; exposure uniform → 10; E8 moot — chips removed in 8b's session) |
 | §9.9 Navigation rail | 9a (incl. E3's `power3.out`, E40's item-hover and panel-item part — done); `--sweep` spec text → E13 |
-| §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
+| §9.10 Colophon + micro-states | 9b (done, incl. inline text-link underline elements, E46, E47; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
 | §10.1 Motion preference | 4 (resolution, done) · each checkpoint's reduced branch (cross-cutting; nav indicator row → 9a) · chain row → 6a via E1 · 11a audit |
 | §10.2 Quality tiers | 6a (incl. E1) · 11a verification |
 | §10.3 No-JS / no-WebGL | 3 (baseline, done) · 5a (`motion.css` rule) · 11a (NONE fallback, incl. E19) |
@@ -324,11 +324,14 @@ resolved.
 | E37 | §9.5, §9.7 (E25's mechanism) | `.chamfer`'s path `M0 0 L24 24` carries `pathLength="100"` but is 24√2 ≈ 33.94 long: DrawSVG writes its dash in real units, the browser reads them in `pathLength` units, so the draw stops at 34 %. The plate's frame paths are exactly 100 long, so DrawSVG is right there | 7a (plate) · 8a (§9.7 card chamfers) | resolved — 7a: the plate's chamfer tweens `stroke-dasharray '0 100' → '100 0'`, as the hero ring does; 8a: the card chamfers do the same (3τ, mask, at 6τ), no DrawSVG |
 | E38 | §6.5 × §7.5 | The wireframe arranges the clusters 2×2, but §7.5's fallback roots are four distinct left-to-right X values, and a 2×2 sends the lower row's branch chains through the upper clusters (6b's log); with capsules up to 217 px, four across only fits wide screens | 7b | resolved by 7b — four across where the measured spans fit (≥ ~1280 px), 2×2 otherwise; each cluster its own lattice (no edge leaves one), packed a gutter apart, rows on a shared lattice row |
 | E39 | §6.5 | The wireframe draws horizontal edges, but the text allows only 30°/150°/90°, and claims integer basis combinations give those axes "therefore" (`b₁ − b₂` is horizontal); a one-step 30° neighbour is narrower than most capsules | 7b | resolved by 7b — edges are `k·b₁`, `k·b₂`, `k·(b₁+b₂)` only; the wireframe is topology; rows and same-row nodes two units apart; three wireframe edges replaced by the nearest legal ones |
-| E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover and panel item entrance) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9a's part resolved by 9a — rail item hover `font-weight 400 → 560` (1τ `--ease-glyph`, no reflow: mono advances are weight-independent), panel items `font-weight 300 → 400`; 9b open |
+| E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover and panel item entrance) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9a's part resolved by 9a — rail item hover `font-weight 400 → 560` (1τ `--ease-glyph`, no reflow: mono advances are weight-independent), panel items `font-weight 300 → 400`; 9b's part resolved by 9b — the LINK row label hover is `font-weight 600 → 760` (the rail's +160 step from its resting 600) with the 8 px shift |
 | E41 | §9.7 vs §6.6 / §3.4 | `D = track.scrollWidth − window.innerWidth`, but `#works` is capped at `--container-wide` (1568 px): above that the clipped viewport is narrower than the window, so the cards cut off at an invisible line up to ~176 px in from each screen edge (over a chain that runs full width, §7.5), and the track travels `innerWidth − 1568` px too far | 8a | resolved by 8a — full-bleed while pinned: the viewport spans the window's layout width (`clientWidth`), the leading pad grows so card 01 stays on the header's edge, `D = scrollWidth − viewport.clientWidth` |
 | E42 | §9.7 vs §1.3 I2 / §4.3 | The card hover sheen sweeps `--silver-sheen` (0.55 `--chrome` peak) over the card's text: under the band the `--blue-lift` "github ↗" drops to 1.23:1 and body copy to 2.10:1 on `--graphite`, against I2 (E35's problem, on the cards) | 8b | resolved by 8b — E35's cap: the sheen layer runs at opacity 0.22, `--blue-lift` 4.62:1, body 7.89:1 at the peak |
 | E43 | §9.7 × §7.3 / §7.5 | "3 links from spine to the card's left edge", but the horizontal spine runs ≈ 250 px below the cards at 1440×900 and 3 links at §7.3's pitch span ≈ 85 px; stretched to reach, they hang as loose rings (E32) | 8b | resolved by 8b — a 3-link stub rising from the spine at the card's left edge, at §7.3's pitch, drawn in the LATTICE branch's idle mesh (draw calls ≤ 3) |
 | E44 | §9.7 × §6.6 | "If `location.hash` names a card, jump the pin to it", but no card has an id in §6.6 or `index.html`, so no hash can name one | 8b | resolved by 8b — `#work-01` … `#work-04` on each `<article data-card>`; the jump rests the card where card 01 rests |
+| E45 | §9.8 vs §7.5 | The loop snap fires when `#link` reaches `top 60%`, but §7.5's loop scrub closes only at `top center`: at 60 % the loop is 80 % closed, and `snapFinalLink()` returns null before `loop = 1`, so the snap would never fire | 9b | resolved by 9b — the snap fires as the loop closes: a `top center` trigger, and the stage waits on the ticker for `loop = 1` (3 s cap) |
+| E46 | §9.10 vs §4.1 / base.css / E35 | The text link goes `--silver-light → --blue-lift` with a drawn underline, but §4.1, base.css and E35's figures rest links at `--blue-lift` with a native underline; a silver link with no underline can't be told from the text around it (WCAG 1.4.1) | 9b | resolved by 9b — `a.tlink` rests `--silver-light` over a static 1 px `--hairline-strong` SVG underline; hover/focus → `--blue-lift` (1τ metal) and a `--blue` line draws over it (3τ mask); unclassed links keep `--blue-lift` |
+| E47 | §9.10 vs §9.8 / §3.5 | `.btn--metal`'s hover sheen is 1τ in §9.10's table, but §9.8's Dossier CTA hover "repeats" the 8τ sweep and §3.5 gives sheen sweeps 8τ | 9b | resolved by 9b — every sheen sweep is 8τ metal, hover repeats included; §9.10's 1τ is the lift's |
 
 ## Log
 
@@ -1840,3 +1843,77 @@ Two moves stay instant, both deliberate:
   - E40's §9.8 row-label part is still open.
 - **11b:** the panel lock uses `inert` on `#smooth-wrapper`. §10.4's audit should confirm screen readers can't reach the page behind an open panel. E13 (§9.9's `--sweep / 100%` text) is untouched.
 - **Left alone, owned elsewhere:** E13 (11b), E16–E18 (10), E19 (11a), E27/E28 (11b), E40's 9b part.
+
+### Checkpoint 9b — LINK + colophon + micro-states
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 9b — LINK + colophon + micro-states`
+
+§9.8 and §9.10 are built:
+- The new `sections/contact.js` (sections chunk, already listed in §12.2) has the LINK header, row entrance, glyph morph, loop snap and the Dossier CTA's entrance sweep.
+- `sections/footer.js` gained the colophon reveal, as a registered `colophon` movement.
+- Every §9.10 micro-state is CSS on the `--ease-*` tokens. That converts the last plain `ease` keywords 8b and 9a handed over: `a`, `.btn--metal`/`.rail__cta`, `.btn--ghost`, `.tag`, the rows and the toggle. `.card__go` is transitioned now, with a `:focus-visible` twin.
+
+**Errata decisions (user, this session; each was the recommended option):**
+- **E40 (9b's part), which closes E40:** the row label hover is the 8 px shift plus a weight settle, 1τ glyph.
+  - The option I put to the user read "400 → 560, like the rail", but the LINK label rests at **600** (CP3's `.row__label`).
+  - I applied the rail's +160 step instead: **600 → 760**. JetBrains Mono's `wght` runs 100–800. Worth a look if 760 reads too heavy.
+- **New E45:** the snap fires as the loop closes.
+  - §9.8's `top 60%` came before §7.5's `top center` close, where `snapFinalLink()` returns null.
+  - The trigger is now `top center`, and the stage waits on the ticker for `loop = 1`, with a 3 s cap.
+- **New E46:** text links (`a.tlink`: the plate's two, the colophon's `CC BY 3.0`) rest at `--silver-light` over a static 1 px `--hairline-strong` SVG underline.
+  - On hover/focus they go `--blue-lift` (1τ metal), and a `--blue` line draws over the hairline (3τ mask, dashoffset in `pathLength` units).
+  - Both lines are in `index.html`, so no JS is needed.
+  - Unclassed links keep `--blue-lift`.
+- **New E47:** every sheen sweep is 8τ metal, hover repeats included. §9.10's 1τ is the lift's.
+
+**My decisions where the spec is silent (written into §9.8/§9.10):**
+- **Hairlines as elements:**
+  - The row borders are now `.row::after` plus the first row's `::before`.
+  - The colophon's `border-top` is now `#colophon::before`.
+  - Both are scaled by `--rule`, drawn at rest (7a's principles pattern).
+- **Row entrance:** on `.rows`' own `top 72%`, each row's hairline, label and value start together, 1τ apart.
+- **Glyph:**
+  - Pointer and keyboard listeners (`:focus-visible` only) morph the open path itself: `morphSVG { shape, shapeIndex: 0 }`, 3τ `chain`.
+  - The first JS morph adds `.rows.is-morph`, which retires CP3's CSS crossfade. The crossfade stays as the fallback before the late chunk arrives and under reduced motion.
+  - Measured: at rest `d` equals the closed path exactly, and back to the open one exactly.
+  - Mid-flight, `back.out`'s overshoot carries the seam end to y 2.4 against the closed 3 (≈ 0.6 units) before settling. That's the spec's seat, not a point-mapping wobble.
+- **Dossier CTA:** the entrance sweep runs as the CTA itself crosses `top 72%`, since §9.8's "section enter" is a screen above it. It gets a 1 px border that goes `--hairline-blue` on hover/focus.
+- **Colophon trigger** is `clamp(top 72%)`: the colophon ends the page, and its top may not reach the line.
+- **Sheen at LOW is kept.** The plan said to skip it as 8b does, but §10.2 drops only WORKS' sheen, and a CSS keyframe sweep costs nothing on the GPU budget. This deviates from my plan, not from the spec.
+- **`flash()` / `exposure`:**
+  - `stage.exposure.value` (1.0 at rest) is tweened by `stage.flash()`, 1 → 1.25 → 1 over 2τ metal, and never under reduced motion.
+  - `snapLoop()` in `sections/chain.js` is the sections-side bridge (the `driveChain` pattern), with a pending ask honoured when the stage lands.
+- **Fixed on the way:** the toggle rendered "MOTIONON". `.toggle` is `inline-flex`, which drops the whitespace before `.toggle__state`, so the state span now has a 1ch margin.
+
+**Verified** in headless Firefox (desktop pointer prefs) against `vite preview`. chrome-headless-shell is still not installed, so Chrome was not run.
+- **Build:**
+  - entry 4.48 + 2.47 + 58.91 = **65.86 kB** (≤ 66);
+  - sections **7.02** (was 6.59), stage 6.19 (was 6.08), rect 0.37, late 14.55, `three` 135.68;
+  - **total 229.67 kB against ≤ 232**;
+  - CSS 6.35 kB.
+- **Snap + flash exactly once:**
+  - Tracked per frame through the first pass, a scroll to the top and back, motion toggle ×2, a 1000 ↔ 1440 resize, and a third pass: **1 seat episode, 1 flash episode**.
+  - seat `1.078, 1.125, 1.149, 1.155 … 0.985 … 1`.
+  - exposure `1.008 … 1.25 … 1.001, 1`.
+- **Row entrance** (1440): row 01 at `--rule` 0.90 / label 0.95 while row 02 is still at 0. At 120 ms steps the rows follow 1τ apart. At rest there are no inline styles.
+- **Colophon** (fresh load, straight to the bottom): `--rule` 0.30 → 0.84 → 0.97 → 1, then the rows stagger in (0.96/0.16/0 … all 1). The CTA's `--sheen-x` goes −104 % → −27 % → 118 % → 201 %, then clears.
+- **Hover = focus:** a keyboard-focused row gives the label `matrix(… 8, 0)` at weight 760, underline dashoffset 0, value `--blue-lift`, glyph closed. The same as hover.
+  - The CTA on hover: `translateY(−2px)`, the `sheen` animation, border `--hairline-blue`.
+  - An audit of the built CSS finds every `:hover` selector has a `:focus-visible` twin.
+- **Late chunk blocked:** hover still closes the glyph via the CSS crossfade (open 0, closed 1, no `is-morph`).
+- **Contrast (WCAG script):**
+  - text links at rest 10.91:1 (plate, `--graphite`) and 12.74:1 (colophon, `--ink`);
+  - hovered 6.39 / 7.46:1;
+  - under the plate sheen's peak 7.90:1 (4.63 if hovered);
+  - `--ink` on `--silver-fill` + the full 0.55 sheen band ≥ 12.35:1.
+- **Reduced motion (OS pref):** no flash or seat frames, nothing below opacity 1, no inline styles. Row hover is colour only (no transform, weight 600). The CTA has no lift and no animation, but its border still changes.
+- **Leaks:** motion toggle ×3 gives **2 children / 10 triggers OFF** every cycle, 9a's baseline. ON settles at 23–24 / 21 (first load has 34 triggers, the once-only reveals included). 800 ↔ 1440 ×2: 28 / 23 and 26 / 21, stable. The glyph is back at its open path after the rebuilds.
+- **No JS** at 1440 / 900 / 640: 5 sections, 0 hidden text, no overflow, the row hairlines drawn, and the three resting underlines present.
+- **Screenshots:** a hovered LinkedIn row (closed glyph, blue value, shifted label), and the colophon with `CC BY 3.0` focused.
+
+**Carried forward:**
+- **10:** bind `uExposure` to `getStage().exposure.value`. `flash()` is already called by the snap.
+- **11b:**
+  - The E46 resting underline (`--hairline-strong` over `--ink`) measures **2.77:1**, under 1.4.11's 3:1 for the graphic that identifies a link. It's the owner's choice this session, so re-check it in the §10.4 audit (a solid `--silver-shadow` or a stronger alpha would clear it).
+  - The colophon's `TIER · HIGH` sits a few px above the toggle's baseline (CP3's layout, untouched).
+- **Left alone, owned elsewhere:** E6, E13, E27, E28 (11b); E16–E18 (10); E10, E19 (11a).
