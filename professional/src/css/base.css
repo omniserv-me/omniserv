@@ -1,0 +1,181 @@
+/* ============================================================================
+   base.css — reset and element defaults. Declares no values: everything comes
+   from tokens.css (design.md §3, §4). Component-level typographic roles are
+   §5.3 and belong to components.css; this sheet only establishes the defaults
+   those roles are exceptions to.
+   ========================================================================== */
+
+/* ── §5.2 Self-hosted faces ────────────────────────────────────────────────
+   public/fonts/*-v1.woff2, unhashed (§12.2): a replaced face is a deliberate
+   bump to -v2, and the Archivo preload in index.html keeps a static href.
+   Subset: printable ASCII plus exactly the non-ASCII characters the page
+   renders (© ° · × – — → ↓ ↗ √). Anything new outside that set falls back
+   per glyph — re-subset when copy changes. */
+@font-face {
+  font-family: "Archivo Variable";
+  src: url("/fonts/archivo-var-v1.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Variable";
+  src: url("/fonts/inter-var-v1.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  src: url("/fonts/jetbrains-mono-var-v1.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Metric-compatible fallbacks, so swap moves nothing (§12.7 CLS). Overrides
+   computed with fontTools from each face's hhea metrics and English-weighted
+   average advance, against Arial-metric sans (Arial ≡ Liberation Sans ≈
+   Helvetica ≈ FreeSans) and 0.6em mono. Archivo is matched on capitals: every
+   Archivo role on the page is uppercase.
+   size-adjust was then refit (checkpoint 11b) to the page's own rendered copy:
+   the fontTools figures ignored Archivo's 700–800 weights (fallback 9.3 %
+   narrow) and Inter's optical sizing (fallback 2.4 % wide), and the swap
+   rewrapped copy at 87 of 401 widths. ascent/descent are rescaled with it, so
+   the vertical metrics are unchanged. */
+@font-face {
+  font-family: "Archivo Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Helvetica"), local("FreeSans");
+  size-adjust: 110.87%;
+  ascent-override: 79.20%;
+  descent-override: 18.94%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Helvetica"), local("FreeSans");
+  size-adjust: 108.07%;
+  ascent-override: 89.64%;
+  descent-override: 22.32%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono"), local("FreeMono");
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+/* Margins are set deliberately per component, never inherited from the UA. */
+body, h1, h2, h3, h4, p, figure, blockquote, dl, dd, ul, ol { margin: 0; }
+ul[class], ol[class] { padding: 0; list-style: none; }
+
+html {
+  /* --ink, never pure #000 (§4.1). The design is committed to a dark ground —
+     silver needs it — and there is no light theme (§1.4). */
+  background: var(--ink);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* §4.3: --silver-light on --ink is 12.74:1, and is the only dimmable text
+     token (dim floor §4.3). Body copy is the default; anything darker is a
+     documented exception. */
+  font-family: var(--font-body);
+  font-size: var(--t-0);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  color: var(--silver-light);
+  min-height: 100%;
+  overflow-x: hidden;   /* the WORKS track (§6.6) scrolls horizontally, the page never does */
+}
+
+/* Display type. Sizes are per-role (§5.3), so none are set here. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-size: inherit;
+  font-weight: 700;
+  line-height: var(--lh-display);
+  color: var(--chrome);          /* 16.85:1 on --ink, any size */
+  text-wrap: balance;
+}
+
+p { text-wrap: pretty; }
+
+/* Links use --blue-lift (7.46:1). --blue fails AA as text — using it for a
+   link is a bug (§4.1). */
+a {
+  color: var(--blue-lift);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color var(--beat-2) var(--ease-metal);
+}
+
+/* Mono carries the technical register. tabular-nums is mandatory, not
+   cosmetic: without it the scramble (§9.7) and preloader counter (§9.3) shift
+   layout on every frame. */
+code, kbd, samp, pre, time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-mono);
+}
+
+/* Focus ring — §10.4. Two rings so it reads on the dark ground and on silver
+   fills alike: a --blue-lift outline outside, a 1px --ink ring inside. */
+:focus-visible {
+  outline: 2px solid var(--blue-lift);
+  outline-offset: 2px;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* --chrome ground with --ink text: 16.85:1, and it leaves the blue budget
+   (§4.4, ≤ 5% of pixels) untouched. */
+::selection { background: var(--chrome); color: var(--ink); }
+
+img, svg, video, canvas { display: block; max-width: 100%; }
+img { height: auto; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--hairline);   /* hairlines are the page's structural device (§4.2) */
+  margin: 0;
+}
+
+/* Gradient text — §4.2. Solid colour first so an unsupported browser gets
+   readable text; the standard property alongside the prefixed one. */
+.silver-type {
+  color: var(--chrome);                    /* fallback, must come first */
+  background-image: var(--silver-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .silver-type { color: transparent; }
+}
+@media (forced-colors: active) {
+  .silver-type { color: CanvasText; background-image: none; }
+}
+
+/* Visually hidden but readable by assistive tech (§6.2's .sr-only). */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

@@ -3,23 +3,30 @@
 }
 
 :5005 { # wildcard for any host. Localhost will not accept if called from remote
-	@notData {
-		not path /.git/*
-		not path /Caddyfile
-		not path /Dockerfile
-		not path /.vscode/*
-		not path /.idea/*
-		not path /.env
-		not path /hidden/*
-	}
-	
-
 	log {
-		output file /hidden/caddylog 
+		output file /hidden/caddylog
 		format console
 	}
 
+	# zstd at its best level: the §12.7 budgets are bytes on the wire, and the
+	# default level missed them (entry 70.4 / total 248.2 kB, errata E50).
+	encode {
+		zstd best
+		gzip 9
+	}
 
+	@hashed path /_/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	header /fonts/*  Cache-Control "public, max-age=31536000, immutable"
+	header /assets/* Cache-Control "public, max-age=604800"
+	header /files/*  Cache-Control "public, max-age=86400"
+	header /         Cache-Control "no-cache"
+
+	header {
+		X-Content-Type-Options   "nosniff"
+		Referrer-Policy          "strict-origin-when-cross-origin"
+		-Server
+	}
 
 	respond /.git/* 403
 	respond /Caddyfile 403
@@ -29,5 +36,5 @@
 	respond /.env 403
 	respond /hidden/* 403
 
-	file_server 
+	file_server
 }

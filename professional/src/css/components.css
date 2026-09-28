@@ -1,0 +1,1213 @@
+/* ============================================================================
+   components.css — the typographic roles of design.md §5.3 and every component
+   surface of §6.2–§6.8, plus §10.5's forced-colours block (which names .card and
+   .plate, born here). Consumes tokens.css; the only literals are the dimensions
+   §6 states in px and the vw/ch figures it states directly.
+
+   Nothing in this sheet may hide content. Entrance states (opacity 0, the 102°
+   .wipe mask, DrawSVG dash offsets) belong to motion.css inside
+   @media (scripting: enabled) — §10.3, and the reason the page survives a dead
+   bundle. Hover affordances that later become GSAP tweens are authored here as
+   CSS transitions so they already have keyboard parity (§10.4).
+   ========================================================================== */
+
+/* ── §5.3 Typographic roles ───────────────────────────────────────────────
+   One rule per row of the table. tabular-nums on every mono role: mandatory,
+   not cosmetic — the scramble (§9.7) and the progress readout shift layout
+   without it. */
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-mono);
+}
+
+/* Telemetry — the register of the meta line, readouts and controls. */
+.meta,
+.works__count,
+.lattice__readout,
+.colophon__controls,
+.card__index,
+.hero__cue {
+  font-size: var(--t--2);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--silver);
+}
+
+/* Lead (§5.3) is declared before .hero__tagline so the hero's own row wins on
+   the element that carries both classes. */
+.lead {
+  font-size: var(--t-1);
+  font-weight: 380;
+  letter-spacing: -0.005em;
+  line-height: var(--lh-lead);
+  color: var(--silver-light);
+}
+
+.hero__name {
+  font-size: var(--t-hero);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  /* Two lines — LEONID / YESAULOV — so §5.4's width morph has two staggered
+     runs. min-content puts one word per line without a <br> the split would
+     have to reason about. */
+  max-width: min-content;
+}
+
+.hero__role {
+  font-size: var(--t--1);
+  font-weight: 500;
+  letter-spacing: 0.18em;   /* animated from 0.6em in §9.4 */
+  text-transform: uppercase;
+  color: var(--silver);
+}
+
+.hero__tagline {
+  font-size: var(--t-1);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--silver-light);
+}
+
+.head__index {
+  font-size: var(--t--2);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--silver);
+}
+
+.head__title {
+  font-size: var(--t-heading);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: var(--chrome);
+}
+
+.card__title {
+  font-size: var(--t-3);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--chrome);
+}
+
+.card__kicker {
+  font-size: var(--t--1);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--silver);
+}
+
+/* Tags and node labels are --silver-light, not --silver: they are the two
+   things the page dims on hover, and only --silver-light survives the 0.60 dim
+   floor at AA (§4.3, §5.3). */
+.tag,
+.node__label {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t--1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: var(--lh-mono);
+  text-transform: uppercase;
+  color: var(--silver-light);
+}
+
+.plate__label,
+.cluster__label,
+.row__label {
+  font-family: var(--font-mono);
+  font-size: var(--t--2);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: var(--lh-mono);
+  text-transform: uppercase;
+  color: var(--silver);
+}
+
+.plate__value {
+  font-family: var(--font-body);
+  font-size: var(--t-0);
+  font-weight: 450;
+  letter-spacing: 0;
+  color: var(--silver-light);
+}
+
+/* ── §6.2 Navigation rail ─────────────────────────────────────────────────
+   A rule with content on it. 72 → 56px and the 0.72 ground alpha are the px
+   figures §6.2 states; both are chrome, not content rhythm, so they are written
+   as unit multiples rather than joining the §3.3 scale. */
+
+.rail {
+  --rail-h: calc(9 * var(--u));            /* 72px */
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: var(--rail-h);
+  padding-inline: var(--page-margin);
+  /* Ground and hairline are faded in once scrolled, not present at rest.
+     color-mix keeps --void's channels in tokens.css, where the palette lives. */
+  background: color-mix(in srgb, var(--void) 0%, transparent);
+  border-bottom: 1px solid transparent;
+  transition:
+    height var(--beat-2) var(--ease-metal),
+    background-color var(--beat-2) var(--ease-metal),
+    backdrop-filter var(--beat-2) var(--ease-metal),
+    border-color var(--beat-2) var(--ease-metal);
+}
+
+/* Toggled by ScrollTrigger past 80px of scroll (§9.9). */
+.rail.is-compact {
+  --rail-h: calc(7 * var(--u));            /* 56px */
+  background: color-mix(in srgb, var(--void) 72%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--hairline);
+}
+
+.rail__mark {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: calc(5.5 * var(--u));
+  font-family: var(--font-mono);
+  font-size: var(--t--1);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: var(--chrome);
+  text-decoration: none;
+}
+
+.rail__glyph {
+  width: calc(3 * var(--u));
+  height: calc(2 * var(--u));
+  fill: none;
+  stroke: var(--silver);
+  stroke-width: 1.4;
+}
+
+.rail__nav {
+  position: relative;
+  margin-inline: auto;
+}
+
+.rail__nav ul,
+.rail__panel ul { list-style: none; padding: 0; }
+
+.rail__nav ul {
+  display: flex;
+  gap: var(--s-3);
+}
+
+.rail__nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: calc(5.5 * var(--u));
+  font-family: var(--font-mono);
+  font-size: var(--t--1);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--silver);
+  text-decoration: none;
+  transition: color var(--beat-1) var(--ease-metal), font-weight var(--beat-1) var(--ease-glyph);
+}
+
+/* §5.3: every mono number is tabular — the rail's and the panel's indices. */
+.rail__nav a i,
+.rail__panel nav a i { font-variant-numeric: tabular-nums; }
+
+.rail__nav a i {
+  font-size: var(--t--2);
+  font-style: normal;
+  color: var(--silver);   /* §5.3's index colour: --silver-shadow may carry no small text (§4.3) */
+}
+
+/* §9.9 item hover. JetBrains Mono has only a wght axis, so the width morph is a
+   weight settle (errata E40); a monospace advance does not change with weight,
+   so nothing in the row moves. Reduced motion: colour only (§10.1). */
+.rail__nav a:hover,
+.rail__nav a:focus-visible { color: var(--chrome); font-weight: 560; }
+
+html[data-motion="reduced"] .rail__nav a:hover,
+html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
+
+/* Moved into the active item by Flip (§9.9); it inherits that item's box, so
+   it is only drawn once it has a home — never as a full-width bar under the
+   whole nav, which would also blow the §4.4 blue budget at rest. */
+.rail__nav > .rail__indicator { display: none; }
+
+.rail__nav li { position: relative; }
+
+.rail__indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--blue);
+}
+
+/* The one filled element in the chrome, and the only metal fill: --silver-fill,
+   never --silver-sheet, whose dark stops drop to 1.95:1 behind ink (§4.3).
+   min-height is the §10.4 target floor, 44px, not a spacing decision. */
+.rail__cta,
+.btn--metal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: calc(5.5 * var(--u));
+  padding: var(--s-1) var(--s-3);
+  background-image: var(--silver-fill);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t--1);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  position: relative;
+  isolation: isolate;          /* the sheen's z-index −1 paints above the fill, below the text */
+  overflow: hidden;
+  transition: transform var(--beat-1) var(--ease-glyph);
+}
+
+/* §9.10: the sheen sweep, repeated on every hover (errata E47: 8τ, as every
+   sheen sweep — §9.10's 1τ is the lift's). --silver-sheen over --silver-fill
+   only lightens the ground, so --ink holds its ≥ 8:1 (§4.3) under the band at
+   full strength. 180 % wide with §9.5's ends, so the band is off the button at
+   rest; --sheen-x lets sections/contact.js run the LINK CTA's entrance sweep. */
+.rail__cta::after,
+.btn--metal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--silver-sheen);
+  background-size: 180% 100%;
+  background-repeat: no-repeat;
+  background-position: var(--sheen-x, -120%) 0;
+  pointer-events: none;
+}
+
+@keyframes sheen {
+  from { background-position: -120% 0; }
+  to   { background-position: 220% 0; }
+}
+
+.rail__cta:hover,
+.rail__cta:focus-visible,
+.btn--metal:hover,
+.btn--metal:focus-visible { transform: translate3d(0, -2px, 0); }
+
+.rail__cta:hover::after,
+.rail__cta:focus-visible::after,
+.btn--metal:hover::after,
+.btn--metal:focus-visible::after { animation: sheen var(--beat-8) var(--ease-metal); }
+
+/* §10.1: hover is colour and border only — no lift, no sheen. */
+html[data-motion="reduced"] :is(.rail__cta, .btn--metal):is(:hover, :focus-visible) { transform: none; }
+html[data-motion="reduced"] :is(.rail__cta, .btn--metal)::after { animation: none; }
+
+.btn--ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: calc(5.5 * var(--u));
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--hairline);
+  color: var(--silver-light);
+  font-family: var(--font-mono);
+  font-size: var(--t--1);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color var(--beat-1) var(--ease-metal), color var(--beat-1) var(--ease-metal);
+}
+
+.btn--ghost:hover,
+.btn--ghost:focus-visible { border-color: var(--hairline-blue); color: var(--chrome); }
+
+/* A button's contents as one element, so §9.4 can fade the label after the
+   button has seated (errata E23). It lays out exactly as the button did. */
+.btn__label { display: inline-flex; align-items: center; gap: inherit; }
+
+.rail__toggle {
+  display: none;
+  place-items: center;
+  width: calc(5.5 * var(--u));     /* 44px — §10.4 target floor */
+  height: calc(5.5 * var(--u));
+}
+
+.rail__toggle svg {
+  width: calc(2.5 * var(--u));
+  stroke: var(--silver);
+  stroke-width: 1;
+}
+
+/* Mobile panel — §9.9. At rest --sweep is 0, so the polygon is fully
+   collapsed; the element is also inert in the markup until JS opens it. */
+/* §9.9 registers --sweep as a <percentage> and divides it by 100% to scale the
+   shear. CSS math only permits division by a number, so that calc() is invalid
+   at computed-value time and takes clip-path down with it (verified: Firefox
+   computes clip-path: none). Registered as a <number> 0–1 instead; every use
+   below multiplies it back up. The geometry is the spec's, unchanged. */
+@property --sweep { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+.rail__panel {
+  --sweep: 0;
+  --shear: calc(100vh * tan(var(--angle-panel)) * var(--sweep));
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-rail) - 1);   /* over the content, under the rail bar */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-5);
+  padding: var(--s-21) var(--page-margin) var(--s-5);
+  background: var(--void);
+  clip-path: polygon(
+    100% 0,
+    calc(100% - var(--sweep) * 100%) 0,
+    calc(100% - var(--sweep) * 100% - var(--shear)) 100%,
+    100% 100%
+  );
+  visibility: hidden;
+}
+
+/* sections/nav.js tweens --sweep (5τ open, 3τ close) and sets .is-open for as
+   long as any of the panel shows. */
+.rail__panel.is-open { visibility: visible; }
+
+.rail__panel ul { display: grid; gap: var(--s-3); }
+
+/* Scoped to the nav list: a bare `.rail__panel a` also caught the panel's
+   metal CTA and put --silver-light text on a silver fill (invariant I2). */
+.rail__panel nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: calc(5.5 * var(--u));
+  font-family: var(--font-mono);
+  font-size: var(--t-2);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--silver-light);
+  text-decoration: none;
+}
+
+.rail__panel .btn--metal { align-self: start; font-size: var(--t--1); }
+
+@media (max-width: 900px) {
+  .rail__nav { display: none; }
+  .rail__toggle { display: grid; }
+  .rail__cta { display: none; }        /* the panel carries it instead */
+}
+
+/* With scripting off the toggle cannot open anything, and an inert control is
+   worse than an absent one (§10.4). Every section stays reachable by scrolling. */
+@media (scripting: none) {
+  .rail__toggle,
+  .rail__panel { display: none; }
+  @media (max-width: 900px) {
+    .rail__cta { display: inline-flex; }
+  }
+}
+
+/* ── §6.3 Movement 01 — IDENTITY ──────────────────────────────────────────
+   The LCP block. Text paints from HTML and CSS alone; nothing here waits on JS. */
+
+/* overflow-x: clip — the role tracks in from 0.6em holding nowrap (~452 px), so
+   at phone widths it ran past the viewport, and a phone widens its layout
+   viewport to fit: every fixed layer (CAST, the rail, the ground) re-laid out
+   mid-load — a 0.97 layout shift at 412 px (11b). clip makes no scroll
+   container and leaves y visible, so the name's scroll-out rise is untouched. */
+#identity { min-height: 100vh; align-content: center; overflow-x: clip; }
+
+.hero__text {
+  display: grid;
+  /* minmax(0, 1fr), not the implicit auto: an auto track grows to its widest
+     child's min-content, which let the 704 px tagline measure (and at phone
+     widths the name) stretch the track past its own column — and would let
+     §9.4's role, held on one line while tracked out from 0.6em, reflow the
+     tagline and buttons mid-entrance. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-3);
+  justify-items: start;
+}
+
+.hero__role { position: relative; margin-top: calc(-1 * var(--s-1)); }
+
+/* The role hairline (§9.4, errata E20) — decoration under the role line, at
+   the role's own width, drawn in by the entrance. Absolutely positioned, so it
+   adds no row to the hero's grid. A border rather than a background so forced
+   colours keep it as a stroke. */
+.hero__rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--s-1));
+  border-top: 1px solid var(--hairline-strong);
+}
+
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
+
+.hero__cue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: calc(5.5 * var(--u));
+  margin-top: var(--s-2);
+  color: var(--silver);
+  text-decoration: none;
+}
+
+.hero__cue i { font-style: normal; color: var(--silver); }   /* §4.3: not --silver-shadow */
+.hero__cue:hover, .hero__cue:focus-visible { color: var(--chrome); }
+
+.hero__portrait { position: relative; justify-self: end; width: 240px; }
+
+/* The stadium — precisely the inner void of a chain link. A single 116px value,
+   exactly half the 232px width, so CSS's corner overlap-correction never fires
+   and the caps stay true semicircles (§6.3). */
+.aperture {
+  width: 232px;
+  height: 312px;
+  margin: 4px;
+  border-radius: 116px;
+  overflow: hidden;
+  background: var(--void);
+}
+
+@media (max-width: 900px) {
+  .hero__portrait { justify-self: start; }
+}
+
+.aperture img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; }
+
+.aperture__ring {
+  position: absolute;
+  inset: 0;
+  width: 240px;
+  height: 320px;
+  fill: none;
+  stroke: var(--hairline-strong);
+  stroke-width: 1;
+}
+
+/* ── Section header — §9.5's three targets: index, rule, heading ──────────── */
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.head__rule {
+  align-self: center;
+  width: var(--s-8);
+  height: 1px;
+  background: var(--hairline-strong);
+  transform-origin: left center;
+}
+
+.head--split .works__count { margin-left: auto; }
+
+/* The heading takes the rest of the header's line, so its box is the same
+   width whatever its glyphs are doing: §9.5's wdth 125 → 100 morph would
+   otherwise resize a shrink-to-fit flex item and make autoSplit re-split it
+   mid-reveal. Text sits left either way — no visual change. */
+.head__title { flex: 1 1 auto; }
+
+/* ── §6.4 Movement 02 — DOSSIER ───────────────────────────────────────────
+   Copy on columns 5–9, fact plate nested at 10–12, both inside the alternated
+   content block; the chain runs the vacated 2–4. */
+
+.dossier__inner {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  row-gap: var(--s-5);
+}
+
+.dossier__copy { grid-column: 1 / 6; display: grid; gap: var(--s-3); }
+
+/* Two mono rows in --silver — not --silver-shadow, which may carry no small
+   text (§4.3) — bracketed by hairlines. */
+.principles {
+  position: relative;
+  display: grid;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+  padding-block: var(--s-2);
+  /* The plate-label size (§5.3): at --t--1 the first row cannot hold its three
+     items on one line inside the 5–9 column, and the spec prints two rows. */
+  font-size: var(--t--2);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--silver);
+}
+
+/* The bracketing hairlines as elements rather than borders, so §9.5 can draw
+   them (scaleX 0→1) without scaling the text. --rule defaults to 1: drawn. */
+.principles::before,
+.principles::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px solid var(--hairline);
+  transform: scaleX(var(--rule, 1));
+  transform-origin: left center;
+}
+.principles::before { top: 0; }
+.principles::after { bottom: 0; }
+
+.principles__row { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-2); }
+/* Trailing separator, so a wrap never starts a line with a lone "·". */
+.principles li:not(:last-child)::after { content: "·"; margin-left: var(--s-2); color: var(--silver-shadow); }
+
+.plate {
+  grid-column: 6 / 9;
+  position: relative;
+  padding: var(--s-3);
+  background: var(--graphite);
+  /* The edge is .plate__frame — a CSS border as well would read as a doubled
+     hairline, and §9.5 draws the frame in four segments anyway.
+     24px 45° chamfer, top-right (§3.6); px so the bevel is the same physical
+     size whatever the panel's width. */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--s-3)) 0,
+    100% var(--s-3),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Four separate segments, so §9.5 can draw each edge and turn the corner. */
+.plate__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--hairline-strong);
+  /* Half of a centred stroke falls outside the clip, so 2 renders as 1px. */
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* §9.5's one sheen sweep, driven by --sheen-x (−120% → 220%); off the plate at
+   rest. The image is 180 % of the plate wide: with a larger-than-box image a
+   percentage position runs it right → left, and 180 % is what puts the whole
+   105° band — which leans 15° across the plate's full height — off-plate at
+   both ends for any plate up to 4.6 times taller than wide. A narrower image
+   would clip the leaning band at its own edges. It passes under text, so its opacity is capped
+   (errata E35): 0.22 × the band's 0.55 peak = 0.121 of --chrome over
+   --graphite, where the plate's weakest text, the --blue-lift links, still
+   measures 4.61:1 (--silver labels 5.55:1). */
+.plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--silver-sheen);
+  background-repeat: no-repeat;
+  background-size: 180% 100%;
+  background-position: var(--sheen-x, -120%) 0;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.plate__rows { position: relative; display: grid; gap: var(--s-2); }
+
+.plate__row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Dotted leader: 1px of --hairline every 4px, drawn L→R on entry (§9.5). */
+.plate__leader {
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    to right, var(--hairline) 0 1px, transparent 1px 4px);
+  transform-origin: left center;
+}
+
+.plate__value { grid-column: 1 / -1; }
+
+@media (max-width: 900px) {
+  .dossier__inner { grid-template-columns: minmax(0, 1fr); }
+  .dossier__copy,
+  .plate { grid-column: 1 / -1; }
+}
+
+/* ── §6.5 Movement 03 — LATTICE ───────────────────────────────────────────
+   Four labelled columns of capsules: the `s` layout, the no-WebGL fallback and
+   (node coordinates being resolved in JS) the no-JS layout. §9.6 replaces this
+   with the triangular graph when it can measure. */
+
+.lattice {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  row-gap: var(--s-5);
+  margin-top: var(--s-3);
+}
+
+.cluster { display: grid; align-content: start; gap: var(--s-2); }
+
+.cluster__nodes { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+
+/* The chain-link stadium again, at small scale. A <button>, so hover has a
+   keyboard equivalent (§6.5, §10.4); 44px tall to clear the target floor.
+   The seat (scale 1.06, back.out) is a tween in sections/stack.js, so no
+   transform transition here to smear it; colour is the only hover state that
+   also holds with no JS and under reduced motion (§9.6). Transitions run out
+   over 2τ and in over 1τ — the destination state's duration wins. */
+.node {
+  --node-h: calc(5.5 * var(--u));
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--node-h);
+  padding-inline: var(--s-2);
+  background: var(--void);
+  border: 1px solid var(--hairline);
+  border-radius: calc(var(--node-h) / 2);
+  transition:
+    border-color var(--beat-2) var(--ease-glyph),
+    opacity var(--beat-2) var(--ease-metal);
+}
+
+.node:hover,
+.node:focus-visible,
+.node.is-linked { border-color: var(--hairline-blue); transition-duration: var(--beat-1), var(--beat-2); }
+
+.lattice__readout { margin-top: var(--s-3); }
+
+/* ── The graph (§6.5, §9.6) — JS only, > 640px, with a stage ─────────────
+   sections/stack.js resolves lattice coordinates to px and positions each
+   node's <li> and each cluster label; the DOM order (and so the tab order) is
+   the columns'. Edges are one SVG behind the nodes, user units = px. */
+
+.lattice.is-graph { display: block; position: relative; }
+.lattice.is-graph .cluster,
+.lattice.is-graph .cluster__nodes { display: block; }
+.lattice.is-graph .cluster__nodes > li { position: absolute; display: flex; justify-content: center; }
+.lattice.is-graph .node { white-space: nowrap; }
+.lattice.is-graph .cluster__label { position: absolute; white-space: nowrap; }
+
+.lattice__edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--hairline-strong);
+  stroke-width: 1;
+}
+
+.lattice__edges path {
+  transition:
+    stroke var(--beat-2) var(--ease-metal),
+    stroke-width var(--beat-2) var(--ease-metal),
+    opacity var(--beat-2) var(--ease-metal);
+}
+
+.lattice__edges .is-lit { stroke: var(--blue); transition-duration: var(--beat-1), var(--beat-1), var(--beat-2); }
+
+/* Full motion at MED/HIGH only: the lit width, the linked labels tracking out
+   (errata E40 — the mono face has no wdth axis), and the dim to the floor. */
+.lattice.is-kinetic .lattice__edges .is-lit { stroke-width: 2; }
+.lattice.is-kinetic .node.is-linked .node__label { letter-spacing: 0.12em; transition-duration: var(--beat-1), var(--beat-2); }
+/* A dimmed node dims its label and border, never its --void ground: the
+   capsule has to stay opaque over the branch chain that hangs in behind it. */
+.lattice.is-kinetic .node__label { transition: letter-spacing var(--beat-2) var(--ease-glyph), opacity var(--beat-2) var(--ease-metal); }
+.lattice.is-kinetic.is-focus .node:not(.is-active, .is-linked) {
+  border-color: color-mix(in srgb, var(--hairline) 60%, transparent);
+}
+.lattice.is-kinetic.is-focus .node:not(.is-active, .is-linked) .node__label,
+.lattice.is-kinetic.is-focus .lattice__edges path:not(.is-lit) { opacity: var(--dim-floor); }
+
+@media (max-width: 900px) {
+  .lattice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .lattice { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── §6.6 Movement 04 — WORKS ─────────────────────────────────────────────
+   The one wide exception: --container-wide (§3.4). Until the pin exists the
+   viewport is a native horizontal scroller, so all four cards are reachable
+   with JS dead (I3); checkpoint 8 takes over `x` and clips it instead. */
+
+#works { max-width: var(--container-wide); }
+
+.works__bar {
+  height: 2px;
+  margin-top: var(--s-3);
+  background: var(--hairline);
+}
+
+.works__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--silver);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.works__viewport {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* the cards' chamfers and hover lift must not be clipped vertically */
+  padding-block: var(--s-2);
+  margin-inline: calc(-1 * var(--page-margin));
+}
+
+.works__track {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-8);
+  /* leading pad --s-5, trailing 50vw so the last card can reach centre (§6.6) */
+  padding-inline: var(--page-margin) 50vw;
+  width: max-content;
+}
+
+.card__link { display: flex; flex: none; text-decoration: none; }
+
+/* A card with no URL is still a tab stop (every card is reachable by keyboard):
+   a focusable wrapper, since .card's clip-path would clip its own focus ring.
+   The ring is its only affordance — no lift, border or sheen (§6.6). */
+.card__stop { display: flex; flex: none; }
+
+.card {
+  position: relative;
+  flex: none;
+  width: min(78vw, 720px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  scroll-snap-align: center;
+  /* A #work-0N jump (errata E44) without the pin — native, reduced or the
+     ≤ 900 px stack — lands below the rail, not under it (72 px at rest). */
+  scroll-margin-top: calc(9 * var(--u) + var(--s-3));
+  background: var(--graphite);
+  border: 1px solid var(--hairline);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--s-3)) 0,
+    100% var(--s-3),
+    100% 100%,
+    0 100%
+  );
+  /* §9.7 hover: the lift in 1τ glyph (§9.2's CSS rule — lifts are glyph,
+     seating stays in GSAP), the border a 2τ metal colour crossfade. */
+  transition: transform var(--beat-1) var(--ease-glyph), border-color var(--beat-2) var(--ease-metal);
+}
+
+/* Cards are never scaled — a 6px lift only, because scaling rasterised text to
+   a non-integer factor blurs it (§9.7). Link-free cards get no lift at all. */
+.card__link:hover .card,
+.card__link:focus-visible .card { transform: translate3d(0, -6px, 0); border-color: var(--hairline-blue); }
+
+/* §9.7's hover sheen — the band follows the pointer's x (--sheen-x, written by
+   sections/projects.js). It crosses the card's text, so it runs at E35's cap
+   (errata E42): at opacity 0.22 the weakest text under the peak, the
+   --blue-lift "github ↗", holds 4.62:1 on --graphite; body copy 7.89:1.
+   Linked cards only; .works--sheen is absent at LOW / NONE and without JS.
+   Keyboard twin: parked at the card's centre while it has visible focus. */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--silver-sheen);
+  background-repeat: no-repeat;
+  background-size: 180% 100%;
+  background-position: var(--sheen-x, 50%) 0;
+  opacity: 0;
+  transition: opacity var(--beat-2) var(--ease-metal);
+  pointer-events: none;
+}
+
+.works--sheen .card.is-sheen::after,
+.works--sheen .card__link:focus-visible .card::after { opacity: 0.22; }
+
+/* The machined bevel itself: a hairline lying on the clip-path's 45° cut. */
+.chamfer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--s-3);
+  height: var(--s-3);
+  fill: none;
+  stroke: var(--hairline-strong);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.card__head { display: flex; align-items: baseline; gap: var(--s-2); }
+.card__head .card__title { margin-left: auto; text-align: right; }
+
+.card__body { color: var(--silver-light); }
+
+.card__tags { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: auto; padding-top: var(--s-1); }
+
+.tag {
+  padding: calc(var(--u) / 2) var(--s-1);
+  border: 1px solid var(--hairline);
+  transition: border-color var(--beat-1) var(--ease-metal);
+}
+
+/* §9.10's tag micro-state is the base rule's 1τ metal. A tag is neither a link
+   nor focusable: it lights only with a linked card (below), whose hover has its
+   :focus-visible twin — never on its own, so an unlinked card stays inert (§6.6). */
+
+/* §9.7: tags take the card's hover in 2τ metal. */
+.card__link:hover .tag,
+.card__link:focus-visible .tag {
+  border-color: var(--hairline-blue);
+  transition: border-color var(--beat-2) var(--ease-metal);
+}
+
+.card__go { align-self: end; color: var(--silver); transition: color var(--beat-1) var(--ease-metal); }
+.card__link:hover .card__go,
+.card__link:focus-visible .card__go { color: var(--blue-lift); }
+
+/* ≤900px: no pin, plain vertical stack (§9.7's branch table). */
+@media (max-width: 900px) {
+  .works__viewport { overflow: visible; margin-inline: 0; }
+  .works__track {
+    flex-direction: column;
+    width: auto;
+    gap: var(--s-5);
+    padding-inline: 0;
+  }
+  .card { width: 100%; }
+  .card__link,
+  .card__stop { width: 100%; }
+}
+
+/* Reduced motion (§9.7, §10.1): no pin at any width, so the same vertical
+   stack, and hover is colour and border only — no lift. Keyed off the
+   attribute JS sets, so with JS off the viewport stays the native scroller. */
+[data-motion="reduced"] .works__viewport { overflow: visible; margin-inline: 0; }
+[data-motion="reduced"] .works__track {
+  flex-direction: column;
+  width: auto;
+  gap: var(--s-5);
+  padding-inline: 0;
+}
+[data-motion="reduced"] .card,
+[data-motion="reduced"] .card__link,
+[data-motion="reduced"] .card__stop { width: 100%; }
+[data-motion="reduced"] .card__link:hover .card,
+[data-motion="reduced"] .card__link:focus-visible .card { transform: none; }
+
+/* ── §6.7 Movement 05 — LINK ──────────────────────────────────────────────
+   Full-width rows, hairline-separated, 64px tall — comfortably past the 44px
+   touch floor. */
+
+.rows { margin-top: var(--s-5); }
+
+/* The hairlines as elements rather than borders, so §9.8's entrance can draw
+   them (scaleX 0→1, origin left) without scaling the row: --rule defaults to 1,
+   drawn, and only sections/contact.js takes it lower (as 7a's principles). */
+.row { position: relative; }
+.row::after,
+.row:first-child::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px solid var(--hairline);
+  transform: scaleX(var(--rule, 1));
+  transform-origin: left center;
+  pointer-events: none;
+}
+.row::after { bottom: 0; }
+.row:first-child::before { top: 0; }
+
+.row__link {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 8rem) 1fr auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--s-8);
+  padding-block: var(--s-1);
+  color: var(--silver-light);
+  text-decoration: none;
+  transition: color var(--beat-2) var(--ease-metal);
+}
+
+.row__index { color: var(--silver); }   /* §5.3 index; --silver-shadow failed AA (4.32:1) */
+
+/* §9.8 label: x 0→8px and a weight settle (errata E40: JetBrains Mono has only
+   a wght axis, so §9.8's font-stretch did nothing). The rail's +160 step, from
+   the label's 600. A monospace advance doesn't change with weight: no reflow. */
+.row__label {
+  transition: transform var(--beat-1) var(--ease-glyph), font-weight var(--beat-1) var(--ease-glyph);
+}
+
+.row__value { color: var(--silver); transition: color var(--beat-2) var(--ease-metal); }
+
+.row__glyph {
+  width: calc(3.5 * var(--u));
+  height: calc(2.5 * var(--u));
+  fill: none;
+  stroke: var(--silver);
+  stroke-width: 1.4;
+}
+
+/* Two paths, identical structure, one hidden: MorphSVG interpolates cleanly
+   only between matched path data (§9.8). This crossfade is the stand-in until
+   the late chunk brings MorphSVG, and under reduced motion; once
+   sections/contact.js morphs the open path itself, .rows.is-morph retires it. */
+.row__glyph-closed { opacity: 0; transition: opacity var(--beat-3) var(--ease-metal); }
+.row__glyph-open { transition: opacity var(--beat-3) var(--ease-metal); }
+
+/* §9.8 underline: drawn 0→100 in --blue, 3τ mask — the dash in the line's
+   pathLength="100" units (errata E25's mechanism). Decoration, not content: it
+   never spends the §4.4 blue budget until pointed at. */
+.row__rule {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  stroke: var(--blue);
+  stroke-width: 1;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset var(--beat-3) var(--ease-mask);
+}
+
+.row__link:hover,
+.row__link:focus-visible { color: var(--chrome); }
+.row__link:hover .row__value,
+.row__link:focus-visible .row__value { color: var(--blue-lift); }
+.row__link:hover .row__label,
+.row__link:focus-visible .row__label { transform: translateX(8px); font-weight: 760; }
+.rows:not(.is-morph) .row__link:hover .row__glyph-open,
+.rows:not(.is-morph) .row__link:focus-visible .row__glyph-open { opacity: 0; }
+.rows:not(.is-morph) .row__link:hover .row__glyph-closed,
+.rows:not(.is-morph) .row__link:focus-visible .row__glyph-closed { opacity: 1; }
+.row__link:hover .row__rule,
+.row__link:focus-visible .row__rule { stroke-dashoffset: 0; }
+
+/* §10.1: hover is colour only — no shift, no weight, the underline appears
+   rather than draws. */
+html[data-motion="reduced"] .row__link:is(:hover, :focus-visible) .row__label { transform: none; font-weight: 600; }
+html[data-motion="reduced"] .row__rule { transition: none; }
+
+/* The dossier's third and final placement. The sub-label states the page's own
+   organising ratio at the moment the document is offered (§6.7). */
+.link__cta {
+  flex-direction: column;
+  align-items: start;
+  gap: 0;
+  margin-top: var(--s-5);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  transition: transform var(--beat-1) var(--ease-glyph), border-color var(--beat-1) var(--ease-metal);
+}
+
+/* §9.8: on hover the sweep repeats (the .btn--metal rule) and the border goes
+   --hairline-blue. */
+.link__cta:hover,
+.link__cta:focus-visible { border-color: var(--hairline-blue); }
+
+.link__cta-label { font-size: var(--t--1); letter-spacing: 0.14em; }
+.link__cta-sub { font-size: var(--t--2); letter-spacing: 0.18em; }
+
+/* ── §6.8 Colophon ───────────────────────────────────────────────────────── */
+
+/* The top hairline as an element, so §9.10's reveal can draw it (scaleX 0→1,
+   origin left) without scaling the colophon; --rule defaults to 1, drawn. */
+#colophon { position: relative; }
+#colophon::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  border-top: 1px solid var(--hairline);
+  transform: scaleX(var(--rule, 1));
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.colophon__col { display: grid; gap: var(--s-1); align-content: start; }
+.colophon__col p { font-size: var(--t--1); color: var(--silver); }
+
+.colophon__controls { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: calc(5.5 * var(--u));
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--silver-light);
+  transition: color var(--beat-1) var(--ease-metal);
+}
+
+.toggle::before { content: "["; margin-right: 0.5ch; color: var(--silver-shadow); }
+.toggle::after { content: "]"; margin-left: 0.5ch; color: var(--silver-shadow); }
+.toggle:hover,
+.toggle:focus-visible { color: var(--chrome); }
+/* inline-flex drops the whitespace between "Motion" and the state, so the
+   gap is a margin. */
+.toggle__state { margin-left: 1ch; color: var(--chrome); }
+
+/* Both are written by JS (§1.3's single exception, plus the tier probe §10.2);
+   with scripting off the toggle controls nothing, so it does not appear. */
+@media (scripting: none) {
+  .colophon__controls { display: none; }
+}
+
+/* ── §9.10 Text links (errata E46) ─────────────────────────────────────────
+   Inline links in running text: the plate's two values and the colophon's
+   licence. At rest --silver-light over a static --hairline-strong underline —
+   the underline is what marks it as a link (colour alone can't, WCAG 1.4.1),
+   and it spends no §4.4 blue. On hover / focus-visible the colour goes
+   --blue-lift (1τ metal) and a --blue line draws over the hairline (3τ mask),
+   in its pathLength="100" units (errata E25). Both lines are in the HTML, so
+   the resting underline needs neither JS nor the late chunk. */
+.tlink {
+  position: relative;
+  display: inline-block;
+  color: var(--silver-light);
+  text-decoration: none;
+  transition: color var(--beat-1) var(--ease-metal);
+}
+
+.tlink__u {
+  position: absolute;
+  left: 0;
+  bottom: -0.12em;
+  width: 100%;
+  height: 1px;
+  overflow: visible;
+  stroke-width: 1;
+  pointer-events: none;
+}
+.tlink__rest { stroke: var(--silver-shadow); }   /* 1.4.11: ≥ 3:1 on every ground (--hairline-strong was 2.77:1) */
+.tlink__draw {
+  stroke: var(--blue);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset var(--beat-3) var(--ease-mask);
+}
+
+.tlink:hover,
+.tlink:focus-visible { color: var(--blue-lift); }
+.tlink:hover .tlink__draw,
+.tlink:focus-visible .tlink__draw { stroke-dashoffset: 0; }
+
+/* §10.1: colour only — the blue line appears rather than draws. */
+html[data-motion="reduced"] .tlink__draw { transition: none; }
+
+/* ── §9.3 Movement 00 — CAST (sections/preloader.js) ───────────────────────
+   Injected by JS only, so none of this can hide the served page (I1). The
+   veil is an SVG mask over the whole viewport, never a clip-path on
+   #smooth-content (§9.3's caveat); it takes no pointer events, so nothing is
+   ever trapped under it. The link is one 3:2 stadium, sized so the exit's
+   14× carries it past every edge. */
+#cast {
+  --cast-h: min(12vh, 18vw);
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cast);
+  pointer-events: none;
+}
+
+.cast__mask { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cast__veil { fill: var(--ink); }
+
+.cast__link {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--cast-h) * 1.5);
+  height: var(--cast-h);
+  margin: calc(var(--cast-h) / -2) 0 0 calc(var(--cast-h) * -0.75);
+  overflow: visible;
+}
+.cast__link rect { fill: none; stroke-width: 11; }
+.cast__matte { stroke: var(--silver-shadow); }
+.cast__gloss { stroke: url(#castGloss); opacity: 0; }
+
+.cast__meter {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + var(--cast-h) / 2 + var(--s-3));
+  width: calc(var(--u) * 24);
+  transform: translateX(-50%);
+  display: grid;
+  gap: var(--s-1);
+  justify-items: center;
+}
+.cast__count {
+  font-family: var(--font-mono);
+  font-size: var(--t--2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.18em;
+  color: var(--silver);
+}
+.cast__line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--silver-shadow);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* ── §10.5 Forced colours and reduced transparency ───────────────────────── */
+
+/* Errata E10 (11a): the rail is the page's one translucent, blurred surface —
+   it goes opaque. Cards are already opaque --graphite and keep it. The sheen
+   bands are translucent layers swept over text, so they go too. */
+@media (prefers-reduced-transparency: reduce) {
+  .rail, .rail.is-compact { backdrop-filter: none; background: var(--void); }
+  .plate::before, .card::after, .rail__cta::after, .btn--metal::after { display: none; }
+}
+
+/* Every hairline is named: there is no .hairline class (errata E10). */
+@media (forced-colors: active) {
+  #cast, .ground, #stage, .grain, .plate::before, .card::after { display: none; }
+  .principles::before, .principles::after,
+  .row::after, .row:first-child::before, #colophon::before { border-color: CanvasText; }
+  .rail__cta::after, .btn--metal::after { display: none; }
+  /* The 1 px SVG underline can land between device pixels and vanish (11a:
+     the plate's omniserv.me link); the native underline is whole-pixel LinkText. */
+  .tlink { text-decoration: underline; }
+  .tlink__u { display: none; }
+  .card, .plate, .node, .tag { border-color: CanvasText; }
+  .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
+  .lattice__edges .is-lit { stroke: Highlight; }
+  .rail__indicator { background: Highlight; }
+  /* Lines drawn as backgrounds, which forced colours would otherwise erase
+     (found by 11a: the section-header rules vanished). */
+  .head__rule, .works__bar-fill { background: CanvasText; }
+  .works__bar { background: GrayText; }
+  /* Forced colours keep the compact rail's 72 % alpha; content scrolling
+     under it must not show through the nav text. */
+  .rail.is-compact { background: Canvas; }
+  .rail__cta, .btn--metal { background-image: none; }
+}

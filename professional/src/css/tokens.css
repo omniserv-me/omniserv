@@ -1,0 +1,218 @@
+/* ============================================================================
+   tokens.css — the √2 spine. Transcribed from design.md §3 (design system) and
+   §4 (colour), plus the three family stacks of §5.1 and the shell z-layers of
+   §6.1. Values live here and nowhere else: base.css, layout.css and every later
+   sheet consume these and declare no literals of their own.
+
+   px figures in comments are design.md's own reference numbers, kept so a value
+   can be checked against the spec's tables without recomputing it.
+   ========================================================================== */
+
+:root {
+  /* ── Type scale — §3.2 ───────────────────────────────────────────────────
+     Base 16px. Step 2^(1/4) = 1.189207, a quarter-octave: four steps double,
+     two steps multiply by √2. Declared in rem; px shown for reference. */
+  --t--2:  0.7071rem;   /*  11.31px — mono micro-labels, indices, telemetry */
+  --t--1:  0.8409rem;   /*  13.45px — mono labels, tags, captions */
+  --t-0:   1rem;        /*  16.00px — body copy */
+  --t-1:   1.1892rem;   /*  19.03px — lead paragraph, card body */
+  --t-2:   1.4142rem;   /*  22.63px — card title (mobile), blockquote */
+  --t-3:   1.6818rem;   /*  26.91px — card title */
+  --t-4:   2rem;        /*  32.00px — section heading (mobile) */
+  --t-5:   2.3784rem;   /*  38.05px — unassigned */
+  --t-6:   2.8284rem;   /*  45.25px — section heading */
+  --t-8:   4rem;        /*  64.00px — hero name (mobile) */
+  --t-10:  5.6569rem;   /*  90.51px — hero name (tablet) */
+  --t-12:  8rem;        /* 128.00px — hero name (desktop) */
+
+  /* Fluid sizes interpolate between two adjacent steps — never outside the scale. */
+  --t-hero:    clamp(var(--t-8), 11.2vw, var(--t-12));
+  --t-heading: clamp(var(--t-4), 5vw, var(--t-6));
+
+  /* Line heights are ratios, not lengths. */
+  --lh-body:    1.55;
+  --lh-lead:    1.35;
+  --lh-display: 1.05;
+  --lh-mono:    1.2;
+
+  /* ── Families — §5.1 ─────────────────────────────────────────────────────
+     Stacks only; the @font-face blocks are in base.css (§5.2). Each second
+     entry is a metric-matched local fallback, so the swap to the real face
+     shifts nothing (§12.7 CLS). */
+  --font-display: "Archivo Variable", "Archivo Fallback", "Arial Narrow", Impact, system-ui, sans-serif;
+  --font-body:    "Inter Variable", "Inter Fallback", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:    "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ── Spacing — §3.3 ─────────────────────────────────────────────────────
+     Unit u = 8px; only Fibonacci multiples of u are permitted, which grows at
+     roughly φ while staying on an 8px grid. */
+  --u:     8px;
+  --s-1:   calc(1  * var(--u));   /*   8px */
+  --s-2:   calc(2  * var(--u));   /*  16px */
+  --s-3:   calc(3  * var(--u));   /*  24px */
+  --s-5:   calc(5  * var(--u));   /*  40px */
+  --s-8:   calc(8  * var(--u));   /*  64px */
+  --s-13:  calc(13 * var(--u));   /* 104px */
+  --s-21:  calc(21 * var(--u));   /* 168px */
+
+  /* Responsive: section vertical rhythm and page margin. Overridden per
+     breakpoint at the foot of this file so values keep one home. */
+  --s-section:   var(--s-21);     /* 168px desktop */
+  --page-margin: var(--s-5);      /*  40px desktop */
+
+  /* ── Grid and measure — §3.4 ────────────────────────────────────────────
+     12 columns, gutter --s-3, margin --page-margin. Body copy is never
+     full-bleed: 66ch with a hard cap of --s-8 × 11. --container-wide exists
+     only for the pinned works track (§6.6). */
+  --grid-cols:       12;
+  --gutter:          var(--s-3);      /*  24px */
+  --container:       1280px;
+  --container-wide:  1568px;
+  --measure:         66ch;
+  --measure-max:     704px;           /* --s-8 * 11 */
+
+  /* ── The beat grid — §3.5 ───────────────────────────────────────────────
+     Base beat τ = 0.12s; every choreographed duration is a Fibonacci multiple
+     of τ. Written as calc(N * var(--beat)) rather than as seconds so the
+     relationship stays visible in the source — the CSS counterpart of
+     js/core/easings.js's `5 * T`. Incidental engineering constants (the CAST
+     safety timeout §9.3, idle-breathing periods §9.4) are exempt by design. */
+  --beat:     0.12s;
+  --beat-1:   calc(1  * var(--beat));  /* 0.12s — hover, focus, tag pop */
+  --beat-2:   calc(2  * var(--beat));  /* 0.24s — colour, blur, nav shrink */
+  --beat-3:   calc(3  * var(--beat));  /* 0.36s — card lift, glyph morph, indicator flip */
+  --beat-5:   calc(5  * var(--beat));  /* 0.60s — text line reveals, plate rows */
+  --beat-8:   calc(8  * var(--beat));  /* 0.96s — section entrances, apertures, sheen sweeps */
+  --beat-13:  calc(13 * var(--beat));  /* 1.56s — hero headline, lattice growth */
+  --beat-21:  calc(21 * var(--beat));  /* 2.52s — preloader exit ceiling only */
+  --stagger-glyph: calc(0.5 * var(--beat));  /* 0.06s between glyphs */
+  --stagger-line:  var(--beat-1);            /* 0.12s between lines, rows, cards */
+
+  /* ── Named easings as CSS — §9.2 ─────────────────────────────────────────
+     The CustomEase curves of js/core/easings.js, for CSS transitions (errata
+     E-ease). Colour, border and crossfade → metal; transforms of type and
+     lifts → glyph; draws and wipes → mask. `back.out(1.8)` overshoots, which
+     a cubic-bezier cannot express faithfully — seating stays in GSAP. */
+  --ease-mask:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-glyph: cubic-bezier(0.08, 0.82, 0.17, 1);
+  --ease-metal: cubic-bezier(0.5, 0, 0.5, 1);
+
+  /* ── Fixed angles — §3.6 ────────────────────────────────────────────────
+     Every non-orthogonal angle on the page comes from this list. No others. */
+  --angle-tilt:      12deg;    /* body-copy wipe, conceptual tilt (CSS form below) */
+  --angle-panel:     15deg;    /* mobile nav panel sweep */
+  --angle-lattice-a: 30deg;    /* lattice edge axis */
+  --angle-lattice-b: 150deg;   /* lattice edge axis */
+  --angle-chamfer:   45deg;    /* card chamfer, corner cuts */
+  --angle-wipe:      102deg;   /* 90 + 12 — body-copy mask wipes, linear-gradient() form */
+  --angle-sheen:     105deg;   /* 90 + 15 — all specular sheen sweeps */
+  --angle-sheet:     168deg;   /* silver sheet gradient axis */
+
+  /* ── Parallax depths — §3.7 ─────────────────────────────────────────────
+     Amplitudes are 4px · √2^n by depth layer. Pointer parallax uses these
+     directly; scroll parallax multiplies them by 4. */
+  --px-body:      0;          /* body copy never parallaxes */
+  --px-heading:   4px;        /* n = 0 */
+  --px-plate:     5.66px;     /* n = 1 — fact plate, cards */
+  --px-portrait:  8px;        /* n = 2 */
+  --px-chain-fg:  11.31px;    /* n = 3 */
+  --px-chain-mid: 16px;       /* n = 4 */
+  --px-sheet:     22.63px;    /* n = 5 — background gradient sheet */
+
+  /* ── Palette — §4.1 ────────────────────────────────────────────────────
+     Eleven tokens. Nothing outside this list appears anywhere in the CSS.
+     Ratios are computed WCAG 2.1 values against --ink (§4.3). */
+  --ink:           #05070A;   /* page ground; blue-shifted black, never pure #000 */
+  --void:          #0A0D12;   /* recessed panels, nav ground */
+  --graphite:      #171B21;   /* raised panels, card ground */
+  --steel:         #3A4149;   /* borders on raised surfaces, gradient dark stop */
+  --silver-shadow: #6E757C;   /* hairlines, rules, gradient mid-dark — no text under 24px (§4.3) */
+  --silver:        #A8AEB5;   /* secondary copy, tags — 9.01:1 */
+  --silver-light:  #C9CED4;   /* body copy — 12.74:1; the only dimmable text token */
+  --chrome:        #E8EBEE;   /* headings, specular highlight stop — 16.85:1 */
+  --white:         #FFFFFF;   /* specular clip only — the hottest 3% of any highlight */
+  --blue:          #1F5BFF;   /* strokes, active indicators, WebGL fill light — never text */
+  --blue-lift:     #6C9BFF;   /* blue text, links, focus rings, WebGL rim light — 7.46:1 */
+
+  /* ── Silver gradients — §4.2 ───────────────────────────────────────────
+     Silver is never a flat fill. Each gradient carries a specular flip — a
+     bright stop immediately adjacent to a dark one — which is the only thing
+     that reads as metal rather than grey. */
+
+  /* Panel/sheet metal — decorative surfaces only, never behind text (§4.3).
+     Flip at 52 %. Angle 168° per §3.6. */
+  --silver-sheet: linear-gradient(168deg,
+    #C9CED4 0%, #6E757C 38%, #E8EBEE 52%, #8A9199 63%, #3A4149 100%);
+
+  /* The tier-NONE fallback sheet (§10.3, errata E19): --silver-sheet's five
+     stops, flip at 52 % included, as a radial centred on the spine's X
+     (--spine-x, the fraction of viewport width from centre, §7.5; written on
+     <html> by sections/fallback.js), moved in by the chain's at-rest bow so it
+     sits where the spine visibly runs. farthest-corner, so it has no edge.
+     --spine-at is a length on the fixed, viewport-wide .fallback. */
+  --spine-x: 0.26;
+  --spine-side: 1;   /* sign of --spine-x: the at-rest bow (≈ 0.08·H) leans toward centre */
+  --spine-at: calc(50% + var(--spine-x) * 100% - var(--spine-side) * 8vh);
+  --silver-sheet-radial: radial-gradient(farthest-corner at var(--spine-at) 50%,
+    #C9CED4 0%, #6E757C 38%, #E8EBEE 52%, #8A9199 63%, #3A4149 100%);
+
+  /* Text-bearing metal: the DOSSIER CTA and any filled button. Range-limited so
+     --ink text holds 8.00:1 at the worst stop (§4.3). NOT interchangeable with --silver-sheet. */
+  --silver-fill: linear-gradient(168deg,
+    #B4BAC0 0%, #E8EBEE 46%, #C9CED4 62%, #9DA4AB 100%);
+
+  /* Travelling highlight band. Animated via background-position (§9.4). */
+  --silver-sheen: linear-gradient(105deg,
+    rgba(232,235,238,0) 42%, rgba(232,235,238,0.55) 50%, rgba(232,235,238,0) 58%);
+
+  /* Gradient text. MUST be paired with a solid fallback colour — see .silver-type in base.css. */
+  --silver-text: linear-gradient(180deg, #E8EBEE 0%, #A8AEB5 54%, #6E757C 100%);
+
+  /* Hairlines. The page's primary structural device. */
+  --hairline:        rgba(168,174,181,0.22);
+  --hairline-strong: rgba(201,206,212,0.40);
+  --hairline-blue:   rgba(31,91,255,0.55);
+
+  /* ── The dim floor — §4.3 ──────────────────────────────────────────────
+     Invariant I2 made numeric. Several interactions dim non-focused elements
+     (§9.6 lattice, §9.7 cards); no tween may target below this, and only
+     --silver-light text may be dimmed at all — at 0.60 it composites to
+     4.95:1 on --ink, 4.96:1 on --void, 4.72:1 on --graphite. --silver at the
+     same opacity yields 3.62–3.78:1 and fails AA. */
+  --dim-floor: 0.60;
+
+  /* ── Shell layers — §6.1 ───────────────────────────────────────────────
+     The canvas sits fixed behind content, outside the smoothed subtree; the
+     ground ramp (§8.5) behind the canvas; CAST's veil (§9.3) over everything. */
+  --z-ground: -1;
+  --z-stage:   0;
+  --z-grain:   1;
+  --z-content: 10;
+  --z-rail:    40;
+  --z-cast:    50;
+
+  /* ── Ground and grain — §8.5, §3.7 (errata E18) ────────────────────────
+     The page's background ramp: --void falling to --ink on the silver sheet's
+     168° axis (§3.6), so the top of every screen reads a shade lifted. Text
+     over it stays between §4.3's --void and --ink figures. The grain is a
+     64×64 1-bit monochrome noise PNG (644 B), inline: a request for it would
+     cost more than the base64. */
+  --ground-ramp: linear-gradient(168deg, var(--void) 0%, var(--ink) 62%);
+  --grain: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAACCEkxzAAACS0lEQVR42gFAAr/9AKpexRYvDr0JAL6TnUW1Ih9+ALyp+ND1ez5eAOtnpLo4Y6bsAOtbqEshma3wAAvMfKjUlKC7AF7rp8wcsvbxACfjhjZk4/QeAJW9fcP0Z2Q9AA/vLDBiH6sDAIC4nzBnv6IeACHCYgC9C/jGANDuKjnDFPnIAOz0fqImzIS4AMf6StB1CgYRAF0UIaF4pQ+FADPRSWCFvkt5AFUw+6KF6yhcAPMNoUHbLmtNAA8xMpHEQJfKAPg/iythXdbxADYwcIEJd1J5ALhrZ6FPMK15AE1WFgvcv+VaAJFr53JUW4GXAMYky3wY1lIWADYHjM4yPe4XABDNLByLjGP1ACTMEMjnqbz3AM8qMlaKGAXeAHRmDTXwtjQYAHtG5omJajiUAKMW4ZWtxNTeAOMtXXUTHAAJABIcPr845iRVAItW2oOz3pW9ACG4kuVEgSt6ALCx/rWHAqxTAEBlLiedwii6AG8hCilY+MhYANTIlZnr0dQ6AH1ao4kVPT9TANF7s/HQVI+3ADixVgQezgZWAO61hTHsiFlJAHU25jYiNkPfAE54wx2lt2R5AH4GYkqU9OuMAPFEl3szq8w3ACpvutb4GawlAMz8gPAc5XaNAE/Gd6J5vyv3AKl8jl2UvHB+AHGAUN43uUJoACMK8EdYRKR9APruC1GHUlc8AIfNDU8hmo0/AFHH7cdk+vljAA20761+v2DfAIqJH9g1Dmv8ANgQNqkUkW7FANvJxzdMIjMnAAdm3UN9cugfAPLQEfbydR3kQDn9O+jqAykAAAAASUVORK5CYII=");
+}
+
+/* Breakpoints — §3.4: s ≤ 640px, m 641–900px, l 901–1280px, xl > 1280px.
+   Only the responsive tokens are redefined; everything above is fixed. */
+
+/* m and below — tablet */
+@media (max-width: 900px) {
+  :root { --s-section: var(--s-13); }   /* 104px */
+}
+
+/* s — mobile */
+@media (max-width: 640px) {
+  :root {
+    --s-section:   var(--s-8);          /*  64px */
+    --page-margin: var(--s-3);          /*  24px */
+  }
+}

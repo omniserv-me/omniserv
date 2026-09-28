@@ -223,3 +223,6 @@ pyrightconfig.json
 # Editor/IDE
 .idea/
 # .vscode/
+
+# Node (professional/)
+professional/node_modules/

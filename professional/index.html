@@ -1,178 +1,578 @@
 <!doctype html>
+<!--
+  index.html — the six movements of design.md §6, with the final copy of §6.2–6.8.
+
+  Invariant I1/I3 (§1.3): every word on the page is in this file. The only script
+  served is the legacy-hash map of §2.3 at the foot of <body>; nothing in the
+  layout or the copy depends on it. Animation initial states belong to motion.css
+  under @media (scripting: enabled) (§10.3) — never to the four sheets before it.
+
+  Stylesheet order tokens → base → layout → components → motion is load-bearing.
+-->
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Leo — Software Developer</title>
-  <link rel="icon" type="image/x-icon" href="/assets/me.jpg">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- §11 -->
+  <title>Leonid Yesaulov — AI &amp; Infrastructure Engineer</title>
+  <meta name="description" content="AI &amp; Infrastructure Engineer in Munich. Secure, scalable backend services and deployment pipelines — Python, Go, gRPC, Docker, CI/CD.">
+  <link rel="canonical" href="https://omniserv.me/">
+  <meta name="theme-color" content="#05070A">
+
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://omniserv.me/">
+  <meta property="og:title"       content="Leonid Yesaulov — AI &amp; Infrastructure Engineer">
+  <meta property="og:description" content="Secure, scalable systems end to end.">
+  <!-- og:image: switch to assets/og.png once it exists (§14 item 1). Until then this points at
+       assets/me.jpg so the share card is never a broken image. -->
+  <meta property="og:image"       content="https://omniserv.me/assets/me.jpg">
+  <meta name="twitter:card"       content="summary_large_image">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/me.jpg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org", "@type": "Person",
+    "name": "Leonid Yesaulov",
+    "jobTitle": "AI & Infrastructure Engineer",
+    "url": "https://omniserv.me/",
+    "image": "https://omniserv.me/assets/me.jpg",
+    "email": "mailto:leo@omniserv.me",
+    "address": { "@type": "PostalAddress", "addressLocality": "Munich", "addressCountry": "DE" },
+    "alumniOf": { "@type": "CollegeOrUniversity", "name": "Technical University of Munich" },
+    "knowsLanguage": ["en", "de", "ru", "uk"],
+    "sameAs": [
+      "https://github.com/leoyesaulov",
+      "https://www.linkedin.com/in/leonid-yesaulov-836b98217/"
+    ]
+  }
+  </script>
+
+  <!-- §5.2: Archivo only — it carries the LCP element. Preloading all three
+       delays the hero. -->
+  <link rel="preload" href="/fonts/archivo-var-v1.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="/src/css/tokens.css">
+  <link rel="stylesheet" href="/src/css/base.css">
+  <link rel="stylesheet" href="/src/css/layout.css">
+  <link rel="stylesheet" href="/src/css/components.css">
+  <link rel="stylesheet" href="/src/css/motion.css">
 </head>
-<body class="theme-dark">
-  <header class="site-header">
-    <nav class="nav container">
-      <a class="logo" href="#">Leo</a>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#about">About</a></li>
-        <li><a href="#stack">Stack</a></li>
-        <li><a href="#projects">Projects</a></li>
-        <li><a href="#socials">Socials</a></li>
+<body>
+  <a class="skip" href="#identity">Skip to content</a>
+
+  <!-- §6.1 shell. The ground ramp and the grain are CSS only (§8.5); the
+       canvas is inert until §7 fills it. All three are aria-hidden and
+       pointer-events: none throughout. -->
+  <div class="ground" aria-hidden="true"></div>
+  <canvas id="stage" aria-hidden="true"></canvas>
+  <!-- §10.3 (errata E19): the tier-NONE fallback — a --silver-sheet radial and
+       a static chain strip where the spine would run. Hidden unless the probe
+       reports NONE (html[data-tier="NONE"]); sections/fallback.js moves its X
+       per movement. Units: one link diameter (0.044·H) = 100, pitch 72 (§7.3),
+       viewBox height = 100 / 0.044, so the strip is exactly one viewport tall.
+       Pattern content is in tile space (0–80), centred on x = 40. -->
+  <div class="fallback" aria-hidden="true">
+    <svg class="fallback__strip" viewBox="-40 0 80 2273" preserveAspectRatio="xMidYMin meet" focusable="false">
+      <defs>
+        <pattern id="fallback-links" patternUnits="userSpaceOnUse" x="-40" y="0" width="80" height="144">
+          <rect x="34" y="-50" width="12" height="100" rx="6"/>
+          <rect x="34" y="94" width="12" height="100" rx="6"/>
+          <rect x="10" y="22" width="60" height="100" rx="30"/>
+          <rect x="22" y="34" width="36" height="76" rx="18"/>
+        </pattern>
+      </defs>
+      <rect x="-40" y="0" width="80" height="2273" fill="url(#fallback-links)"/>
+    </svg>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ══ Navigation rail — §6.2. Outside #smooth-content (§9.9), or the
+       smoother's transform would drag it up the page. ══ -->
+  <header class="rail" data-rail>
+    <a class="rail__mark" href="#identity" aria-label="Leo — home">
+      <svg class="rail__glyph" viewBox="0 0 24 16" aria-hidden="true">
+        <!-- two interlocked links: the stadium of §6.3, twice -->
+        <rect x="1.5" y="4" width="12" height="8" rx="4"/>
+        <rect x="10.5" y="4" width="12" height="8" rx="4"/>
+      </svg>
+      <span>LEO</span>
+    </a>
+
+    <nav class="rail__nav" aria-label="Sections">
+      <ul>
+        <li><a href="#dossier"><i>02</i> About</a></li>
+        <li><a href="#lattice"><i>03</i> Stack</a></li>
+        <li><a href="#works"><i>04</i> Work</a></li>
+        <li><a href="#link"><i>05</i> Link</a></li>
       </ul>
-      <a class="nav-cta" id="downloadBtn" href="files/Yesaulov_CV.pdf" target="_blank">Resume</a>
-      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <span class="rail__indicator" data-indicator aria-hidden="true"></span>
     </nav>
+
+    <a class="rail__cta" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
+      Dossier <span aria-hidden="true">↓</span>
+    </a>
+
+    <!-- The ☰ text character of the old page is three 1px hairlines, 20/14/20. -->
+    <button class="rail__toggle" data-nav-toggle aria-expanded="false" aria-controls="rail-panel">
+      <span class="sr-only">Menu</span>
+      <svg viewBox="0 0 20 12" aria-hidden="true">
+        <line x1="0" y1="0.5" x2="20" y2="0.5"/>
+        <line x1="0" y1="6" x2="14" y2="6"/>
+        <line x1="0" y1="11.5" x2="20" y2="11.5"/>
+      </svg>
+    </button>
+
   </header>
 
-  <main>
-    <!-- HERO -->
-    <section id="hero" class="hero">
-      <canvas id="particles"></canvas>
-      <div class="hero-bg" aria-hidden="true">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-      </div>
+  <!-- Mobile panel (§9.9). A sibling of the rail, not a child: the compact
+       rail's backdrop-filter would make it the containing block for fixed
+       descendants and trap the panel inside a 56px bar. inert + collapsed
+       --sweep at rest; sections/nav.js opens it and owns the trap and Escape. -->
+  <div class="rail__panel" id="rail-panel" data-nav-panel inert>
+    <nav aria-label="Sections (mobile)">
+      <ul>
+        <li><a href="#dossier"><i>02</i> About</a></li>
+        <li><a href="#lattice"><i>03</i> Stack</a></li>
+        <li><a href="#works"><i>04</i> Work</a></li>
+        <li><a href="#link"><i>05</i> Link</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--metal" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
+      Dossier <span class="mono" aria-hidden="true">↓ PDF</span>
+    </a>
+  </div>
 
-      <div class="container hero-content">
-        <div class="hero-text reveal">
-          <h1>Hi — I’m <span class="accent">Leonid Yesaulov</span></h1>
-          <p class="tagline">I build fast, reliable software and delightful user experiences.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#projects">View Projects</a>
-            <a class="btn btn-ghost" href="#about">About me</a>
-          </div>
-        </div>
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+      <main>
 
-        <!-- New: profile image -->
-        <aside class="hero-photo reveal">
-          <img src="assets/me.jpg" alt="Your portrait" loading="lazy" />
-        </aside>
-      </div>
-    </section>
+        <!-- ══ 01 IDENTITY — §6.3 ══════════════════════════════════════════ -->
+        <section id="identity" aria-labelledby="identity-h">
+          <div class="hero__text col-left">
+            <p class="meta mono" data-copy>Munich, DE <span aria-hidden="true">·</span> 48.1375° N 11.5755° E</p>
 
-    <!-- ABOUT -->
-    <section id="about" class="section">
-      <div class="container section-inner">
-        <div class="split">
-          <div class="reveal">
-            <h2>About</h2>
-            <p>I’m a software developer who enjoys designing robust systems and clean user interfaces. I focus on performance, readable code, and pragmatic design decisions. I value testing, automation, and collaboration.</p>
-            <p>Favourite domains: data/AI, backend systems and developer tools.</p>
-            <p>Hobbys: arts (music, literature), bonsai gardens and tabletop games.</p>
-          </div>
+            <h1 id="identity-h" class="hero__name silver-type" data-split="name" data-copy>Leonid Yesaulov</h1>
 
-          <div class="reveal card-light">
-            <h3>Quick facts</h3>
-            <ul class="facts">
-              <li><strong>Location:</strong> Munich, Germany</li>
-              <li><strong>Languages:</strong> English, German, Russian, Ukrainian</li>
-              <li><strong>Education:</strong> Informatics BSc @ TUM (projected - 2027)</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
+            <p class="hero__role mono" data-role data-copy>AI &amp; Infrastructure Engineer<span class="hero__rule" aria-hidden="true"></span></p>
 
-    <!-- STACK -->
-    <section id="stack" class="section alt">
-      <div class="container section-inner">
-        <h2 class="reveal">Tech Stack</h2>
-        <p class="reveal">Tools and languages I work with frequently:</p>
+            <p class="hero__tagline lead measure" data-split="lines" data-copy>
+              Secure, scalable systems end to end — backend services, deployment
+              lifecycles, and the mathematics underneath.
+            </p>
 
-        <div class="stack-grid">
-          <span class="badge reveal">Python</span>
-          <span class="badge reveal">Java</span>
-          <span class="badge reveal">C/C++</span>
-          <span class="badge reveal">SQL</span>
-          <span class="badge reveal">MongoDB</span>
-          <span class="badge reveal">Docker</span>
-          <span class="badge reveal">Git</span>
-          <span class="badge reveal">Linux</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- PROJECTS -->
-    <section id="projects" class="section">
-      <div class="container section-inner">
-        <h2 class="reveal">Selected Projects</h2>
-        <p class="reveal">Small selection — <a class="accent" href="mailto:leo@omniserv.me?subject=New%20Offer&body=Hi,%20Leo!%0A%0A">reach out</a> for details.</p>
-
-        <div class="projects-grid">
-
-          <a href="https://github.com/omniserv-me/omniserv" class="mute" target="_blank">
-          <article class="project-card reveal">
-            <div class="pc-top">
-              <h3>Omniserv</h3>
-              <p class="muted">Self-hosted · Server</p>
+            <div class="hero__actions" data-copy>
+              <a class="btn btn--metal" href="#works"><span class="btn__label">Selected work <span aria-hidden="true">→</span></span></a>
+              <a class="btn btn--ghost" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
+                <span class="btn__label">Dossier <span class="mono" aria-hidden="true">↓ PDF</span></span>
+              </a>
             </div>
-            <p class="pc-desc">Home-server, providing reliable automations, secure VPN and Webserver capacity without downtime.</p>
-            <div class="pc-meta">
-              <span class="tag">Python</span>
-<!--              ToDo: -->
-<!--              <span class="tag">Docker</span>-->
-<!--              <span class="tag">GitGub Actions</span>-->
-              <span class="tag">Linux</span>
-              <span class="tag">Cloudflare</span>
+
+            <a class="hero__cue mono" href="#dossier" data-copy><i>02</i> About <span aria-hidden="true">↓</span></a>
+          </div>
+
+          <figure class="hero__portrait col-aside" data-portrait>
+            <div class="aperture">
+              <img src="/assets/me.jpg" width="762" height="762" alt="Leonid Yesaulov"
+                   fetchpriority="high" decoding="async">
+            </div>
+            <svg class="aperture__ring" viewBox="0 0 240 320" aria-hidden="true">
+              <rect x="4" y="4" width="232" height="312" rx="116" pathLength="100"/>
+            </svg>
+          </figure>
+        </section>
+
+        <!-- ══ 02 DOSSIER — §6.4 ═══════════════════════════════════════════ -->
+        <section id="dossier" aria-labelledby="dossier-h">
+          <header class="head col-right">
+            <p class="head__index mono" data-copy>02</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="dossier-h" class="head__title" data-copy data-split="heading">About</h2>
+          </header>
+
+          <div class="dossier__inner col-right">
+            <div class="dossier__copy" data-copy>
+              <p class="lead measure">
+                I build and run the infrastructure other systems sit on — the full deployment
+                lifecycle across cloud and self-hosted environments, and the backend services
+                on top of it.
+              </p>
+              <p class="measure">
+                The foundation is mathematical. I read Informatics with a minor in Mathematics
+                at TUM, and what draws me to machine learning is the mathematics of it, applied
+                to real infrastructure problems rather than benchmarks.
+              </p>
+              <p class="measure">
+                Favourite domains: data and AI, backend systems, developer tools. Away from the
+                terminal: arts — music and literature — bonsai gardens, and tabletop games.
+              </p>
+
+              <!-- Principles strip: the values clause of the old about paragraph, designed. -->
+              <div class="principles mono">
+                <ul class="principles__row">
+                  <li>Performance</li>
+                  <li>Readable code</li>
+                  <li>Pragmatic decisions</li>
+                </ul>
+                <ul class="principles__row">
+                  <li>Testing</li>
+                  <li>Automation</li>
+                  <li>Collaboration</li>
+                </ul>
+              </div>
+            </div>
+
+            <aside class="plate" data-copy>
+              <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M0 0 L24 24" pathLength="100"/>
+              </svg>
+              <svg class="plate__frame" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 0 H100" pathLength="100"/>
+                <path d="M100 0 V100" pathLength="100"/>
+                <path d="M100 100 H0" pathLength="100"/>
+                <path d="M0 100 V0" pathLength="100"/>
+              </svg>
+              <dl class="plate__rows">
+                <div class="plate__row">
+                  <dt class="plate__label">Location</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value">Munich, Germany</dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Education</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value">Informatics BSc, minor Mathematics — TUM, 2024–2027 (expected)</dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Languages</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value">English C1 <span aria-hidden="true">·</span> German C1
+                    <span aria-hidden="true">·</span> Russian native <span aria-hidden="true">·</span> Ukrainian native</dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Contact</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value"><a class="tlink" href="mailto:leo@omniserv.me">leo@omniserv.me<svg class="tlink__u" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><line class="tlink__rest" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/><line class="tlink__draw" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/></svg></a></dd>
+                </div>
+                <div class="plate__row">
+                  <dt class="plate__label">Web</dt>
+                  <span class="plate__leader" aria-hidden="true"></span>
+                  <dd class="plate__value"><a class="tlink" href="https://omniserv.me">omniserv.me<svg class="tlink__u" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><line class="tlink__rest" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/><line class="tlink__draw" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/></svg></a></dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ══ 03 LATTICE — §6.5 ═══════════════════════════════════════════
+             Four labelled columns of capsules is the authored state: it is the
+             `s` breakpoint layout, the no-WebGL fallback, and — since node
+             positions are lattice coordinates resolved in JS — the no-JS layout
+             too. The edge SVG and the triangular placement arrive with §9.6. -->
+        <section id="lattice" aria-labelledby="lattice-h">
+          <header class="head col-full">
+            <p class="head__index mono" data-copy>03</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="lattice-h" class="head__title" data-copy data-split="heading">Stack</h2>
+          </header>
+
+          <div class="lattice col-full" data-lattice>
+            <div class="cluster" data-cluster="backend">
+              <h3 class="cluster__label mono" data-copy>Backend</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Python</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">FastAPI</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Go</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">gRPC</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Java</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">C/C++</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">SQL</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">MongoDB</span></button></li>
+              </ul>
+            </div>
+
+            <div class="cluster" data-cluster="infra">
+              <h3 class="cluster__label mono" data-copy>Infra &amp; DevOps</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Docker</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">CI/CD</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Traefik</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Caddy</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">AWS</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Google Cloud</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Linux (Arch, Debian)</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Cloudflare</span></button></li>
+              </ul>
+            </div>
+
+            <div class="cluster" data-cluster="frontend">
+              <h3 class="cluster__label mono" data-copy>Frontend</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Flutter/Dart</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">HTML</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">CSS</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">JavaScript</span></button></li>
+              </ul>
+            </div>
+
+            <div class="cluster" data-cluster="tooling">
+              <h3 class="cluster__label mono" data-copy>Tooling</h3>
+              <ul class="cluster__nodes">
+                <li><button class="node" type="button"><span class="node__label">Git</span></button></li>
+                <li><button class="node" type="button"><span class="node__label">Make</span></button></li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="lattice__readout mono col-full">
+            <span class="sr-only">Selected cluster:</span>
+            <span data-readout data-copy>22 nodes <span aria-hidden="true">·</span> 4 clusters</span>
+          </p>
+        </section>
+
+        <!-- ══ 04 WORKS — §6.6 ═════════════════════════════════════════════
+             The track is a native horizontal scroller here, so all four cards
+             are reachable with JS dead (I3). Checkpoint 8's pin takes over `x`
+             and clips the viewport instead. ≤900px is a vertical stack (§9.7). -->
+        <section id="works" aria-labelledby="works-h">
+          <header class="head head--split col-full">
+            <p class="head__index mono" data-copy>04</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="works-h" class="head__title" data-copy data-split="heading">Work</h2>
+            <p class="works__count mono" data-progress-label data-copy>01 / 04</p>
+          </header>
+
+          <div class="works__bar col-full" aria-hidden="true">
+            <span class="works__bar-fill" data-progress-bar></span>
+          </div>
+
+          <div class="works__viewport col-full" data-works-viewport>
+            <div class="works__track" data-track>
+
+              <a class="card__link" href="https://github.com/omniserv-me/omniserv"
+                 target="_blank" rel="noopener">
+                <article class="card" id="work-01" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">01</p>
+                    <h3 id="work-01-h" class="card__title" data-split="title">Omniserv</h3>
+                  </header>
+                  <p class="card__kicker mono">Self-hosted <span aria-hidden="true">·</span> Infrastructure</p>
+                  <p class="card__body" data-copy>
+                    Home server running reliable automations, a secure VPN and always-on web
+                    capacity. Automated deployment and managed service lifecycles with Docker
+                    and CI/CD; local network routing, DNS resolution via Pi-hole, security
+                    protocols. Accounting and smart-home systems that digitalise day-to-day
+                    processes.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">Python</li>
+                    <li class="tag">Docker</li>
+                    <li class="tag">GitHub Actions</li>
+                    <li class="tag">Linux</li>
+                    <li class="tag">Cloudflare</li>
+                  </ul>
+                  <p class="card__go mono">github <span aria-hidden="true">↗</span></p>
+                </article>
+              </a>
+
+              <!-- No public link (§14 item 3), so no anchor and no hover lift. Still a tab
+                   stop: the wrapper sits outside the card's clip-path, so its ring shows. -->
+              <div class="card__stop" tabindex="0" role="group" aria-labelledby="work-02-h">
+                <article class="card" id="work-02" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">02</p>
+                    <h3 id="work-02-h" class="card__title" data-split="title">uWeMe</h3>
+                  </header>
+                  <p class="card__kicker mono">Startup <span aria-hidden="true">·</span> Mobile MVP
+                    <span aria-hidden="true">·</span> 06.2024 – 10.2024</p>
+                  <p class="card__body" data-copy>
+                    Took an initial prototype to a functional MVP: stripped placeholders, resolved
+                    core bugs, engineered both ends — Flutter front, Golang back. Shipped into the
+                    Apple ecosystem through TestFlight.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">Golang</li>
+                    <li class="tag">Flutter/Dart</li>
+                    <li class="tag">TestFlight</li>
+                  </ul>
+                </article>
+              </div>
+
+              <!-- No link (§14 item 2); a tab stop, as card 02. -->
+              <div class="card__stop" tabindex="0" role="group" aria-labelledby="work-03-h">
+                <article class="card" id="work-03" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">03</p>
+                    <h3 id="work-03-h" class="card__title" data-split="title">Secure Memory Unit</h3>
+                  </header>
+                  <p class="card__kicker mono">Academic <span aria-hidden="true">·</span> Embedded simulation</p>
+                  <p class="card__body" data-copy>
+                    Monolithic SMU module: controller logic, latency simulation, parity checking
+                    and fault-injection tests.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">C/C++</li>
+                    <li class="tag">Hardware</li>
+                  </ul>
+                </article>
+              </div>
+
+              <a class="card__link" href="https://github.com/leoyesaulov/professional"
+                 target="_blank" rel="noopener">
+                <article class="card" id="work-04" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">04</p>
+                    <h3 id="work-04-h" class="card__title" data-split="title">This page</h3>
+                  </header>
+                  <p class="card__kicker mono">Web <span aria-hidden="true">·</span> The thing you are looking at</p>
+                  <p class="card__body" data-copy>
+                    Silver, chain and kinetic type. GSAP over a three.js metal stage, laid out on
+                    a √2 grid and cut to a 0.12-second beat.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">GSAP</li>
+                    <li class="tag">three.js</li>
+                    <li class="tag">WebGL</li>
+                    <li class="tag">Vite</li>
+                  </ul>
+                  <p class="card__go mono">github <span aria-hidden="true">↗</span></p>
+                </article>
+              </a>
 
             </div>
-          </article>
+          </div>
+        </section>
+
+        <!-- ══ 05 LINK — §6.7 ══════════════════════════════════════════════ -->
+        <section id="link" aria-labelledby="link-h">
+          <header class="head col-left">
+            <p class="head__index mono" data-copy>05</p>
+            <span class="head__rule" aria-hidden="true"></span>
+            <h2 id="link-h" class="head__title" data-copy data-split="heading">Link</h2>
+          </header>
+
+          <p class="lead measure col-left" data-copy>Four ways in. The first three are read daily.</p>
+
+          <ul class="rows col-left" data-copy>
+            <li class="row">
+              <a class="row__link" href="https://github.com/leoyesaulov" target="_blank" rel="noopener">
+                <span class="row__index mono">01</span>
+                <span class="row__label mono">GitHub</span>
+                <span class="row__value">leoyesaulov</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <!-- matched point counts, one hidden: MorphSVG needs identical
+                       path data structure to interpolate without wobble (§9.8). -->
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+
+            <li class="row">
+              <a class="row__link" href="https://www.linkedin.com/in/leonid-yesaulov-836b98217/"
+                 target="_blank" rel="noopener">
+                <span class="row__index mono">02</span>
+                <span class="row__label mono">LinkedIn</span>
+                <span class="row__value">leonid-yesaulov</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+
+            <li class="row">
+              <!-- One mailto, pre-filled with placeholders the sender overwrites. -->
+              <a class="row__link" href="mailto:leo@omniserv.me?subject=%5BTopic%5D&amp;body=Hi%20Leo%2C%0A%0A">
+                <span class="row__index mono">03</span>
+                <span class="row__label mono">Email</span>
+                <span class="row__value">leo@omniserv.me</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+
+            <li class="row">
+              <a class="row__link" href="https://omniserv.me" target="_blank" rel="noopener">
+                <span class="row__index mono">04</span>
+                <span class="row__label mono">Web</span>
+                <span class="row__value">omniserv.me</span>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
+            </li>
+          </ul>
+
+          <a class="btn btn--metal link__cta col-left" href="/files/Yesaulov_CV.pdf"
+             target="_blank" rel="noopener">
+            <span class="link__cta-label">Dossier <span aria-hidden="true">↓</span></span>
+            <span class="link__cta-sub mono">A4 <span aria-hidden="true">·</span> 1:√2 <span aria-hidden="true">·</span> PDF</span>
           </a>
+        </section>
 
-          <a href="https://github.com/leoyesaulov/professional" class="mute" target="_blank">
-          <article class="project-card reveal">
-            <div class="pc-top">
-              <h3>Portfolio Website</h3>
-              <p class="muted">Web · HTML/CSS/JS</p>
-            </div>
-            <p class="pc-desc">This portfolio — clean, responsive, animated single-page site.</p>
-            <div class="pc-meta">
-              <span class="tag">HTML</span>
-              <span class="tag">CSS</span>
-              <span class="tag">JS</span>
-            </div>
-          </article>
-          </a>
+      </main>
 
-          <article class="project-card reveal">
-            <div class="pc-top">
-              <h3>Secure Memory Unit</h3>
-              <p class="muted">Embedded systems · Simulation</p>
-            </div>
-            <p class="pc-desc">Monolithic SMU module with controller logic, latency simulation, parity checks, and fault-injection tests.</p>
-            <div class="pc-meta">
-              <span class="tag">C/C++</span>
-              <span class="tag">Hardware</span>
-            </div>
-          </article>
-
-
+      <!-- ══ Colophon — §6.8 ═══════════════════════════════════════════════ -->
+      <footer id="colophon" class="shell">
+        <div class="colophon__col col-left" data-copy>
+          <p>© <span id="year">2026</span> Leonid Yesaulov</p>
+          <p>Text and design <a class="tlink" href="/LICENSE.txt">CC BY 3.0<svg class="tlink__u" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><line class="tlink__rest" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/><line class="tlink__draw" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/></svg></a>.</p>
+          <p class="mono">√2 grid <span aria-hidden="true">·</span> 0.12 s beat.</p>
         </div>
-      </div>
-    </section>
-
-    <!-- SOCIALS -->
-    <section id="socials" class="section alt">
-      <div class="container section-inner">
-        <h2 class="reveal">Socials & Contact</h2>
-        <p class="reveal">Find me online — happy to connect.</p>
-
-        <div class="socials-grid reveal">
-          <a class="social" href="https://github.com/leoyesaulov">GitHub</a>
-          <a class="social" href="https://www.linkedin.com/in/leonid-yesaulov-836b98217/">LinkedIn</a>
-          <a class="social" href="mailto:leo@omniserv.me?subject=Personal%20Inquiry&body=Hi,%20Leo!%0A%0A">Email</a>
+        <div class="colophon__col col-aside" data-copy>
+          <p>Part of Omniserv.</p>
+          <p>Built with GSAP and three.js.</p>
+          <p class="colophon__controls mono">
+            <button class="toggle" type="button" data-motion-toggle aria-pressed="true">
+              Motion <span class="toggle__state" data-motion-state>on</span>
+            </button>
+            <span class="tier">Tier <span aria-hidden="true">·</span> <span data-tier>—</span></span>
+          </p>
         </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <p>© <span id="year"></span> Leonid Yesaulov — Built with care.</p>
+      </footer>
     </div>
-  </footer>
+  </div>
 
-  <script src="script.js"></script>
+  <!-- The rig (§9.1). Owns the §2.3 legacy-hash map too. Nothing it does is
+       load-bearing for content: with it dead the page above is complete (I1/I3). -->
+  <script type="module" src="/src/js/main.js"></script>
 </body>
 </html>
