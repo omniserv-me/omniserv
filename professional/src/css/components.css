@@ -155,10 +155,10 @@
   background: color-mix(in srgb, var(--void) 0%, transparent);
   border-bottom: 1px solid transparent;
   transition:
-    height var(--beat-2) ease,
-    background-color var(--beat-2) ease,
-    backdrop-filter var(--beat-2) ease,
-    border-color var(--beat-2) ease;
+    height var(--beat-2) var(--ease-metal),
+    background-color var(--beat-2) var(--ease-metal),
+    backdrop-filter var(--beat-2) var(--ease-metal),
+    border-color var(--beat-2) var(--ease-metal);
 }
 
 /* Toggled by ScrollTrigger past 80px of scroll (§9.9). */
@@ -214,7 +214,7 @@
   text-transform: uppercase;
   color: var(--silver);
   text-decoration: none;
-  transition: color var(--beat-1) ease, font-stretch var(--beat-1) ease;
+  transition: color var(--beat-1) var(--ease-metal), font-weight var(--beat-1) var(--ease-glyph);
 }
 
 .rail__nav a i {
@@ -223,8 +223,14 @@
   color: var(--silver-shadow);   /* index only, never a text role (§4.3) */
 }
 
+/* §9.9 item hover. JetBrains Mono has only a wght axis, so the width morph is a
+   weight settle (errata E40); a monospace advance does not change with weight,
+   so nothing in the row moves. Reduced motion: colour only (§10.1). */
 .rail__nav a:hover,
-.rail__nav a:focus-visible { color: var(--chrome); font-stretch: 112%; }
+.rail__nav a:focus-visible { color: var(--chrome); font-weight: 560; }
+
+html[data-motion="reduced"] .rail__nav a:hover,
+html[data-motion="reduced"] .rail__nav a:focus-visible { font-weight: inherit; }
 
 /* Moved into the active item by Flip (§9.9); it inherits that item's box, so
    it is only drawn once it has a home — never as a full-width bar under the
@@ -303,7 +309,7 @@
   stroke-width: 1;
 }
 
-/* Mobile panel — §9.9. At rest --sweep is 0%, so the polygon is fully
+/* Mobile panel — §9.9. At rest --sweep is 0, so the polygon is fully
    collapsed; the element is also inert in the markup until JS opens it. */
 /* §9.9 registers --sweep as a <percentage> and divides it by 100% to scale the
    shear. CSS math only permits division by a number, so that calc() is invalid
@@ -331,10 +337,11 @@
     100% 100%
   );
   visibility: hidden;
-  transition: --sweep var(--beat-5) ease, visibility var(--beat-5) step-start;
 }
 
-.rail__panel.is-open { --sweep: 1; visibility: visible; }
+/* sections/nav.js tweens --sweep (5τ open, 3τ close) and sets .is-open for as
+   long as any of the panel shows. */
+.rail__panel.is-open { visibility: visible; }
 
 .rail__panel ul { display: grid; gap: var(--s-3); }
 

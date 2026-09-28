@@ -1471,7 +1471,7 @@ on 40 split characters — it is a per-element compositing layer and the memory 
 
 ### 9.2 Named easings
 
-Three `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page. *(errata E3)*
+Three `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page.
 
 ```js
 CustomEase.create('mask',     'M0,0 C0.16,1 0.3,1 1,1');      // ≈ expo.out  — wipes, apertures, draws
@@ -2000,7 +2000,8 @@ ScrollTrigger.create({
 ```
 
 `.rail.is-compact` transitions over 2τ with `ease.metal` as a `cubic-bezier`: height `72 → 56px`,
-`backdrop-filter: blur(0 → 14px)`, ground alpha `0 → 0.72`, bottom hairline `opacity 0 → 1`.
+`backdrop-filter: blur(0 → 14px)`, ground alpha `0 → 0.72`, bottom hairline `opacity 0 → 1`. The
+toggle exists under reduced motion too: the compact ground keeps the rail readable over content.
 
 **Active indicator — Flip.** One ScrollTrigger per section; on toggle, the indicator element is
 *moved in the DOM* to the active item and Flip animates the difference:
@@ -2008,13 +2009,24 @@ ScrollTrigger.create({
 ```js
 const state = Flip.getState(indicator);
 item.appendChild(indicator);
-Flip.from(state, { duration: 3 * T, ease: 'power3.out' });   // errata E3
+Flip.from(state, { duration: 3 * T, ease: 'mask' });   // a hairline landing: §9.2's draw curve
 ```
+
+Each trigger runs from its section's `top center` to `max`, and the active item is the last trigger
+started, resolved once per update (a jump across several sections is one Flip). Only the starts are
+measured, so the ranges can never leave a gap. A range that ended at the next section's
+`endTrigger` was not offset by the WORKS pin spacer, and it dropped the indicator for most of the
+pin's travel. Above DOSSIER, in IDENTITY, the indicator goes back to `.rail__nav`, where CSS hides it.
+Its first placement, and any move before the late chunk has loaded Flip (§12.7), is a plain
+`appendChild`. It moves under reduced motion as well, because it is feedback (§10.1).
 
 Flip is used rather than measuring offsets because nav labels have different widths and the
 indicator must land exactly on each. Hand-rolled measurement here is re-implementing Flip, worse.
 
-**Item hover:** `font-stretch 100% → 112%` *(errata E40)* 1τ, colour `--silver → --chrome` 1τ.
+**Item hover:** `font-weight 400 → 560` 1τ `--ease-glyph`, colour `--silver → --chrome` 1τ
+`--ease-metal`. The rail items are JetBrains Mono, which has only a `wght` axis (§5.1), so a
+`font-stretch` morph would do nothing. A monospace advance doesn't change with weight, so nothing in
+the row moves. Reduced motion changes the colour only.
 
 **Mobile panel:** 15° polygon sweep from the top-right (§3.6), via a registered custom property so
 the interpolation is typed:
@@ -2035,9 +2047,14 @@ the interpolation is typed:
 }
 ```
 
-Panel open 5τ `ease.mask`; items `y 24→0` + `font-stretch 88%→100%`, 1τ each at 1τ stagger,
-`ease.glyph`. Close reverses at 3τ. While open: `aria-expanded="true"`, focus trapped in the panel,
-Escape closes and returns focus to the toggle, and `smoother.paused(true)` locks scroll.
+Panel open 5τ `ease.mask`; items `y 24→0` + `font-weight 300→400` (mono: weight, not width, as the
+item hover), 1τ each at 1τ stagger from 1τ, `ease.glyph`. Close reverses at 3τ. `--sweep` is tweened
+by GSAP, not transitioned in CSS. While open: `aria-expanded="true"`; `#smooth-wrapper` is inert; Tab
+and Shift+Tab cycle the toggle and the panel's links, so the menu can always be closed; Escape
+closes and returns focus to the toggle; and `smoother.paused(true)` locks scroll (`overflow: hidden` on
+`<html>` under reduced motion, which has no smoother). A panel link closes the panel first, so the
+anchor's glide runs unpaused. Reduced motion opens and closes instantly. A breakpoint or
+motion-toggle rebuild closes it.
 
 The rail lives **outside** `#smooth-content` (§6.1). Inside it, the smoother's transform would drag
 it up the page.

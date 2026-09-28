@@ -136,7 +136,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       card — see SESSIONS.md); progress readout never lags; cards are never scaled; LOW drops
       tether and sheen.
 
-- [ ] 9a. Nav rail — design.md §9.9
+- [x] 9a. Nav rail — design.md §9.9
       Scope: `sections/nav.js`. Shrink via `toggleClass`, which also drives §6.2's at-rest → compact
       ground, blur and bottom hairline fade. Active indicator per section: a static first placement
       at boot (CP3 hides it as `display: none` while it's still a child of `.rail__nav`), then Flip
@@ -259,7 +259,7 @@ level.**
 | §9.6 LATTICE | 7b (done, incl. E25's edges, E40's part; arrow keys deferred, not built); "4.6:1" → E21 |
 | §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch, incl. E37's card part, E41 — done) · 8b (focus incl. E7, deep links incl. E44, hover incl. E42, tether incl. E43, readout, reduced/LOW branches — done) |
 | §9.8 LINK | 9b (E40's row-label part; exposure uniform → 10; E8 moot — chips removed in 8b's session) |
-| §9.9 Navigation rail | 9a (incl. E3's `power3.out`, E40's item-hover part; `--sweep` spec text → E13) |
+| §9.9 Navigation rail | 9a (incl. E3's `power3.out`, E40's item-hover and panel-item part — done); `--sweep` spec text → E13 |
 | §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
 | §10.1 Motion preference | 4 (resolution, done) · each checkpoint's reduced branch (cross-cutting; nav indicator row → 9a) · chain row → 6a via E1 · 11a audit |
 | §10.2 Quality tiers | 6a (incl. E1) · 11a verification |
@@ -286,7 +286,7 @@ resolved.
 |---|---|---|---|---|
 | E1 | §10.1 vs §10.2 | Reduced motion: "one static frame rendered, then the ticker callback is removed" vs "forced to `NONE` when `signals.motion === 'reduced'`", which removes the canvas | 6a | resolved by 6a — §10.1 wins: the chain is drawn but never animated (no ticker callback), redrawn only on scroll/resize so the guard holds; tier unaffected |
 | E2 | §5.2 vs §12.2 | Fonts "in `src/fonts/`, imported from CSS so Vite fingerprints them" vs `public/fonts/*-v1.woff2`, deliberately unhashed. 5a's scope already follows §12.2 | 5a | resolved by 5a — `public/fonts/*-v1.woff2`, unhashed, per §12.2 |
-| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | 5b's part resolved by 5b — breathing is a true sine computed per frame on the ticker, no eased tween; 6a's part resolved by 6a — ripple `env = (1 − τ/1.2)²` computed per frame; 9a open |
+| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | 5b's part resolved by 5b — breathing is a true sine computed per frame on the ticker, no eased tween; 6a's part resolved by 6a — ripple `env = (1 − τ/1.2)²` computed per frame; resolved by 9a — the indicator Flip uses `mask` |
 | E-ease | §9.4–§9.8 tables | An Ease column of "—" (button labels, scroll cue, section index, plate row labels, node labels, colophon rows) is undefined, and §9.10's micro-state table has no Ease column at all (CSS transitions, so the rule must also give `cubic-bezier` forms, as §9.9 does for `ease.metal`); GSAP's default `power1.out` is not on the §9.2 list. Settle the rule once (`none`, or a `gsap.defaults` ease); it is cross-cutting after that | 5b | resolved by 5b — "—" means `glyph`, written out; `gsap.defaults({ ease: 'none' })`; CSS `--ease-mask/glyph/metal` tokens (§9.2), §9.10 gained an Ease column; existing CSS `ease` keywords are converted by their owners (9a, 9b), audited by 11b |
 | E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | resolved by 5b — scrubs are `none` with no exception; the aperture closes linearly |
 | E5 | §6.5 vs §5.3 / §4.3 | Node label "mono label in `--silver`" vs `--silver-light` (dimmable, AA at the floor). Code already follows §5.3 (`components.css`, `.node__label`) | 11b (text) | resolved in code by 3 |
@@ -324,7 +324,7 @@ resolved.
 | E37 | §9.5, §9.7 (E25's mechanism) | `.chamfer`'s path `M0 0 L24 24` carries `pathLength="100"` but is 24√2 ≈ 33.94 long: DrawSVG writes its dash in real units, the browser reads them in `pathLength` units, so the draw stops at 34 %. The plate's frame paths are exactly 100 long, so DrawSVG is right there | 7a (plate) · 8a (§9.7 card chamfers) | resolved — 7a: the plate's chamfer tweens `stroke-dasharray '0 100' → '100 0'`, as the hero ring does; 8a: the card chamfers do the same (3τ, mask, at 6τ), no DrawSVG |
 | E38 | §6.5 × §7.5 | The wireframe arranges the clusters 2×2, but §7.5's fallback roots are four distinct left-to-right X values, and a 2×2 sends the lower row's branch chains through the upper clusters (6b's log); with capsules up to 217 px, four across only fits wide screens | 7b | resolved by 7b — four across where the measured spans fit (≥ ~1280 px), 2×2 otherwise; each cluster its own lattice (no edge leaves one), packed a gutter apart, rows on a shared lattice row |
 | E39 | §6.5 | The wireframe draws horizontal edges, but the text allows only 30°/150°/90°, and claims integer basis combinations give those axes "therefore" (`b₁ − b₂` is horizontal); a one-step 30° neighbour is narrower than most capsules | 7b | resolved by 7b — edges are `k·b₁`, `k·b₂`, `k·(b₁+b₂)` only; the wireframe is topology; rows and same-row nodes two units apart; three wireframe edges replaced by the nearest legal ones |
-| E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9b, 9a open |
+| E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover and panel item entrance) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9a's part resolved by 9a — rail item hover `font-weight 400 → 560` (1τ `--ease-glyph`, no reflow: mono advances are weight-independent), panel items `font-weight 300 → 400`; 9b open |
 | E41 | §9.7 vs §6.6 / §3.4 | `D = track.scrollWidth − window.innerWidth`, but `#works` is capped at `--container-wide` (1568 px): above that the clipped viewport is narrower than the window, so the cards cut off at an invisible line up to ~176 px in from each screen edge (over a chain that runs full width, §7.5), and the track travels `innerWidth − 1568` px too far | 8a | resolved by 8a — full-bleed while pinned: the viewport spans the window's layout width (`clientWidth`), the leading pad grows so card 01 stays on the header's edge, `D = scrollWidth − viewport.clientWidth` |
 | E42 | §9.7 vs §1.3 I2 / §4.3 | The card hover sheen sweeps `--silver-sheen` (0.55 `--chrome` peak) over the card's text: under the band the `--blue-lift` "github ↗" drops to 1.23:1 and body copy to 2.10:1 on `--graphite`, against I2 (E35's problem, on the cards) | 8b | resolved by 8b — E35's cap: the sheen layer runs at opacity 0.22, `--blue-lift` 4.62:1, body 7.89:1 at the peak |
 | E43 | §9.7 × §7.3 / §7.5 | "3 links from spine to the card's left edge", but the horizontal spine runs ≈ 250 px below the cards at 1440×900 and 3 links at §7.3's pitch span ≈ 85 px; stretched to reach, they hang as loose rings (E32) | 8b | resolved by 8b — a 3-link stub rising from the spine at the card's left edge, at §7.3's pitch, drawn in the LATTICE branch's idle mesh (draw calls ≤ 3) |
@@ -1773,3 +1773,70 @@ Two moves stay instant, both deliberate:
 
 **Owner decision, §12.7:** total JS budget **228 → 232 KB**. The glide helper and the reduced-motion focus fix brought it 0.03 kB over 228 after trimming, and 232 leaves ~4 kB for 9a and 9b. Owner's manual tab pass on this build: good.
 
+### Checkpoint 9a — Nav rail
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 9a — Nav rail`
+
+§9.9 is built in the new `sections/nav.js`, which lives in the sections chunk (imported from `sections/index.js`). It adds the shrink, the active indicator, the item hover, and the mobile panel with its focus trap and scroll lock. All three registry branches build the same parts, and reduced motion only makes the panel instant. The rail and panel CSS in `components.css` were converted to the `--ease-*` tokens (E-ease: 9a's own keywords).
+
+**Errata decisions (user, this session):**
+- **E3 (9a's part):** the indicator Flip is 3τ `mask` (≈ expo.out), the curve §9.2 gives hairline draws. That closes every part of E3, so the §9.2 marker is gone too.
+- **E40 (9a's part):** the rail item hover is `font-weight 400 → 560`, 1τ `--ease-glyph`, with the colour on `--ease-metal`. A monospace advance doesn't change with weight, so nothing in the row moves; measured below.
+- **E40, widened:** §9.9's panel-item entrance `font-stretch 88% → 100%` was the same no-op in 9a's own material. The user chose to match the hover's axis: `font-weight 300 → 400` with the `y 24 → 0` rise. It's recorded in E40's row rather than as a new one.
+
+**My decisions where the spec is silent (all written into §9.9):**
+- **Indicator ranges.** Each section's trigger runs `top center` → `max`, and the active item is the last trigger started, resolved in one microtask per update.
+  - The first build tiled the ranges with an `endTrigger` at the next section. WORKS's end was *not* offset by the pin spacer: the indicator dropped out for most of the pin's travel (scroll ≈ 3490 → 5750 at 1440).
+  - Start-only triggers can't leave a gap.
+  - Resolving once per update makes a multi-section jump one Flip, not a hide and a re-place.
+- **In IDENTITY,** the indicator goes back to `.rail__nav`, where CP3's rule hides it. Moves from or to hidden are plain `appendChild`, and so is every move before `late()` has Flip.
+- **An interrupted Flip is finished before the next move** (`progress(1).kill()`, after `getState` has read the mid-flight box). Killing it outright left its inline `transform` / `width` behind.
+- **Shrink under reduced motion:** it still toggles, because the compact ground is what keeps the rail readable over content. §10.1's "hover: colour only" is `html[data-motion="reduced"]` resetting the weight.
+- **Panel:**
+  - GSAP tweens `--sweep` (still CP3's registered `<number>`), and the CSS transition and `.is-open { --sweep: 1 }` are gone. `.is-open` now only means "visible", and it holds until the close reverse completes.
+  - Items start at 1τ, so the fourth one lands at 5τ with the sweep.
+  - While open, `#smooth-wrapper` is `inert` and Tab / Shift+Tab cycle the toggle + panel links + panel CTA, so the menu can always be closed by keyboard.
+  - Scroll lock is `smoother.paused(true)`, or `overflow: hidden` on `<html>` under reduced motion (there's no smoother).
+  - A panel link closes the panel synchronously in its own click listener, which runs before the document-level anchor handler, so the glide runs unpaused and focus can land in the un-inerted page.
+  - A rebuild (breakpoint, motion toggle) closes the panel instantly.
+
+**A bug found and fixed while verifying:** on a rebuild, `ScrollTrigger.create` fires `onToggle` synchronously. The first version touched a `let` before its declaration, and the TDZ error aborted the rest of that branch on every 900 px crossing. The declaration now comes first.
+
+**Verified** in headless Firefox (desktop pointer prefs) against `vite preview`. chrome-headless-shell is not installed on this machine any more, so Chrome was not re-run.
+- **Indicator lands exactly.** Clicking through DOSSIER → LATTICE → WORKS → LINK → back, after each glide settles, the indicator's left / width equal the item `li`'s to 0.0 px:
+  - 1440: 502.5/75.1, 601.6/75.1, 700.7/65.1, 789.8/65.1;
+  - 1920: 742.5 … 1029.8.
+  - Mid-glide it is part-way through its Flip (`translate3d(−37.2px…)`), with no inline styles left once settled.
+  - Back at IDENTITY it's `display: none`.
+  - A MutationObserver across a full tour shows only item-to-item moves, never a hidden gap inside the pin.
+- **Before / without Flip:** with the `late-*.js` request aborted, the same tour lands on every item with the same figures.
+- **Reduced motion (OS pref):**
+  - the indicator follows every section;
+  - hover weight stays 400;
+  - the panel opens and closes instantly with `overflow: hidden`, the trap and Escape;
+  - a panel link jumps natively to WORKS.
+- **Shrink:** `.is-compact` at 80 px; compact computed height 56px, `blur(14px)`, ground `--void` / 0.72, hairline `--hairline`, all four transitions `cubic-bezier(0.5, 0, 0.5, 1)`.
+- **Hover:** weight 560, colour `--chrome`, and every item's left / width identical before and after (742.53:75.08 … 1029.83:65.13 at 1920).
+- **Panel at 800 px:**
+  - Enter on the toggle gives `aria-expanded` true, the panel not inert, the wrapper inert, and focus on "02 About".
+  - `--sweep` 0.77 at 80 ms and 1 by 900 ms, with the items staggering in (weight 347 → 400, y 12.6 → 0).
+  - A wheel of 800 px while open leaves the scroll position unchanged (paused).
+  - Tab: About → Stack → Work → Link → Dossier CTA → toggle → About. Shift+Tab reverses.
+  - Escape closes it (3τ reverse), then it's inert and hidden, focus on the toggle.
+  - Clicking "04 Work" closes the panel, unpauses, glides to `#works` and focuses it.
+  - A resize to 1100 while open closes it cleanly: no inert wrapper, `aria-expanded` false.
+- **Leaks:** motion toggle ×3 at 1440 gives OFF 2 children / 10 triggers every cycle (8b's 1 / 5, plus the shrink and four indicator triggers). ON settles at 24–25 / 24 once the once-only reveals are used up. 800 ↔ 1440 ×2 gives 31 / 24 and 29 / 24, stable.
+- **No JS** at 1440 / 900 / 640: 5 sections, 0 hidden text, no horizontal overflow, toggle / panel / indicator `display: none`, rail CTA shown.
+- **Build:**
+  - entry 4.32 + 2.47 + 58.91 = **65.70 kB** (≤ 66);
+  - sections **6.59** (was 5.66), stage 6.08, rect 0.37, late 14.55, `three` 135.68;
+  - **total 228.97 kB against ≤ 232**, leaving ~3 kB for 9b.
+
+**Carried forward:**
+- **11a:** a 900 px breakpoint crossing resets the scroll position to 0 (measured at HEAD before this checkpoint too: 2400 → 0 on 800 → 1100 px). It's the registry's `mm` rebuild, not the rail's. It sits next to 8a's "toggle OFF mid-pin" item.
+- **9b:**
+  - `.rail__cta` shares `.btn--metal`'s rule, and its `transform var(--beat-1) ease` is §9.10's `.btn--metal` micro-state, left for you to convert;
+  - the panel CTA is a `.btn--metal` too;
+  - E40's §9.8 row-label part is still open.
+- **11b:** the panel lock uses `inert` on `#smooth-wrapper`. §10.4's audit should confirm screen readers can't reach the page behind an open panel. E13 (§9.9's `--sweep / 100%` text) is untouched.
+- **Left alone, owned elsewhere:** E13 (11b), E16–E18 (10), E19 (11a), E27/E28 (11b), E40's 9b part.
