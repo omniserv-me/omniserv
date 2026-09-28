@@ -82,7 +82,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       dims/mattes behind copy; tier probe downgrades under forced LOW; colophon shows the tier;
       draw calls ≤ 3; `three` chunk ≤ 180 KB; reduced motion behaves as E1's resolution says.
 
-- [ ] 6b. Chain movement states — design.md §7.5, §3.7 (chain rows)
+- [x] 6b. Chain movement states — design.md §7.5, §3.7 (chain rows)
       Scope: every row of §7.5 except CAST's preloader behaviour (10): the IDENTITY spine entering
       from the top-left at full `A₀`; scrubbed `X` migrations for IDENTITY → DOSSIER (their ease is
       **E15**: `ease.metal` vs scrubs-are-`none`); the LATTICE four-way branch (`gl/lattice.js`,
@@ -90,7 +90,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       **E9**), with a **branch-roots setter** fed from CP3's column layout for now — 7b re-feeds it
       with the lattice-resolved root positions; the **horizontal mode API**
       (rotation to `y = −0.40·H`, phase driven by an external progress value) for 8a to bind, and
-      a way back to vertical for 8a's ≤ 900 px branch (§9.7); the LINK closed 24-link loop +
+      a way back to vertical for 8a's ≤ 900 px branch (§9.7); the LINK closed 24-link loop (34 links, **E33**) +
       colophon idle, with a `snapFinalLink()` hook for 9b. The degenerate-tangent guard at the
       loop top. The §3.4 asymmetry rule: the spine runs on the unused column side. Chain
       pointer/scroll parallax (foreground n=3, mid n=4) from 5b's depth module.
@@ -247,7 +247,7 @@ level.**
 | §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry) · 8b (readout, linking behaviour) |
 | §6.7 LINK · §6.8 Colophon | 3 (markup, copy, done) · 4 (year, toggle, tier readout, done) |
 | §7.1 Stage · §7.2 Catenary · §7.3 Links · §7.4 Material · §7.6 Guard | 6a (§7.3's degenerate-tangent guard → 6b, it fires only at the loop top) |
-| §7.5 Per-movement choreography | 6b (IDENTITY → colophon rows, incl. E9, E15; branch-roots setter) · 7b (feeds lattice-resolved roots) · 8a (bind WORKS row to pin, ≤ 900 px return to vertical) · 9b (trigger loop snap) · 10 (CAST row) |
+| §7.5 Per-movement choreography | 6b (IDENTITY → colophon rows, incl. E9, E15, E33, E34; branch-roots setter) · 7b (feeds lattice-resolved roots) · 8a (bind WORKS row to pin, ≤ 900 px return to vertical) · 9b (trigger loop snap) · 10 (CAST row) |
 | §7.7 Performance | 6a (DPR, links, clearcoat) · 10 (MSAA, post, incl. E16) · 8b (tethers) |
 | §8.1 Pass chain · §8.2 Metal pass · §8.3 Why these four · §8.4 Exposure flash | 10 (§8.4's trigger → 9b; §8.1's MED/LOW `antialias` depends on 6a's renderer decision; MED streak vs no composer → E16) |
 | §8.5 CSS grain sheet | 10 (plus the background ramp, incl. E18) |
@@ -268,7 +268,7 @@ level.**
 | §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
 | §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
 | §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
-| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 11b full audit (zstd transfer) |
+| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 11b full audit (zstd transfer) |
 | §13 Implementation order | superseded by this checklist (see note in design.md §13) |
 | §14 Open items | 11b (items 1–3; item 4 closed by 3) |
 | Appendix | reference only |
@@ -293,13 +293,13 @@ resolved.
 | E6 | §1.3 I1 | "The only text JS writes is the copyright year and the diagnostic tier readout", but the CAST counter, card index scramble, WORKS progress label and lattice cluster readout also write text. Reword to what I1 means: JS never supplies *content* | 11b (text) | open |
 | E7 | §10.4 vs §9.7 | "the WORKS pin's `focusin` handler" vs "Do not add a `focusin` listener", i.e. use the smoother's `onFocusIn` | 8b | open |
 | E8 | §9.8 | Email chips `scale 0.9→1, opacity 0→1` on row hover imply hidden chips at rest: unreachable on touch and invisible without hover, against I1/I3 and CP3's "nothing hides content" | 9b | open |
-| E9 | §7.5 × §6.5 | The LATTICE chain branch terminates at cluster root nodes, but at `s` the lattice is four plain columns with no edges; the chain's behaviour there is unspecified | 6b | open |
+| E9 | §7.5 × §6.5 | The LATTICE chain branch terminates at cluster root nodes, but at `s` the lattice is four plain columns with no edges; the chain's behaviour there is unspecified | 6b | resolved by 6b — no branch at `s` (≤ 640 px): the spine keeps its DOSSIER state through LATTICE |
 | E10 | §10.5 | Block targets a `.hairline` class that does not exist, and `.card { backdrop-filter: none }` although cards have none | 11a | open |
 | E11 | §1.4, §5.1, §12.1 | Wrong references: §1.4 "one pinned section (§6.5)" → §6.6; §5.1 "animation targets in §9.3" → §9.4; §12.1 "Three addons" lists five | 11b (text) | open |
 | E12 | §4.3, §3.2 | `--void`/`--graphite` luminances misprinted (0.0043/0.0094 → 0.0040/0.0108); `--t-5` 38.06 → 38.05 (checkpoint 2's log) | 11b (text) | resolved in code by 2 |
 | E13 | §9.9, §12.2 | `--sweep / 100%` is invalid CSS (checkpoint 3's log); `manualChunks` object form fails under vite 8 (checkpoint 1's log) | 11b (text) | resolved in code by 1, 3 |
 | E14 | §3.4 | "These three numbers match the existing CSS breakpoints" is false: the old sheet had 768/900, no 640 (checkpoint 2's log) | 11b (text) | open |
-| E15 | §7.5 vs §9.2 | The `X` migration is "a scrubbed GSAP tween … `ease.metal`", but "scrubbed animations always use `ease: 'none'`". E4 covers only §9.4's scroll-out | 6b | open |
+| E15 | §7.5 vs §9.2 | The `X` migration is "a scrubbed GSAP tween … `ease.metal`", but "scrubbed animations always use `ease: 'none'`". E4 covers only §9.4's scroll-out | 6b | resolved by 6b — scrubbed, `ease: 'none'`; `ease.metal` struck from §7.5 |
 | E16 | §7.7, §8.2 vs §8.1 | MED tier lists "Post: streak taps 3" and `uStreak` "0.6 MED", but §8.1 drops the composer entirely at MED and LOW, so no pass exists for the streak to run in; the shader also has no tap-count parameter | 10 | open |
 | E17 | §9.3 × §10.1, §10.2, §7.7 | CAST shows "the single spinning link from the WebGL stage", but its behaviour with no stage (tier NONE, WebGL failure, reduced motion forced to NONE per E1) and its exit under reduced motion are unspecified. The tier probe runs *after* first paint while CAST renders *from* it, and no rule says which tier's parameters apply until the probe resolves | 10 (with 6a's renderer decision) | open |
 | E18 | §8.5, §3.7 | "The page's background ramp" / the depth-5 "background gradient sheet" is referenced but never specified: no gradient, stops, angle or element | 10 | open |
@@ -317,6 +317,8 @@ resolved.
 | E30 | §7.4 | The env-tint snippet picks meshes by `color.l > 0.5`, but RoomEnvironment's light panels have black `color` (their light is `emissive`), so it turns the room walls blue and leaves every light white — no left/right specular split | 6a | resolved by 6a — the two far-left panels' `emissive` → `0x6C9BFF`, the rest white, walls neutral |
 | E31 | §7.2 | The ripple is written into the 9 control points (`ripple(i)`), but its constants are per link (6-link wavelength, 0.9×/link, 48 links/s); control points ≈ 6.3 links apart alias it into a whole-chain 8 Hz wobble | 6a | resolved by 6a — applied per link after sampling, `k = u·N` from the top end |
 | E32 | §7.3 × §7.7 | §7.7 cuts links to 36 (MED) / 18 (LOW), but §7.3 fixes the spacing (0.72 × diameter) and the 1.6·H span, which need 51: at LOW the links hang ~2.5 diameters apart as loose rings | 6a | resolved by 6a — 51 links at every tier; the tier cuts torus tessellation (12×48 / 10×32 / 8×24) |
+| E33 | §7.5 vs §7.3 | The LINK loop is "24-link, radius 0.17·H", but a 0.17·H circle is 1.068·H round, 34 links at §7.3's 0.72-diameter pitch: 24 links hang ≈ 1.01 diameters apart, as touching rings (E32's failure) | 6b | resolved by 6b — keep the radius, 34 links: R = 34·spacing/2π ≈ 0.171·H, so the seam closes exactly |
+| E34 | §7.5 vs §7.3 | WORKS runs "the full track width", but §7.3 fixes N = 51 from the vertical 1.6·H span: the visible width is aspect·H, so 51 interlocked links (1.616·H) only just span 16:10, and wider screens show the ends or stretch the links apart | 6b | resolved by 6b — N = ceil(length / spacing) for every curve, from a 96-instance pool; the run spans the visible width + a diameter past each edge |
 
 ## Log
 
@@ -1156,3 +1158,139 @@ are still 6b's: the spine sits at IDENTITY's `X = +0.26` on every section.
 - **11a:** the NONE path removes the canvas and nothing replaces it yet (E19).
 - **Left alone, owned elsewhere:** E3 (9a's `power3.out`), E15/E9 (6b), E16/E17/E18 (10), E19
   (11a), E28 (11b).
+
+### Checkpoint 6b — Chain movement states
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 6b — chain movement states`
+
+Every §7.5 row except CAST's is built. The new files are:
+- `gl/movements.js`: the per-boundary states, in the stage chunk.
+- `gl/lattice.js`: the branch mesh.
+- `sections/chain.js`: a small entry shim (+0.10 kB) that registers the chain as a movement.
+
+The stage chunk arrives after `boot()`, so `setChainBuilder()` builds into the live `chain`
+context with `gsap.context().add()`. A function returned from `add()` joins the context's cleanups
+(checked in `gsap-core.js`), and a `gsap.matchMedia()` made inside it is reverted with it. So
+checkpoint 4's rule holds: every trigger lives in a registered context. `rect.js` now exports
+`docOffset`. §12.2 lists the two new files.
+
+**Errata decisions (user, this session):**
+- **E9:** there's no branch at `s`. The spine keeps DOSSIER's state through LATTICE. It's a nested
+  `matchMedia('(min-width: 641px)')` inside the branch, so crossing 640 px toggles only the branch
+  (verified: 800 → 600 → 800 inside the lattice gives branch 1 → 0 → 1).
+- **E15:** scrubbed, `ease: 'none'`. The user followed E4's "no exception".
+- **New E33:** 34 links at radius `34·spacing/2π = 0.1714·H`. Measured: exactly 34 links, radius
+  spread 0, every gap exactly one link, ω = 0.120 rad/s.
+- **New E34:** `N = ceil(length / spacing)` for every curve, from a 96-instance pool. Link `i` sits
+  at `mod(i + phase, 96)·spacing` and is hidden past the curve's end. That replaces 6a's `u = (i +
+  phase)/51`, and at rest the spine still shows 51. The horizontal run shows **54 links at 16:10,
+  60 at 16:9 and 78 at 21:9**.
+- **Owner decision, §12.7:** the total JS budget goes **220 → 224 KB**.
+
+**My decisions where the spec is silent (all written into §7.5 unless noted):**
+- **Trigger windows:**
+  - X, `h` and the coil run while their boundary crosses the view (`top bottom → top top`; LINK
+    `→ top center`).
+  - The loop's §3.7 scroll parallax (×4, 45.25 px) spans `#link` `top bottom → bottom top`.
+  - The branch is active while `[data-lattice]`'s top is between 80 % and 10 % of the view. The
+    first try used `#lattice` `top/bottom center`, which left nothing drawn once the roots had
+    scrolled off the top.
+- **The bow keeps pointing toward screen centre.** It's tweened `−1 → +1` with X, so the chain
+  swings across straight mid-migration.
+- **The horizontal mode is a real rotation of the curve's frame:**
+  - clockwise by `h·90°`, so the top end goes right and links travel left with the track;
+  - the pivot lerps to `(0, −0.40·H)`, and the span to the visible width plus 2 diameters;
+  - the sag lerps to "downward".
+
+  §7.5's "hangs downward between card anchors" names anchors that don't exist, so it's one
+  catenary across the run. **8b's tethers** are where cards meet the chain.
+- **The coil:** the middle stretch of the open chain maps onto the circle from the loop top,
+  clockwise. Positions and tangents are blended per link, and links outside that stretch shrink
+  with `1 − loop`. Mid-coil the two tips bunch before they meet, which I judged acceptable for a
+  transient. The zero-tangent case the blend creates takes the nearer pose's tangent. That's the
+  §7.3 guard 6b owned, since `UP = (0,0,1)` never degenerates for the xy-plane curves themselves.
+- **The ripple** acts along the in-plane normal, so it stays lateral on the horizontal run.
+- **The crossfade is by scale on both meshes.** The material is opaque metal, so "fades out" is
+  per-instance scale 1→0, and the primary mesh is hidden when it reaches 0. Draw calls are **1**
+  (2 only mid-crossfade).
+- **Branch chains hang from their roots:**
+  - They run from just above the viewport to the root node's centre, following its live screen y
+    (document px − `scrollTop`), and they're drawn behind the node's `--void` capsule.
+  - Links are laid at the pitch upward from the root, with no conveyor.
+  - The bow points toward centre, scaled by length.
+  - The pool is 4 × 36.
+  - Roots now come from CP3's columns (each cluster's first `.node`), re-fed on every refresh.
+- **Parallax (§3.7):**
+  - The spine, run and loop are `chainFore` (n=3). Measured at the pointer's corners: ±11.31 px,
+    inverted.
+  - The branches are `chainMid` (n=4), tapered to 0 over the 8 links nearest each root so they
+    stay attached.
+  - Scroll parallax goes only on the loop. The spine's scroll response is its conveyor, and a
+    y-shift of a band that spans the screen would be invisible. Nothing moves under reduced motion.
+- **IDENTITY entrance:** the curve's offset goes from `(−0.35·W, +1.0·H)` → 0 over 13τ `mask`,
+  once per page load and only when the page opens within half a viewport of the top. It plays with
+  the 8τ fade-in.
+- **Reduced motion:** there are no scrubs or crossfades. Four start-only triggers set each section's
+  final state on crossing (read off the scroll, not `isActive`, since `end: 'max'` didn't hold them
+  to the page end), then `redraw()` runs. The WORKS pin doesn't exist there, so the chain stays
+  vertical. The loop is static.
+- **`snap` is a reserved GSAP tween property**, so a tween of `{ snap: 1.14 }` silently does
+  nothing. The seat scale is `state.seat`.
+
+**APIs for later checkpoints** (all on `getStage()`):
+- **7b:** `setBranchRoots([{ x, y }] | null)` takes root centres in document px. Replace
+  `columnRoots()` in `gl/movements.js` (it's re-fed on every `ScrollTrigger` refresh) with the
+  lattice's resolved roots. At `m` the CP3 2×2 grid sends the lower row's branches through the
+  upper clusters and their labels; the lattice geometry should fix that. Cluster labels and nodes
+  aren't `[data-copy]`, so the guard doesn't dim links behind them.
+- **8a:** `drive(px | null)` locks the phase to the track's travel, set directly with no spring.
+  Engaging and releasing each capture an offset, so neither jumps. Measured: 1000 px of drive =
+  35.073 links at 900 px tall, which is exactly `1000 / (0.72·0.044·900)`. The rotation to
+  horizontal is already scrubbed here (desktop branch only), and the ≤ 900 px branch never leaves
+  vertical. **8a doesn't need to switch it back.** The chain's triggers are created after boot, so
+  after the pin exists check that they refresh after it (`refreshPriority` or `ScrollTrigger.sort()`).
+- **9b:** `snapFinalLink()` seats the link at the loop's seam (1 → 1.14 → 1, 1τ + 1τ, `chain`) and
+  returns the timeline. It returns `null` under reduced motion or before the loop has closed.
+  Measured: 1.148, 1.152, 1.078, 0.995, 0.986, 1 at 40 ms steps.
+- **10:** the entrance should start at CAST instead of at stage init.
+- **11a:** at NONE there's still no fallback (E19). On portrait phones §7.5's loop (X +0.30, R
+  0.17·H) sits over the LINK rows, dimmed by the guard. It's legible but crowded; it's worth a look
+  in the §10.1/§10.2 audit.
+
+**Verified** in headless Firefox (desktop pointer prefs) and chrome-headless-shell 154 (SwiftShader),
+against `vite preview`:
+- **Build:**
+  - entry `index` 5.80 + `easings` 58.91 = **64.71 kB** against ≤ 66;
+  - stage chunk 5.71 kB (was 3.50);
+  - `three` 135.68;
+  - late 14.55;
+  - **total 220.65 kB against ≤ 224**;
+  - CSS 5.53.
+- **Migrates, never cuts:**
+  - 150 even steps (27 px) over the whole page at 1440×900, with each mesh's scale-weighted centroid
+    measured separately.
+  - No step without a visible chain, and no NaN matrices.
+  - The largest step, 51 px, is in the LINK coil, where one step is 6 % of the coil.
+  - Mid-transition screenshots of X, `h`, the coil (30 %, 60 %) and the branch crossfade look
+    continuous.
+- **Per section** (1440 / 800 / 390): x 0.26 → −0.28, the branch (56 links at 1440, 64 at 800, none
+  at 390), `h` 1 at WORKS on desktop only, the loop at LINK and the colophon.
+- **Branch:** the chains end at each column's first node, at 1440 and 800.
+- **§3.4:**
+  - At 1440 the IDENTITY links cover x 994–1059 px (link edges), in the gutter between the tagline
+    (right edge 906) and the portrait (1074). At 1280: 883–941 between 824 and 988.
+  - DOSSIER: 354–418 against the copy's left edge at 522 (315–371 against 444 at 1280).
+- **Forced LOW:** both meshes at 384 tris. Chrome at 6× CPU probes MED: 640 tris, AA on, no errors.
+- **Leaks (Firefox):**
+  - Motion toggle ×3: **28 children / 11 triggers ON, 1 / 5 OFF** every cycle. That's 6a's 6
+    triggers plus 5 chain triggers ON; OFF adds reduced's 4.
+  - Toggles inside LATTICE and LINK keep the state (branch 1, loop 1).
+  - 5 resizes 1440 ↔ 1000 and two 800/600/1440 rounds: the trigger count is stable at 11/10/9, no
+    errors.
+- **Reduced motion (OS pref):** 0 renders over 1 s idle, 1 render per scroll. The states at DOSSIER,
+  LATTICE, WORKS, LINK and the colophon are −0.28 / branch / −0.28 / loop / loop.
+- **LCP** is still `.hero__text`, at 40 ms (276 ms at 6×). **CLS** is 0.011 (0.023 at 6×), all E28's
+  width morph as in 6a.
+- **No JS** at 1440/900/640: 5 sections, no hidden text, no overflow.
+
+**Left alone, owned elsewhere:** E3 (9a), E16/E17/E18 (10), E19 (11a), E25 (7b), E27/E28 (11b).

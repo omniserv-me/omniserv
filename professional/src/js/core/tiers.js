@@ -17,9 +17,9 @@ import { coarseQuery } from '../util/prefers.js';
 
 /* §7.7. msaa is read by the composer (checkpoint 10); antialias is the
    renderer's own flag, on wherever there is no composer to supply it (§8.1).
-   segments = the torus's [radial, tubular] tessellation. Every tier keeps all
-   51 links (errata E32, 6a): fewer links cannot both interlock and span the
-   1.6·H curve, so the tier cuts triangles per link instead. */
+   segments = the torus's [radial, tubular] tessellation. Every tier keeps the
+   full link count (errata E32, 6a; E34, 6b): fewer links cannot both interlock
+   and span a curve, so the tier cuts triangles per link instead. */
 export const TIERS = {
   HIGH: { dpr: 2,   segments: [12, 48], clearcoat: true,  msaa: 4, antialias: false },
   MED:  { dpr: 1.5, segments: [10, 32], clearcoat: false, msaa: 0, antialias: true },

@@ -17,6 +17,7 @@ import { boot as bootRegistry } from './core/registry.js';
 import { scrollToHash, bindAnchors } from './core/smoothscroll.js';
 import { resolveMotion } from './util/prefers.js';
 import './sections/hero.js';
+import './sections/chain.js';   // §7.5 — registers now; its build arrives with the stage chunk
 import { initFooter } from './sections/footer.js';
 import { loadLate } from './core/lazy.js';
 

@@ -1098,8 +1098,8 @@ which is not a coincidence: the portrait frame and the link aperture are the sam
 |---|---|
 | Uniform scale `s` | `0.044·H / 1.28` → outer diameter = 4.4 % of viewport height |
 | Arc spacing | `0.72 × outerDiameter` = `0.0317·H` — closer than one diameter, so links visibly interlock |
-| Link count `N` | `ceil(1.6·H / spacing)`, clamped `[18, 51]`; ≈ 51 by this formula. `H` is set only by the fixed FOV/camera distance (§7.1), not by `window.innerHeight` in px, so this value is constant across viewport sizes — and across tiers: fewer links could not both interlock and span the curve, so the tier cuts tessellation instead (§7.7) |
-| Instancing | one `THREE.InstancedMesh`, `DynamicDrawUsage` on the matrix attribute |
+| Link count `N` | `ceil(length / spacing)` for **every** curve: the spacing is fixed and the count follows the curve. The vertical spine (1.6·H) carries ≈ 51. The horizontal WORKS run (visible width + a diameter past each edge, §7.5) carries more on wider screens: ≈ 54 at 16:10, 60 at 16:9, 78 at 21:9. The LINK loop carries 34. `H` is set only by the fixed FOV/camera distance (§7.1), not by `window.innerHeight` in px, so the vertical count is constant across viewport sizes. It is also constant across tiers: fewer links could not both interlock and span the curve, so the tier cuts tessellation instead (§7.7) |
+| Instancing | one `THREE.InstancedMesh` of a **96-instance pool** (the horizontal run's count up to ≈ 2.9:1), `DynamicDrawUsage` on the matrix attribute. Link `i` sits at arc position `mod(i + phase, 96) · spacing` and is drawn only while that lies on the curve; unused instances are scaled to 0 |
 
 **Orientation — alternating, as a real chain.** Each link's plane contains the curve tangent, and
 consecutive links are rotated 90° about it:
@@ -1121,7 +1121,10 @@ parallel to the tangent at every bow apex, and `(1,0,0)` to the whole WORKS hori
 links then read edge-on and odd links face-on. Every curve on the page (spine, branches, the
 horizontal run, the LINK loop) lies in the xy-plane, so `T` is never parallel to `UP`; still guard
 the degenerate case (cross product → zero vector) by falling back to `(1,0,0)` for that frame, in
-case a curve is ever tilted out of the plane.
+case a curve is ever tilted out of the plane. The degenerate case that *does* occur is in the
+coil into the loop (§7.5): each link's tangent is blended between the open curve and the loop, and
+where the two oppose, on the loop's far side mid-coil, the blend collapses to zero. There the
+link takes the nearer pose's tangent.
 
 ### 7.4 Material and light
 
@@ -1166,18 +1169,23 @@ No shadow maps. Nothing casts onto anything.
 
 ### 7.5 Per-movement choreography
 
-`X` is the spine's lateral anchor as a fraction of visible world width (0 = centre). It is the one
-chain property that *is* tweened: a scrubbed GSAP tween on a plain object per section boundary,
-`ease.metal` (§9.2) *(errata E15)*, so the chain visibly migrates between movements rather than cutting.
+`X` is the spine's lateral anchor as a fraction of visible world width (0 = centre). It is tweened,
+along with the other movement states below: a scrubbed GSAP tween on a plain object per section
+boundary, `ease: 'none'` like every scrub (§9.2), so the chain visibly migrates between movements
+rather than cutting. Each scrub runs while its boundary crosses the viewport (the next section's
+`top bottom → top top`; into LINK, `top bottom → top center`), and each starts where the previous
+one ended. ScrollSmoother's own smoothing and the chain's spring-driven phase supply the weight a
+curve would have. The bow keeps pointing toward screen centre, so it swings from −x to +x during
+IDENTITY → DOSSIER.
 
 | Movement | `X` | State |
 |---|---|---|
 | 00 CAST | — | one link only, centred, spinning at ω = 0.6 rad/s, roughness 0.60 → 0.12 |
 | 01 IDENTITY | `+0.26` | full spine enters from the top-left, bowing at full `A₀`; runs the gutter between tagline and portrait |
 | 02 DOSSIER | `−0.28` | migrates into the left margin (cols 2–4), vacated now that copy and fact plate both sit in the alternated content block on the right (§3.4, §6.4); the readability guard (§7.6) still applies if a link ever crosses behind copy |
-| 03 LATTICE | branch *(errata E9)* | spine splits into **four** short chains at `X = −0.30, −0.10, +0.14, +0.32`, one per cluster, each terminating at its cluster root node. Cross-faded over 8τ by animating a second `InstancedMesh`'s per-instance scale 0→1 while the primary fades out |
-| 04 WORKS | horizontal | the spine rotates to horizontal at `y = −0.40·H` and runs the full track width; **phase binds to the pin's horizontal progress instead of scrollY**, so cards and links travel locked together. Sag axis rotates with it — the chain now hangs *downward* between card anchors |
-| 05 LINK | loop | coils into a **closed 24-link loop**, radius `0.17·H`, centred at `X = +0.30`, rotating at ω = 0.12 rad/s. The curve is swapped for a `THREE.EllipseCurve` wrapped as a closed `CatmullRomCurve3`; `sag` is forced to 0 |
+| 03 LATTICE | branch | spine splits into **four** short chains at `X = −0.30, −0.10, +0.14, +0.32`, one per cluster, each terminating at its cluster root node. The actual root positions come from the lattice through a roots setter, and these X values are the fallback. Each chain hangs from just above the viewport to its root, with links laid from the root upward, so it shortens off the top as the lattice scrolls. The branch is active while the roots are on screen (the node grid's top edge from 80 % to 10 % of the viewport). Cross-faded over 8τ (`metal`, a timed crossfade, not a scrub) by animating a second `InstancedMesh`'s per-instance scale 0→1 while the primary's scales 1→0. **At `s` (≤ 640 px) there is no branch**: the lattice is plain columns there (§6.5), so the spine keeps its DOSSIER state through LATTICE |
+| 04 WORKS | horizontal | the spine rotates (clockwise, a real rotation of the curve's frame) to horizontal at `y = −0.40·H` and runs the full visible width plus one link diameter past each edge, so it needs more links on wider screens (§7.3); **phase binds to the pin's horizontal progress instead of scrollY**, so cards and links travel locked together. Sag axis rotates with it — the chain now hangs *downward* in one catenary across the run. Only above 900 px; below it there is no pin and the chain stays vertical (§9.7) |
+| 05 LINK | loop | coils into a **closed 34-link loop**, radius `34 · spacing / 2π ≈ 0.171·H`, so the links interlock at §7.3's pitch, centred at `X = +0.30`, rotating at ω = 0.12 rad/s. The stretch of the open chain nearest its middle maps onto the circle, from the loop top, clockwise; each link's pose is blended from the open curve to the circle as the scrub advances, and links outside that stretch shrink away. `sag` is forced to 0 |
 | colophon | loop | loop idles, unchanged |
 
 The loop closing at `05 LINK` is the page's ending: a chain that has run the whole document
@@ -1224,8 +1232,9 @@ smoothed scroller moves content every frame and the reads would force layout eac
 
 ### 7.7 Performance
 
-51 links × 1152 tris ≈ 58.8 k triangles in one instanced draw call — negligible. The costs that
-matter are pixel-bound, so they scale by tier (§10.2). Every tier keeps all 51 links (§7.3); the
+≈ 51–78 links × 1152 tris ≈ 59–90 k triangles in one instanced draw call, plus the LATTICE branch's
+second mesh (≤ 144 instances) while it is visible — negligible. The costs that matter are
+pixel-bound, so they scale by tier (§10.2). Every tier keeps the full link count (§7.3); the
 torus tessellation (`TorusGeometry(0.5, 0.14, radial, tubular)`) drops instead:
 
 | Tier | DPR | Segments (tris/link) | MSAA | Post | Clearcoat | Tethers |
@@ -2154,7 +2163,8 @@ professional/
       core/      easings.js  signals.js  smoothscroll.js  split.js  tiers.js
                  registry.js  late.js  lazy.js
       sections/  preloader.js nav.js hero.js about.js stack.js projects.js contact.js footer.js
-      gl/        stage.js  chain.js  lattice.js
+                 chain.js     ← registers the chain's movement states (built by gl/movements.js)
+      gl/        stage.js  chain.js  lattice.js  movements.js
       gl/passes/ metal.js
       util/      scramble.js  rect.js  lerp.js  prefers.js
 ```
@@ -2286,7 +2296,7 @@ reads as if it were doing something.
 | Entry JS chunk (compressed) | ≤ 66 KB |
 | Late plugins chunk — Flip + MorphSVG (compressed, idle after `load`) | ≤ 16 KB |
 | `three` chunk (compressed) | ≤ 180 KB |
-| Total JS (compressed) | ≤ 220 KB |
+| Total JS (compressed) | ≤ 224 KB |
 | CSS (compressed) | ≤ 14 KB |
 | Fonts (3 × variable woff2, subset) | ≤ 140 KB |
 | LCP (hero name, cable) | < 2.0 s |
@@ -2303,6 +2313,10 @@ and depth modules brought the entry to 64.0 KB: that headroom was the hero's. Se
 the fold (DOSSIER onward) should load as their own chunk right after boot rather than grow the
 entry further; the total JS budget still governs. The entry is a deferred module, so its size
 moves when motion starts, not when the hero paints.
+
+The total was 220 KB until checkpoint 6b: `three` alone is ~136 KB, and the chain's movement
+states (the LATTICE branch, the horizontal run, the loop) brought the total to 220.7 KB. Raised to
+224 KB by owner decision (2026-09-28). Checkpoint 10's composer passes need their own decision.
 
 The ordering rule: **the hero must be readable before the stage exists.** The canvas starts at
 `opacity: 0` and is faded in once the first frame has rendered, so WebGL initialisation can never

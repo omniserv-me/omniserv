@@ -19,15 +19,22 @@
 
    Reduced motion (errata E1, 6a): the chain is drawn but never animated. No
    ticker callback; the frame is redrawn only on scroll and resize, so the
-   readability guard (§7.6) keeps dimming links as copy scrolls past them. */
+   readability guard (§7.6) keeps dimming links as copy scrolls past them.
+
+   The movement states (§7.5) are gl/movements.js, installed into the chain's
+   registered context (sections/chain.js) once the stage exists. */
 
 import { WebGLRenderer, PerspectiveCamera, Scene, NoToneMapping, SRGBColorSpace, MathUtils } from 'three';
 import { gsap, ScrollTrigger, T, ease } from '../core/easings.js';
 import { velocity, motion } from '../core/signals.js';
 import { getSmoother } from '../core/smoothscroll.js';
 import { TIERS, forcedTier, probe, setTier } from '../core/tiers.js';
+import { pointerOffset } from '../core/depth.js';
 import { measureCopy, copyRects } from '../util/rect.js';
+import { setChainBuilder } from '../sections/chain.js';
 import { createChain } from './chain.js';
+import { createLattice } from './lattice.js';
+import { movements } from './movements.js';
 
 const FOV = 32;
 const CAM_Z = 10;
@@ -66,6 +73,7 @@ export async function initStage() {
   const camera = new PerspectiveCamera(FOV, innerWidth / innerHeight, 0.1, 200);
   camera.position.z = CAM_Z;
   const chain = createChain(scene, H);
+  const lattice = createLattice(scene, H, chain.mat);
 
   let tier = forced ?? 'HIGH';
   let renderer;
@@ -79,14 +87,23 @@ export async function initStage() {
     renderer.setPixelRatio(Math.min(devicePixelRatio, TIERS[t].dpr));
     renderer.setSize(innerWidth, innerHeight, false);   // CSS owns the canvas box
     chain.setTier(TIERS[t]);
+    lattice.setTier(TIERS[t]);
   };
 
   measureCopy();
   const vw = () => innerWidth;
   const vh = () => innerHeight;
   const frameVars = {
-    dt: 0, time: 0, v: 0, scrollY: 0, scrollTop: 0, W: 0, vw: 0, vh: 0,
-    camera, rects: null, still: false,
+    dt: 0, time: 0, v: 0, scrollY: 0, scrollTop: 0, W: 0, vw: 0, vh: 0, unitsPerPx: 0,
+    fore: [0, 0], mid: [0, 0], camera, rects: null, still: false,
+  };
+  /* §3.7: the chain's pointer parallax through the one depth module, CSS px
+     (y down) → world units (y up). Frozen at rest under reduced motion. */
+  const toWorld = (layer, out, still) => {
+    if (still) { out[0] = out[1] = 0; return; }
+    pointerOffset(layer, out);
+    out[0] *= frameVars.unitsPerPx;
+    out[1] *= -frameVars.unitsPerPx;
   };
 
   function draw(dt, time, still) {
@@ -99,9 +116,13 @@ export async function initStage() {
     o.vw = vw();
     o.vh = vh();
     o.W = H * camera.aspect;
+    o.unitsPerPx = H / o.vh;
     o.rects = copyRects();
     o.still = still;
+    toWorld('chainFore', o.fore, still);
+    toWorld('chainMid', o.mid, still);
     chain.update(o);
+    lattice.update(o, chain.state.branch);
     renderer.render(scene, camera);
     if (import.meta.env.DEV && renderer.info.render.calls > 3) {
       console.warn(`stage: ${renderer.info.render.calls} draw calls (§7.7 budget ≤ 3)`);
@@ -174,6 +195,27 @@ export async function initStage() {
     if (mode !== 'full') requestStill();
   });
 
+  stage = {
+    get renderer() { return renderer; },
+    get canvas() { return canvas; },
+    get tier() { return tier; },
+    get mode() { return mode; },
+    scene, camera, chain, lattice, H,
+    /* Redraw once under reduced motion (after a gsap.set on chain.state).
+       Under full motion the ticker already redraws every frame. */
+    redraw() { if (mode !== 'full') requestStill(); },
+    /** §7.5 LATTICE — [{ x, y }] root-node centres in document px (7b). */
+    setBranchRoots: lattice.setRoots,
+    /** §7.5 WORKS — the pinned track's travel in px, or null (8a). */
+    drive: chain.drive,
+    /** §9.8 — the loop's final link seats; returns the timeline (9b). */
+    snapFinalLink: () => (mode === 'full' ? chain.snapFinalLink() : null),
+  };
+
+  /* §7.5 — the movement states, before the first visible frame, so the
+     IDENTITY entrance starts from its offset rather than from rest. */
+  setChainBuilder(movements(stage));
+
   /* §12.7 — the first frame is rendered before the canvas is shown, then it
      fades in over 8τ (a crossfade: metal). Reduced motion shows it at once. */
   draw(0, gsap.ticker.time, motion.value !== 'full');
@@ -183,17 +225,6 @@ export async function initStage() {
     gsap.set(canvas, { opacity: 1 });
   }
   motion.subscribe(setMode);
-
-  stage = {
-    get renderer() { return renderer; },
-    get canvas() { return canvas; },
-    get tier() { return tier; },
-    get mode() { return mode; },
-    scene, camera, chain, H,
-    /* Redraw once under reduced motion (6b: after gsap.set on chain.state).
-       Under full motion the ticker already redraws every frame. */
-    redraw() { if (mode !== 'full') requestStill(); },
-  };
   return stage;
 }
 

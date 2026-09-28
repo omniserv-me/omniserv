@@ -12,7 +12,7 @@
 
 let rects = [];
 
-function docOffset(el) {
+export function docOffset(el) {
   let x = 0;
   let y = 0;
   for (let n = el; n; n = n.offsetParent) {
