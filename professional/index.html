@@ -307,7 +307,7 @@
                   </svg>
                   <header class="card__head">
                     <p class="card__index mono">01</p>
-                    <h3 class="card__title" data-split="title">Omniserv</h3>
+                    <h3 id="work-01-h" class="card__title" data-split="title">Omniserv</h3>
                   </header>
                   <p class="card__kicker mono">Self-hosted <span aria-hidden="true">·</span> Infrastructure</p>
                   <p class="card__body" data-copy>
@@ -328,48 +328,53 @@
                 </article>
               </a>
 
-              <!-- No public link (§14 item 3), so no anchor and no hover lift. -->
-              <article class="card" id="work-02" data-card>
-                <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M0 0 L24 24" pathLength="100"/>
-                </svg>
-                <header class="card__head">
-                  <p class="card__index mono">02</p>
-                  <h3 class="card__title" data-split="title">uWeMe</h3>
-                </header>
-                <p class="card__kicker mono">Startup <span aria-hidden="true">·</span> Mobile MVP
-                  <span aria-hidden="true">·</span> 06.2024 – 10.2024</p>
-                <p class="card__body" data-copy>
-                  Took an initial prototype to a functional MVP: stripped placeholders, resolved
-                  core bugs, engineered both ends — Flutter front, Golang back. Shipped into the
-                  Apple ecosystem through TestFlight.
-                </p>
-                <ul class="card__tags">
-                  <li class="tag">Golang</li>
-                  <li class="tag">Flutter/Dart</li>
-                  <li class="tag">TestFlight</li>
-                </ul>
-              </article>
+              <!-- No public link (§14 item 3), so no anchor and no hover lift. Still a tab
+                   stop: the wrapper sits outside the card's clip-path, so its ring shows. -->
+              <div class="card__stop" tabindex="0" role="group" aria-labelledby="work-02-h">
+                <article class="card" id="work-02" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">02</p>
+                    <h3 id="work-02-h" class="card__title" data-split="title">uWeMe</h3>
+                  </header>
+                  <p class="card__kicker mono">Startup <span aria-hidden="true">·</span> Mobile MVP
+                    <span aria-hidden="true">·</span> 06.2024 – 10.2024</p>
+                  <p class="card__body" data-copy>
+                    Took an initial prototype to a functional MVP: stripped placeholders, resolved
+                    core bugs, engineered both ends — Flutter front, Golang back. Shipped into the
+                    Apple ecosystem through TestFlight.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">Golang</li>
+                    <li class="tag">Flutter/Dart</li>
+                    <li class="tag">TestFlight</li>
+                  </ul>
+                </article>
+              </div>
 
-              <!-- No link (§14 item 2). -->
-              <article class="card" id="work-03" data-card>
-                <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M0 0 L24 24" pathLength="100"/>
-                </svg>
-                <header class="card__head">
-                  <p class="card__index mono">03</p>
-                  <h3 class="card__title" data-split="title">Secure Memory Unit</h3>
-                </header>
-                <p class="card__kicker mono">Academic <span aria-hidden="true">·</span> Embedded simulation</p>
-                <p class="card__body" data-copy>
-                  Monolithic SMU module: controller logic, latency simulation, parity checking
-                  and fault-injection tests.
-                </p>
-                <ul class="card__tags">
-                  <li class="tag">C/C++</li>
-                  <li class="tag">Hardware</li>
-                </ul>
-              </article>
+              <!-- No link (§14 item 2); a tab stop, as card 02. -->
+              <div class="card__stop" tabindex="0" role="group" aria-labelledby="work-03-h">
+                <article class="card" id="work-03" data-card>
+                  <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M0 0 L24 24" pathLength="100"/>
+                  </svg>
+                  <header class="card__head">
+                    <p class="card__index mono">03</p>
+                    <h3 id="work-03-h" class="card__title" data-split="title">Secure Memory Unit</h3>
+                  </header>
+                  <p class="card__kicker mono">Academic <span aria-hidden="true">·</span> Embedded simulation</p>
+                  <p class="card__body" data-copy>
+                    Monolithic SMU module: controller logic, latency simulation, parity checking
+                    and fault-injection tests.
+                  </p>
+                  <ul class="card__tags">
+                    <li class="tag">C/C++</li>
+                    <li class="tag">Hardware</li>
+                  </ul>
+                </article>
+              </div>
 
               <a class="card__link" href="https://github.com/leoyesaulov/professional"
                  target="_blank" rel="noopener">
@@ -379,7 +384,7 @@
                   </svg>
                   <header class="card__head">
                     <p class="card__index mono">04</p>
-                    <h3 class="card__title" data-split="title">This page</h3>
+                    <h3 id="work-04-h" class="card__title" data-split="title">This page</h3>
                   </header>
                   <p class="card__kicker mono">Web <span aria-hidden="true">·</span> The thing you are looking at</p>
                   <p class="card__body" data-copy>

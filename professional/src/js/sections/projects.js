@@ -30,8 +30,8 @@
 
    Interaction (8b):
      focus       the smoother's onFocusIn hook (errata E7), never a second
-                 focusin listener: keyboard focus on a card jumps the pin so
-                 the card rests where card 01 does, unsmoothed, and cancels
+                 focusin listener: keyboard focus on any card glides the pin
+                 so the card rests where card 01 does, and cancels
                  the smoother's own scrollTo. Pointer focus (a click) moves
                  nothing — the card is already under the pointer.
      deep links  #work-01…04 (errata E44) resolve to the same pin position,
@@ -49,7 +49,7 @@ import { gsap, ScrollTrigger, T, ease } from '../core/easings.js';
 import { register } from '../core/registry.js';
 import { onSplit, widthTween } from '../core/split.js';
 import { axis, tier } from '../core/signals.js';
-import { setFocusIn, setHashTarget, getSmoother } from '../core/smoothscroll.js';
+import { setFocusIn, setHashTarget, getSmoother, glide } from '../core/smoothscroll.js';
 import { pointerParallax, scrollParallax } from '../core/depth.js';
 import { shiftCopy } from '../util/rect.js';
 import { scramble } from '../util/scramble.js';
@@ -67,11 +67,11 @@ const LABEL = label.textContent;
 const linked = [...track.querySelectorAll('.card__link')];
 
 const cardOf = (el) => {
-  const item = el?.closest?.('.card__link, [data-card]');
+  const item = el?.closest?.('.card__link, .card__stop, [data-card]');
   const card = item && (item.matches('[data-card]') ? item : item.querySelector('[data-card]'));
   return card && track.contains(card) ? card : null;
 };
-const itemOf = (card) => card.closest('.card__link') ?? card;
+const itemOf = (card) => card.closest('.card__link, .card__stop') ?? card;
 
 sectionHeader(section.querySelector('.head'), { scroll: false });
 
@@ -273,16 +273,19 @@ function pinned() {
     tetherChain(() => left + gsap.getProperty(track, 'x') - x0);
   };
 
-  /* §9.7 keyboard focus (errata E7). Keyboard focus jumps, unsmoothed, and
-     starts an entrance that has not played, so focus never sits on a card at
-     opacity 0 waiting for its trigger. Returning false cancels the smoother's
+  /* §9.7 keyboard focus (errata E7). Every card is a stop (the unlinked two
+     through .card__stop). Keyboard focus glides the pin to the card — the
+     smoother's own catch-up, so the track and chain travel there rather than
+     cut (owner's decision, overriding §9.7's `smooth: false`) — and starts an
+     entrance that has not played, so the card is never still at opacity 0 when
+     the glide lands. Returning false cancels the smoother's
      own "centre the element" for every card focus, pointer ones included. */
   let focused = null;
   setFocusIn((self, e) => {
     const card = cardOf(e.target);
     if (!card) return undefined;
     if (e.target.matches(':focus-visible')) {
-      self.scrollTo(at(card), false);
+      glide(at(card));                    // the pin scrubs the track there, never cuts
       entrances.get(card)?.play();
       if (focused !== card && e.target.classList.contains('card__link')) {
         focused = card;
@@ -347,11 +350,23 @@ function stacked() {
   return () => { cleanup(off); setHashTarget(null); };
 }
 
+/* Reduced motion: native scrolling, no smoother, so nothing else moves the
+   view on focus, and the browser's own focus scroll leaves a card that is
+   partly visible where it is (a card at the viewport's bottom edge took focus
+   there). Bring the whole card in, instantly — reduced means no animation. */
+function still() {
+  // 'nearest' is a no-op for a card already wholly in view.
+  const bring = (e) => cardOf(e.target) && itemOf(cardOf(e.target)).scrollIntoView({ block: 'nearest' });
+  track.addEventListener('focusin', bring);
+  return () => track.removeEventListener('focusin', bring);
+}
+
 register({
   name: 'projects',
-  // No saveStyles selectors (errata E27); no staticStates — nothing is hidden,
-  // so reduced motion is the authored page, and its §9.7 vertical stack is CSS
-  // (components.css, html[data-motion="reduced"]).
+  // No saveStyles selectors (errata E27). Nothing is hidden, so reduced motion
+  // is the authored page: its §9.7 vertical stack is CSS (components.css,
+  // html[data-motion="reduced"]); staticStates only keeps focus in view.
   desktopFull: pinned,
   mobileFull: stacked,
+  staticStates: still,
 });

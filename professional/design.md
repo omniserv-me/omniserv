@@ -913,6 +913,10 @@ progress with no tween — a scrubbed value must never be smoothed twice (§9.7)
 **Linking.** The whole card is the link (`<a>` wrapping `<article>`), replacing the `a.mute`
 pattern at `index.html:104`. Cards without a URL are `<article>` with no anchor and no hover
 affordance (lift, border, sheen, tether) — an affordance that leads nowhere is worse than none.
+They are still tab stops: every card is reachable by keyboard. Each sits in a
+`<div class="card__stop" tabindex="0" role="group" aria-labelledby="work-0N-h">`, named by its
+title. The ring is on the wrapper, not the article, because `.card`'s `clip-path` would clip the
+article's own outline. The ring is its only affordance.
 Each `<article>` carries an id after its index, `#work-01` … `#work-04`, so a card can be deep
 linked (§9.7). The ids are numbered rather than slugged, so renaming a project never breaks a
 shared URL.
@@ -1885,15 +1889,15 @@ scroll position. The plugin exposes the correct hook instead: **an `onFocusIn` c
 ScrollSmoother.create({
   /* …§9.1 config… */
   onFocusIn(self, e) {
-    // The focusable element is the <a> *around* the <article>, so resolve up and back down.
-    const item = e.target.closest?.('.card__link, [data-card]');
+    // The focusable element is the <a> or .card__stop *around* the <article> (§6.6).
+    const item = e.target.closest?.('.card__link, .card__stop, [data-card]');
     const card = item && (item.matches('[data-card]') ? item : item.querySelector('[data-card]'));
     if (!card) return;                      // not our concern — let the smoother do its thing
 
     if (e.target.matches(':focus-visible')) {
       // 1:1 pin: travel = the card's offset from card 01, kept 1 px inside the pin.
       const x = clamp(cardOffsetLeft(card) - cardOffsetLeft(cards[0]), 1, D() - 1);
-      self.scrollTo(pin.start + x, false);
+      glide(pin.start + x);                 // animated — see below
     }
     return false;                           // cancel the smoother's own scrollTo
   },
@@ -1905,8 +1909,17 @@ Four details that make this work:
 - `scrollTo` accepts a **number** as well as an element — verified: it branches on `isNaN(target)`
   and clamps a numeric argument to the scrollable range. So feeding it a computed pin position is
   supported, not a workaround.
-- `smooth` is `false`. Focus must never lag behind the keyboard; an eased scroll here means the
-  user tabs and then waits to see where they landed.
+- **The move is animated, never a cut** (owner's decision, 8b, replacing an earlier `smooth:
+  false`). A focused card glides to its rest position with the smoother's own 1.2 s catch-up. The
+  pin scrubs the track and chain through the travel, and cards passed on the way play their
+  entrances. The same holds for every scroll the page makes for the reader: any other off-screen
+  focus (the smoother's instant `scrollTo(el, false, 'center center')` is replaced by the same
+  target, glided), clicked anchors and `hashchange`. All of them go through `glide()` in
+  `core/smoothscroll.js`. On a touch device ScrollSmoother does not smooth (§9.1 sets no
+  `smoothTouch`), so there `glide()` tweens the scroll position itself over 10τ, `mask`.
+  - Two exceptions. **The hash at page load is instant**: there is no earlier view to travel from.
+  - **Reduced motion is instant, natively**: there is no smoother, and a focused card that is only
+    partly on screen is brought wholly in with `scrollIntoView({ block: 'nearest' })`.
 - The hook fires on every focus, pointer focus included. Only keyboard (`:focus-visible`) focus
   moves the pin. A clicked card is already under the pointer, and jumping the track would slide
   it away. The handler still returns `false`, so the smoother does not re-centre the card either.
@@ -1916,8 +1929,10 @@ Four details that make this work:
   sits on an invisible card waiting for its trigger.
 
 This is ScrollSmoother's `onFocusIn` option, set through `setFocusIn()` in `core/smoothscroll.js`.
-There is no `focusin` listener of our own. The one exception is a `focusout` listener on the
-viewport that retracts the keyboard tether, which never scrolls.
+There is no `focusin` listener of our own while the smoother exists. Two listeners are safe
+exceptions. A `focusout` on the viewport retracts the keyboard tether and never scrolls. Under
+reduced motion, where no smoother exists to race, a `focusin` on the track brings a partly
+visible card wholly into view.
 
 Also handle deep links: if `location.hash` names a card (`#work-01` … `#work-04`, §6.6), jump the
 pin to that card's rest position before the first paint of that section. This covers the hash at
@@ -2135,7 +2150,7 @@ Both resolve to the same static page, and both must look finished rather than br
 | Re-split safety | `autoSplit: true` + `onSplit` returning the timeline; re-splits on font load and resize without leaking tweens |
 | Contrast | §4.3 table; dim floor 0.60 enforced as a token, never bypassed |
 | Focus visible | 2 px `--blue-lift` outline + 2 px offset + 1 px `--ink` inset ring, so it reads on both dark ground and silver fills |
-| Focus order | DOM order throughout; while the WORKS pin exists, the smoother's `onFocusIn` hook (§9.7) keeps view and focus in agreement. It is not a second `focusin` listener, which would race the smoother's own |
+| Focus order | DOM order throughout; every WORKS card is a tab stop, linked or not (§6.6). While the WORKS pin exists, the smoother's `onFocusIn` hook (§9.7) keeps view and focus in agreement, gliding rather than cutting. It is not a second `focusin` listener, which would race the smoother's own |
 | Targets | ≥ 44 × 44 px for every interactive element, including lattice nodes and contact rows |
 | Keyboard parity | every hover state has a `:focus-visible` equivalent; lattice nodes are `<button>`, not `<span>` |
 | Motion control | persisted toggle in the colophon, reachable by keyboard |
@@ -2404,7 +2419,7 @@ reads as if it were doing something.
 | Entry JS chunk (compressed) | ≤ 66 KB |
 | Late plugins chunk — Flip + MorphSVG (compressed, idle after `load`) | ≤ 16 KB |
 | `three` chunk (compressed) | ≤ 180 KB |
-| Total JS (compressed) | ≤ 228 KB |
+| Total JS (compressed) | ≤ 232 KB |
 | CSS (compressed) | ≤ 14 KB |
 | Fonts (3 × variable woff2, subset) | ≤ 140 KB |
 | LCP (hero name, cable) | < 2.0 s |
@@ -2429,8 +2444,10 @@ The total was 220 KB until checkpoint 6b: `three` alone is ~136 KB, and the chai
 states (the LATTICE branch, the horizontal run, the loop) brought the total to 220.7 KB. Raised to
 224 KB by owner decision (2026-09-28). Raised again to 228 KB by owner decision (2026-09-28), when
 checkpoint 7b's lattice (`sections/stack.js`, +2.4 KB in the sections chunk) brought it to 225.0 KB,
-leaving ~3 KB for the remaining section modules. Checkpoint 10's composer passes need their own
-decision.
+leaving ~3 KB for the remaining section modules. Raised again to 232 KB by owner decision
+(2026-09-28), when checkpoint 8b's WORKS interaction (focus, deep links, hover, tether, glided
+focus scrolls) brought it to 228.03 KB. That leaves ~4 KB for checkpoints 9a and 9b. Checkpoint
+10's composer passes need their own decision.
 
 The ordering rule: **the hero must be readable before the stage exists.** The canvas starts at
 `opacity: 0` and is faded in once the first frame has rendered, so WebGL initialisation can never

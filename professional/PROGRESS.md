@@ -268,7 +268,7 @@ level.**
 | §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
 | §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
 | §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `tether.js` 8b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
-| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 7b (total raised to 228 KB) · 11b full audit (zstd transfer) |
+| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 7b (total raised to 228 KB) · 8b (total raised to 232 KB) · 11b full audit (zstd transfer) |
 | §13 Implementation order | superseded by this checklist (see note in design.md §13) |
 | §14 Open items | 11b (items 1–3; item 4 closed by 3) |
 | Appendix | reference only |
@@ -1683,7 +1683,7 @@ The §9.7 interaction layer on 8a's pin is built: keyboard focus, card deep link
   - Every focused element is wholly in the viewport **150 ms after the key press** and again at 1.5 s. The card's opacity is 1, and card 01 / 04 rest at x = 39–40 (1440) and 209–241 (1920).
   - Screenshots checked by eye.
   - At 800 px the stack tabs natively, all in view.
-  - Only cards 01 and 04 are focusable. 02 and 03 have no link (§6.6) and are reached by scrolling.
+  - Only cards 01 and 04 were focusable in this first pass. 02 and 03 have no link (§6.6), and the owner's manual pass found them skipped. Fixed in the follow-up below.
 - **Readout never lags:** at 9 positions across the pin, the label equals §9.7's formula and the bar equals `scaleX(progress)`, and progress equals the track's `−x / D`, all read in the same frame.
 - **Cards never scaled:** on hover the transform is `matrix(1, 0, 0, 1, 0, −6)`.
 - **Hover:**
@@ -1707,7 +1707,7 @@ The §9.7 interaction layer on 8a's pin is built: keyboard focus, card deep link
   - CSS 6.06 kB.
 
 **Carried forward:**
-- **Budget:** the ≤ 228 KB total has 0.27 kB left. 9a/9b's JS will need a decision (raise it, as 6b and 7b did, or trim).
+- **Budget:** the ≤ 228 KB total had 0.27 kB left after this first pass. The follow-up below raised it to 232 KB.
 - **9b:**
   - The base `.tag` transition still uses the plain `ease` keyword. It's §9.10's tag micro-state and yours to convert.
   - The card `.card__go` colour change is still an untransitioned CSS hover (CP3).
@@ -1722,3 +1722,54 @@ The §9.7 interaction layer on 8a's pin is built: keyboard focus, card deep link
   - §2.1, §6.7 and §9.8 are updated, and **E8 is closed as moot** by the owner's decision. 9b has no chip entrance to build.
   - The DOSSIER plate's plain `mailto:` is unchanged.
 - **Left alone, owned elsewhere:** E28 (11b), E3/E40 (9a, 9b), E16–E18 (10), E19 (11a), E27 (11b).
+
+**Follow-up — every card a tab stop, every focus scroll animated** · commit `refactor(webpage): checkpoint 8b — focus every card, animate focus scrolls`
+
+The owner's manual tab pass found two problems with the first 8b commit. Tab / Shift+Tab skipped cards 02 and 03, and focus moves *jumped*. The second came from §9.7's own `smooth: false` and from ScrollSmoother's built-in instant `scrollTo(el, false, 'center center')` for every other focus. **Owner's decision:** every card is a focus stop, and no scroll the page makes for the reader cuts.
+
+**Cards 02 and 03.**
+- Each is wrapped in `<div class="card__stop" tabindex="0" role="group" aria-labelledby="work-0N-h">`, and every card title got an id.
+- It's a wrapper and not `tabindex` on the article, because `.card`'s `clip-path` would clip the article's own outline.
+- The accessible name resolves to the title ("uWeMe").
+- The focus ring is the only affordance: no lift, border, sheen or tether (§6.6).
+- `cardOf` / `itemOf` resolve through `.card__link, .card__stop`.
+
+**Animated focus.** `glide(target, position)` in `core/smoothscroll.js` is now the one path for:
+- card focus;
+- any other off-screen focus (it replaces the plugin's instant fallback via `onFocusIn`);
+- clicked anchors;
+- `hashchange`.
+
+How `glide()` scrolls:
+- **Under a smoothing smoother:** `scrollTo(target, true)`, i.e. the smoother's own 1.2 s catch-up. The pin scrubs the track and chain through the travel.
+- **On a touch device:** ScrollSmoother does no smoothing (§9.1 sets no `smoothTouch`), so its smooth `scrollTo` is instant. `glide()` tweens the scroll position itself over 10τ with `mask`.
+
+Two moves stay instant, both deliberate:
+- **The hash at load.** There's no earlier view to travel from.
+- **Reduced motion.** It's native, and a new `staticStates` branch in `projects.js` brings a partly visible focused card wholly in with `scrollIntoView({ block: 'nearest' })`. It had been taking focus half below the fold (card 03 at 875–1068 px of 900).
+
+§9.7, §6.6 and §10.4 now say all this.
+
+**Test-harness pitfall, for every later session:** chrome-headless-shell matches `(hover: none)`, so `ScrollTrigger.isTouch === 1` and ScrollSmoother does no smoothing: Chrome runs so far were all **touch mode** (8a's included). Launch with `--blink-settings=primaryPointerType=4,availablePointerTypes=4,primaryHoverType=2,availableHoverTypes=2` to test as a desktop. `smoother.scrollTop()` is the scroll *target*, so measure rendered motion from `#smooth-content`'s transform and the track's `x`.
+
+**Verified**, sampling the rendered position every animation frame for ~1.9 s after each key press. The sequence is Tab from the last lattice node through 01 → 02 → 03 → 04 → LINK row 01, then Shift+Tab back.
+- **Tab order and view:** all four cards are visited in both directions. Each focused element is wholly in view once settled, its card at opacity 1, and the readout reads `0N / 04`.
+- **Firefox**, 1440×900 / 1920×1080 / 1280×700:
+  - every move is monotonic over 43–61 distinct frames;
+  - the largest single-frame step is 8–12 % of the move, up to 17 % on the ease's first frame for moves over 1100 px.
+- **Chrome (desktop pointer):** glides at ~26 fps; card 01 → 02 took 833 ms along `1 → 355 → 572 → 677 → … → 784`.
+- **Chrome touch mode:** glides through `glide()`'s tween, monotonic over 22–30 frames.
+- **`hashchange` to `#work-03`:** 61 frames, largest step 9.4 %. A load on `#work-02` still lands at rest instantly.
+- **Reduced motion:** Tab reaches 01 → 04 → LINK, with every card wholly in view.
+- **No JS:** Tab reaches all four cards, but the first stop is Firefox focusing the scrollable `.works__viewport` itself. Firefox's native focus scroll leaves a partly visible card where it is (02 at 824–1544 px, 04 at 1138–1858 px of 1440): browser behaviour with no script to change it.
+- **Screenshots:** cards 02 and 03 focused mid-glide and at rest, with the ring whole around the chamfer corner.
+- **Regressions:**
+  - motion toggle ×3: 28 / 15 ON, 1 / 5 OFF;
+  - hover, LOW (no sheen, no tether, 1 draw call) and the tether (3 instances, 2 calls) are unchanged.
+- **Build:**
+  - entry 4.31 + 2.47 + 58.91 = **65.69 kB** (≤ 66);
+  - sections 5.66, stage 6.08, rect 0.37, late 14.55, `three` 135.68;
+  - **total 228.03 kB against the new ≤ 232**.
+
+**Owner decision, §12.7:** total JS budget **228 → 232 KB**. The glide helper and the reduced-motion focus fix brought it 0.03 kB over 228 after trimming, and 232 leaves ~4 kB for 9a and 9b. Owner's manual tab pass on this build: good.
+

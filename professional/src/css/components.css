@@ -735,6 +735,11 @@
 
 .card__link { display: flex; flex: none; text-decoration: none; }
 
+/* A card with no URL is still a tab stop (every card is reachable by keyboard):
+   a focusable wrapper, since .card's clip-path would clip its own focus ring.
+   The ring is its only affordance — no lift, border or sheen (§6.6). */
+.card__stop { display: flex; flex: none; }
+
 .card {
   position: relative;
   flex: none;
@@ -836,7 +841,8 @@
     padding-inline: 0;
   }
   .card { width: 100%; }
-  .card__link { width: 100%; }
+  .card__link,
+  .card__stop { width: 100%; }
 }
 
 /* Reduced motion (§9.7, §10.1): no pin at any width, so the same vertical
@@ -850,7 +856,8 @@
   padding-inline: 0;
 }
 [data-motion="reduced"] .card,
-[data-motion="reduced"] .card__link { width: 100%; }
+[data-motion="reduced"] .card__link,
+[data-motion="reduced"] .card__stop { width: 100%; }
 [data-motion="reduced"] .card__link:hover .card,
 [data-motion="reduced"] .card__link:focus-visible .card { transform: none; }
 
