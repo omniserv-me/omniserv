@@ -116,7 +116,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Done when: every edge sits on a permitted axis; hover never dims a label below 0.60; keyboard
       focus matches hover; `s` breakpoint shows the columns with no edges.
 
-- [ ] 8a. WORKS pin — design.md §6.6 (pinned geometry), §9.7 (pin, entrances, branches)
+- [x] 8a. WORKS pin — design.md §6.6 (pinned geometry), §9.7 (pin, entrances, branches)
       Scope: `sections/projects.js`. Flip `.works__viewport` from native scroller to clipped when the pin owns `x`; the pin
       (`invalidateOnRefresh`, function `end`/`x`), `signals.axis` on toggle; card triggers via
       `containerAnimation`; card entrance table incl. title split and chamfer draw; index scramble
@@ -244,7 +244,7 @@ level.**
 | §6.3 IDENTITY | 3 (markup, copy, aperture CSS, done) · 5b (animation) |
 | §6.4 DOSSIER | 3 — done |
 | §6.5 LATTICE | 3 (columns markup, fallback, done) · 7b (geometry, coordinates, edges, incl. E38, E39 — done); node-label colour → E5 |
-| §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry) · 8b (readout, linking behaviour) |
+| §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry, incl. E41 — done) · 8b (readout, linking behaviour) |
 | §6.7 LINK · §6.8 Colophon | 3 (markup, copy, done) · 4 (year, toggle, tier readout, done) |
 | §7.1 Stage · §7.2 Catenary · §7.3 Links · §7.4 Material · §7.6 Guard | 6a (§7.3's degenerate-tangent guard → 6b, it fires only at the loop top) |
 | §7.5 Per-movement choreography | 6b (IDENTITY → colophon rows, incl. E9, E15, E33, E34; branch-roots setter) · 7b (feeds lattice-resolved roots) · 8a (bind WORKS row to pin, ≤ 900 px return to vertical) · 9b (trigger loop snap) · 10 (CAST row) |
@@ -257,7 +257,7 @@ level.**
 | §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
 | §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest, incl. E35, E36, E37's plate part; header helper reused by 7b/8a/9b) |
 | §9.6 LATTICE | 7b (done, incl. E25's edges, E40's part; arrow keys deferred, not built); "4.6:1" → E21 |
-| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch; chamfer draw → E37) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
+| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch, incl. E37's card part, E41 — done) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
 | §9.8 LINK | 9b (incl. E8, E40's row-label part; exposure uniform → 10) |
 | §9.9 Navigation rail | 9a (incl. E3's `power3.out`, E40's item-hover part; `--sweep` spec text → E13) |
 | §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
@@ -321,10 +321,11 @@ resolved.
 | E34 | §7.5 vs §7.3 | WORKS runs "the full track width", but §7.3 fixes N = 51 from the vertical 1.6·H span: the visible width is aspect·H, so 51 interlocked links (1.616·H) only just span 16:10, and wider screens show the ends or stretch the links apart | 6b | resolved by 6b — N = ceil(length / spacing) for every curve, from a 96-instance pool; the run spans the visible width + a diameter past each edge |
 | E35 | §9.5 vs §1.3 I2 / §4.3 | The fact plate's sheen sweeps `--silver-sheen` (a 0.55 `--chrome` peak) behind the plate's text, which drops to ~2:1 at the band (the `--blue-lift` links 1.23:1), while I2 forbids any on-screen text animating below 4.5:1 | 7a | resolved by 7a — the sweep layer runs at opacity 0.22 (peak 0.121 `--chrome`): links 4.61:1, labels 5.55:1 at the peak |
 | E36 | §9.5 × §6.4 | The plate's 45° `.chamfer` hairline sits on the bevel, but §9.5 draws the border as "4 DrawSVG segments" and never mentions it, so it would hang fully drawn while the frame draws in around it | 7a | resolved by 7a — the chamfer draws (1τ, mask) as the top edge's eased draw reaches the bevel, handing over to the right edge; 4 segments, 8τ |
-| E37 | §9.5, §9.7 (E25's mechanism) | `.chamfer`'s path `M0 0 L24 24` carries `pathLength="100"` but is 24√2 ≈ 33.94 long: DrawSVG writes its dash in real units, the browser reads them in `pathLength` units, so the draw stops at 34 %. The plate's frame paths are exactly 100 long, so DrawSVG is right there | 7a (plate) · 8a (§9.7 card chamfers) | 7a's part resolved by 7a — the plate's chamfer tweens `stroke-dasharray '0 100' → '100 0'`, as the hero ring does; §9.7's card row open for 8a |
+| E37 | §9.5, §9.7 (E25's mechanism) | `.chamfer`'s path `M0 0 L24 24` carries `pathLength="100"` but is 24√2 ≈ 33.94 long: DrawSVG writes its dash in real units, the browser reads them in `pathLength` units, so the draw stops at 34 %. The plate's frame paths are exactly 100 long, so DrawSVG is right there | 7a (plate) · 8a (§9.7 card chamfers) | resolved — 7a: the plate's chamfer tweens `stroke-dasharray '0 100' → '100 0'`, as the hero ring does; 8a: the card chamfers do the same (3τ, mask, at 6τ), no DrawSVG |
 | E38 | §6.5 × §7.5 | The wireframe arranges the clusters 2×2, but §7.5's fallback roots are four distinct left-to-right X values, and a 2×2 sends the lower row's branch chains through the upper clusters (6b's log); with capsules up to 217 px, four across only fits wide screens | 7b | resolved by 7b — four across where the measured spans fit (≥ ~1280 px), 2×2 otherwise; each cluster its own lattice (no edge leaves one), packed a gutter apart, rows on a shared lattice row |
 | E39 | §6.5 | The wireframe draws horizontal edges, but the text allows only 30°/150°/90°, and claims integer basis combinations give those axes "therefore" (`b₁ − b₂` is horizontal); a one-step 30° neighbour is narrower than most capsules | 7b | resolved by 7b — edges are `k·b₁`, `k·b₂`, `k·(b₁+b₂)` only; the wireframe is topology; rows and same-row nodes two units apart; three wireframe edges replaced by the nearest legal ones |
 | E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9b, 9a open |
+| E41 | §9.7 vs §6.6 / §3.4 | `D = track.scrollWidth − window.innerWidth`, but `#works` is capped at `--container-wide` (1568 px): above that the clipped viewport is narrower than the window, so the cards cut off at an invisible line up to ~176 px in from each screen edge (over a chain that runs full width, §7.5), and the track travels `innerWidth − 1568` px too far | 8a | resolved by 8a — full-bleed while pinned: the viewport spans the window's layout width (`clientWidth`), the leading pad grows so card 01 stays on the header's edge, `D = scrollWidth − viewport.clientWidth` |
 
 ## Log
 
@@ -1568,3 +1569,79 @@ columns'.
 - **8a:** sections chunk headroom inside the 228 KB total is ~3 KB.
 - **Left alone, owned elsewhere:** E5 (11b), E6 (11b), E21 (11b), E27/E28 (11b), E3 (9a), E16–E18
   (10), E19 (11a), E37's card part (8a).
+
+### Checkpoint 8a — WORKS pin
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 8a — WORKS pin`
+
+The WORKS pin and card entrances from §9.7 are built. The new files are both already listed in §12.2:
+- `sections/projects.js`, imported from `sections/index.js`;
+- `util/scramble.js`.
+
+Above 900 px `#works` pins and scroll drives the track's `x` 1:1. At ≤ 900 px CP3's vertical stack stays.
+
+**Errata decisions (user, this session):**
+- **E37, card part:** each card's chamfer tweens `stroke-dasharray '0 100' → '100 0'` (3τ, mask, at 6τ), the same way the hero ring, the plate chamfer and the lattice edges do. E37 is now fully resolved.
+- **New E41 (full-bleed while pinned).** §9.7's `D = scrollWidth − innerWidth` didn't fit `#works`' 1568 px `--container-wide` cap. On a 1920 window the clipped viewport cut the cards off ~176 px from each edge, and the track travelled 352 px too far.
+  - While `#works.is-pinned`, the viewport spans the window's layout width. `--bleed` is written from `document.documentElement.clientWidth` on every `refreshInit`, so the scrollbar never overflows the page.
+  - The track's leading pad grows by the same inset (`motion.css`, scripting only), which keeps card 01 on the header's edge.
+  - `D = track.scrollWidth − viewport.clientWidth`.
+  - Measured: card 01's left edge equals the header's at 1440 (40 px), 1920 (210) and 2560 (530), and there's no page overflow. §6.6 and §9.7 now say this.
+
+**My decisions where the spec is silent (written into §9.7):**
+- **Cards already inside the 78 % line at rest.** At 1440, cards 01 and 02 sit left of the line with the track at `x = 0`. On `containerAnimation` alone they'd wait invisible through the whole vertical approach, about one viewport, until the pin started. So every card also gets a vertical `top 78%` trigger, which plays it only if it's left of the line at that moment. Measured: 01 and 02 play as the section rises, 03 at `x ≈ −400…−1000`, 04 later.
+- **`refreshPriority: 1` on the pin,** so it refreshes before any trigger below it, whenever that trigger was created. **9b:** your LINK header reveal is built in the splits context, before the pin exists, and this is what keeps it correct.
+- **Depth, n = 1:** pointer parallax on every card. Scroll parallax only at ≤ 900 px, because inside the pin it would drift a card ±22.6 px vertically while it travels horizontally (the scope allowed dropping it; this is that call).
+- **Nothing is hidden in CSS** (5b/7a's rule). Each card's entrance is a paused timeline built with the branch, so its from-states apply at build and a dead chunk leaves WORKS complete.
+  - Entrances are once per page. A rebuild after a card has played leaves it authored.
+  - The title row is built by `onSplit('title')`, paused unless its card is already playing. The card's timeline starts it at 1τ. A re-split mid-entrance resumes where SplitText restores it, and a new split of a played card builds nothing.
+  - At rest, `onComplete` clears the inline `transform`, `opacity`, `letter-spacing` and `stroke-dasharray`, so CP3's CSS hover lift still works. While an entrance plays, the card's inline `transition-property: border-color` stops the CSS transform transition from smearing the `y` tween.
+- **Scramble:** one `ease: 'none'` `to()` tween that writes at most every 1/12 s. Positions settle left to right, and the authored text is restored on complete and on interrupt. It's a `to()` rather than a `fromTo()` so a paused entrance never touches the index.
+- **Chain drive without the stage chunk.** Importing `gl/stage.js` from the sections chunk would pull `three` in early. `sections/chain.js` gained `driveChain(px)`, which holds the last value, and `setChainBuilder(fn, chain.drive)` forwards it. A stage that lands mid-pin picks the value up.
+- **Guard (6a's handoff).** `util/rect.js` gained `shiftCopy(root, fn)`, and `copyRects(scrollTop)` applies each shift per frame. The stage now passes its `scrollTop`. The pin registers `[−d, d]` with `d = clamp(scrollTop − pin.start, 0, D)`, covering both the pin's hold and the track's travel. `rect.js` became its own 0.37 kB shared chunk.
+- `about.js` now exports its `wipe()` helper for the card body.
+
+**Verified** in headless Firefox (desktop pointer prefs) and chrome-headless-shell 154, against `vite preview`:
+- **Build:**
+  - entry `index` 4.29 + `depth` 2.23 + `easings` 58.91 = **65.43 kB** against ≤ 66;
+  - sections **4.81** (was 3.60), `rect` 0.37, stage 5.64, late 14.55, `three` 135.68;
+  - **total 226.48 kB against ≤ 228**;
+  - CSS 5.95 kB.
+- **Pin 1:1:** at 8 scroll positions across the pin, `x(track) = −clamp(scrollTop − start, 0, D)` exactly, in Firefox and in Chrome.
+- **Scroll extent (§6.1, "~310 vh"):**
+  - At 1440×900: D = 2404 px (267 vh), plus the 824 px pinned section, ≈ 359 vh.
+  - At 1920×1080: D = 2334 (216 vh), ≈ 292 vh.
+  - At 1280×700: D = 2484.
+  - The last card's right edge rests at the viewport centre, per §6.6's trailing 50vw.
+  - The pinned section is 824 px tall at every width. At 700 px tall its bottom padding is cut, and the cards (bottom at 560 px) aren't.
+- **Survives resize:** mid-pin at 1440 → 1000 → 1920 → 1440 → 800 → 390 → 1440, D, `end` and `x` are recomputed and exact every time. Crossing 900 px removes the spacer and the `.is-pinned` class, the track goes `column`, and the chain goes to `h = 0`.
+- **Chain locked:** 600 px of travel moved the phase **21.044** links, exactly `600 / (0.72·0.044·900)`. `signals.axis` is `(1, 0)` only while pinned. The chain is horizontal (`h = 1`) at pin start, and the LINK loop still closes after the spacer (`loop = 1` at `#link` top centre).
+- **Entrance, card 03 sampled:**
+  - Before: opacity 0, `y 24`, chars at `yPercent 100` / `wdth 88`, kicker 0.3em / 0, body `--wipe 100%`, tags 0.6, dash `0 100`.
+  - Mid-flight: chars `wdth 99.5/99.2/98.6` staggered, kicker 2.03 px, wipe 23 %, tags 0.69.
+  - At rest: every inline style cleared, `transform: none`, kicker 0.14em, dash `none` (drawn).
+  - The index wrote `28 → 09 → 03`, three writes in 3τ.
+- **≤ 900 px** (800×900 and 390×844, fresh loads): no spacer, and each card goes from 0 to 1 only after its top passes 78 %.
+- **Guard:** mid-pin, every card body's cached rect matches `getBoundingClientRect()` to within 1 px.
+- **Velocity** still updates at the colophon after the pin spacer (wheel: −0.48 … +0.17).
+- **Leaks:**
+  - Motion toggle ×3 mid-pin: **26–28 children / 15 triggers ON, 1 / 5 OFF** every cycle. That's the same OFF baseline as 6b–7b. First load has 25 triggers because of the once-triggers.
+  - Resizes and 900 px crossings: 15–17 triggers, no errors.
+- **Reduced motion (OS pref):** no pin, no spacer, no splits, no `.wipe`, nothing below opacity 1. The viewport is CP3's native scroller.
+- **CLS (Chrome):**
+  - 0.0101 at load, E28's hero morph as before.
+  - The whole WORKS pass adds ~0.0005, sources `DIV.char` (the title `wdth` 88 → 100). That's E28's, left to 11b.
+  - LCP is `.hero__text` at 40 ms.
+- **No JS** at 1440 / 900 / 640: 5 sections, no hidden text, no overflow, and the viewport is `overflow-x: auto` at 1440.
+
+**Carried forward:**
+- **8b:**
+  - The pin's `onUpdate` (`drive`) is where the readout goes. The pin is `ScrollTrigger.getAll().find((t) => t.pin)`, or restructure `pinned()` to share it.
+  - `setFocusIn()` isn't wired. **Tabbing to an off-screen card strands focus until 8b.**
+  - Deep links aren't built.
+  - Reduced motion on desktop is still CP3's native horizontal scroller; §9.7 asks for a vertical stack.
+  - LOW keeps the pin with no tether or sheen, and 8a builds neither.
+  - The CSS hover lift and border from CP3 are untouched.
+  - The cards' CSS transitions still use the plain `ease` keyword (E-ease's conversion is the owner's; 8b owns hover).
+- **8b / 11a:** toggling motion OFF mid-pin removes the spacer, and the registry holds the reader's px position, so they land ~D px further down the page (in LINK at 1440). Same class as 7a's "crossing 900 px resets scroll" note.
+- **Left alone, owned elsewhere:** E7 (8b), E28 (11b; the title morph adds to it), E3/E40 (9a, 9b), E16–E18 (10), E19 (11a), E27 (11b).

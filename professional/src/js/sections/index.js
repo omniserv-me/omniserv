@@ -7,3 +7,4 @@
 
 import './about.js';
 import './stack.js';
+import './projects.js';

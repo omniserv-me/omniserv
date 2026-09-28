@@ -90,6 +90,26 @@
      drives is .wipe above and the --rule / --sheen-x factors in
      components.css, which default to their drawn/at-rest values. */
 
+  /* ── §9.7 WORKS (sections/projects.js) ───────────────────────────────────
+     CP3's viewport is a native horizontal scroller, so every card is reachable
+     with JS dead. While the pin owns the track's x (> 900 px, full motion) the
+     viewport is clipped instead, and full-bleed (errata E41): it spans the
+     window, not --container-wide, so cards travel in from the real screen edge
+     over a chain that also spans it, and D is the track's overflow of the
+     window. --bleed is the window's layout width (clientWidth, no scrollbar),
+     written by projects.js; the inset puts card 01 on the header's left edge.
+     Below 1568 px the inset is the page margin, i.e. CP3's own geometry.
+     Cards are not hidden here — each entrance sets its own from-states. */
+  #works.is-pinned {
+    --bleed-in: calc(var(--page-margin) + max(0px, (var(--bleed, 100vw) - var(--container-wide)) / 2));
+  }
+  #works.is-pinned .works__viewport {
+    overflow-x: clip;
+    scroll-snap-type: none;
+    margin-inline: calc(-1 * var(--bleed-in));
+  }
+  #works.is-pinned .works__track { padding-left: var(--bleed-in); }
+
   /* ── §12.7 The stage ──────────────────────────────────────────────────────
      Invisible until gl/stage.js has rendered its first frame (and run the
      tier probe on it), then faded in over 8τ. WebGL can never delay or shift

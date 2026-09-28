@@ -862,6 +862,14 @@ trailing pad `50vw` so the last card can reach centre. Travel distance
 vertical scroll and horizontal travel — the most predictable relationship available, and the one
 that makes the chain's phase binding exact.
 
+**Full-bleed while pinned.** `#works` is capped at `--container-wide` (1568 px), but while the pin
+owns the track's `x` the viewport spans the whole window — its layout width,
+`document.documentElement.clientWidth`, so a scrollbar never overflows the page — and the track's
+leading pad grows by the same inset, so card 01 still starts on the header's left edge. Cards
+travel in from the real screen edge, over a chain that spans it too (§7.5), and `viewportWidth` in
+`D` is that window width. Below 1568 px the inset is the page margin, i.e. the unpinned geometry.
+Unpinned (≤ 900 px, reduced motion, no JS) the viewport keeps the container width.
+
 **Card form.** `--graphite` ground, 1 px `--hairline` border, 24 px 45° chamfer on the top-right
 (the `⌐` in the wireframe), rendered with `clip-path: polygon(...)` in `px` so the chamfer is the
 same physical size on every card regardless of width.
@@ -1766,7 +1774,8 @@ arrives before the growth has played cancels it.
 
 ```js
 const track = document.querySelector('[data-track]');
-const D = () => track.scrollWidth - window.innerWidth;
+const viewport = document.querySelector('[data-works-viewport]');   // full-bleed while pinned (§6.6)
+const D = () => track.scrollWidth - viewport.clientWidth;
 
 const travel = gsap.to(track, { x: () => -D(), ease: 'none' });   // ease MUST be none
 const pin = ScrollTrigger.create({
@@ -1793,6 +1802,16 @@ ScrollTrigger.create({
 });
 ```
 
+A card already inside the 78 % line with the track at rest (01 and 02 at 1440 px) would otherwise
+wait, invisible, through the whole vertical approach until the pin starts. So each card also has a
+vertical trigger (`top 78%`, `once`) that plays it if it is left of the line at that moment; the
+horizontal trigger then finds it already played. The pin carries `refreshPriority: 1`, so it
+refreshes before any trigger below it, whenever that trigger was created. Cards take §3.7's n = 1
+pointer parallax everywhere, but scroll parallax only unpinned: inside the pin a scroll parallax
+would drift a card ±22.6 px vertically while it travels horizontally. While pinned, the §7.6 guard
+shifts the card bodies' cached rects by the pin's hold and the track's travel (both
+`clamp(scrollTop − pin.start, 0, D)`), since both move them by transform.
+
 **Card entrance:**
 
 | t | Target | Change | Dur | Ease | Stagger |
@@ -1803,7 +1822,7 @@ ScrollTrigger.create({
 | 3τ | kicker | `opacity 0→1`, `letter-spacing 0.3em→0.14em` | 5τ | glyph | — |
 | 4τ | body | 102° wipe | 5τ | mask | — |
 | 5τ | tags | `scale 0.6→1`, `opacity 0→1` | 1τ | chain | 0.5τ |
-| 6τ | chamfer hairline | `drawSVG 0→100` *(errata E37)* | 3τ | mask | — |
+| 6τ | chamfer hairline | `stroke-dasharray '0 100' → '100 0'`, in `pathLength` units (DrawSVG ignores `pathLength`, and the 24√2-long bevel would stop at 34 %) | 3τ | mask | — |
 
 **Index scramble** (`js/util/scramble.js`): charset `0123456789/\|—`, duration 3τ, **quantised to
 12 fps** rather than updated per frame. Per-frame scrambling reads as noise; 12 fps reads as a

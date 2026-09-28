@@ -8,9 +8,23 @@
    already in hand: screenY = docY − scrollTop.
 
    Re-measured on load, on every ScrollTrigger refresh (fonts, resize, pin
-   spacers) and on resize. */
+   spacers) and on resize.
+
+   One exception to "layout values are enough": the WORKS track (8a) moves its
+   cards by transform, and its pin holds them still while the document scrolls.
+   Its owner registers a shift for everything inside it, applied per frame from
+   the same scroll value. */
 
 let rects = [];
+const shifts = new Map();   // root element → (scrollTop) => [dx, dy]
+
+/** Offset every [data-copy] box inside `root` by fn(scrollTop) → [dx, dy] px,
+ *  per frame. Returns the unregister function. */
+export function shiftCopy(root, fn) {
+  shifts.set(root, fn);
+  measureCopy();
+  return () => { shifts.delete(root); measureCopy(); };
+}
 
 export function docOffset(el) {
   let x = 0;
@@ -27,9 +41,20 @@ export function measureCopy(selector = '[data-copy]') {
   for (const el of document.querySelectorAll(selector)) {
     if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') continue;   // display: none
     const [x, y] = docOffset(el);
-    rects.push({ x, y, w: el.offsetWidth, h: el.offsetHeight });
+    let shift = null;
+    for (const [root, fn] of shifts) if (root.contains(el)) shift = fn;
+    rects.push({ x, y, x0: x, y0: y, w: el.offsetWidth, h: el.offsetHeight, shift });
   }
   return rects;
 }
 
-export const copyRects = () => rects;
+/** The boxes for this frame, with any registered shift applied. */
+export function copyRects(scrollTop = 0) {
+  for (const r of rects) {
+    if (!r.shift) continue;
+    const [dx, dy] = r.shift(scrollTop);
+    r.x = r.x0 + dx;
+    r.y = r.y0 + dy;
+  }
+  return rects;
+}

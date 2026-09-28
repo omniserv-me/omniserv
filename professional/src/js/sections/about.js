@@ -39,8 +39,9 @@ function reveal(name, trigger, build) {
 }
 
 /* The 102° wipe (§9.5) on elements that get .wipe for its duration only, so
-   a settled paragraph holds no mask layer and no will-change (§9.1). */
-function wipe(els, vars) {
+   a settled paragraph holds no mask layer and no will-change (§9.1). Shared
+   with sections/projects.js (the card body, §9.7). */
+export function wipe(els, vars) {
   els.forEach((el) => el.classList.add('wipe'));
   return gsap.fromTo(els, { '--wipe': '100%' }, {
     '--wipe': '0%', ease: ease.mask, ...vars,

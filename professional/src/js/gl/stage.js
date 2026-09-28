@@ -117,7 +117,7 @@ export async function initStage() {
     o.vh = vh();
     o.W = H * camera.aspect;
     o.unitsPerPx = H / o.vh;
-    o.rects = copyRects();
+    o.rects = copyRects(o.scrollTop);
     o.still = still;
     toWorld('chainFore', o.fore, still);
     toWorld('chainMid', o.mid, still);
@@ -214,7 +214,7 @@ export async function initStage() {
 
   /* §7.5 — the movement states, before the first visible frame, so the
      IDENTITY entrance starts from its offset rather than from rest. */
-  setChainBuilder(movements(stage));
+  setChainBuilder(movements(stage), chain.drive);
 
   /* §12.7 — the first frame is rendered before the canvas is shown, then it
      fades in over 8τ (a crossfade: metal). Reduced motion shows it at once. */
