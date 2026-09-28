@@ -11,6 +11,7 @@
    Steps not yet built are marked with the checkpoint that owns them. */
 
 import { ScrollTrigger } from './core/easings.js';
+import './core/split.js';   // registers the splits first, so they precede every movement's context
 import { motion, startSignals } from './core/signals.js';
 import { boot as bootRegistry } from './core/registry.js';
 import { scrollToHash, bindAnchors } from './core/smoothscroll.js';
@@ -33,9 +34,8 @@ async function main() {
   // 2. Fonts gate.
   await document.fonts.ready;
 
-  // 3. Splits — checkpoint 5 (split.js).
-
-  // 4. Signals, colophon, then every registered movement's context.
+  // 3–4. Signals, colophon, then every registered context: the splits first
+  //      (core/split.js registers at import), then each movement's timelines.
   startSignals();
   initFooter();
   bootRegistry();

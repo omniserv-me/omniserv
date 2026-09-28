@@ -8,6 +8,7 @@ import { gsap, ScrollTrigger } from '../core/easings.js';
 import signals from '../core/signals.js';
 import { getSmoother } from '../core/smoothscroll.js';
 import { getContexts } from '../core/registry.js';
+import { getSplits, onSplit, widthTween } from '../core/split.js';
 
 const fmt = (n) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(3);
 
@@ -37,10 +38,10 @@ export function mountDebug() {
       `axis     (${axis.value.join(', ')})`,
       `tier     ${tier.value ?? '—'}`,
       `motion   ${motion.value}`,
-      `smoother ${getSmoother() ? 'on' : 'off'}  contexts ${getContexts().size}`,
+      `smoother ${getSmoother() ? 'on' : 'off'}  contexts ${getContexts().size}  splits ${getSplits().length}`,
       `triggers ${ScrollTrigger.getAll().length}  tweens ${gsap.globalTimeline.getChildren(true, true, true).length}`,
     ].join('\n');
   });
 
-  window.__rig = { signals, gsap, ScrollTrigger, getSmoother, getContexts };
+  window.__rig = { signals, gsap, ScrollTrigger, getSmoother, getContexts, getSplits, onSplit, widthTween };
 }

@@ -5,9 +5,9 @@
   Invariant I1/I3 (§1.3): every word on the page is in this file. The only script
   served is the legacy-hash map of §2.3 at the foot of <body>; nothing in the
   layout or the copy depends on it. Animation initial states belong to motion.css
-  under @media (scripting: enabled) (§10.3) — never to the four sheets linked here.
+  under @media (scripting: enabled) (§10.3) — never to the four sheets before it.
 
-  Stylesheet order tokens → base → layout → components is load-bearing.
+  Stylesheet order tokens → base → layout → components → motion is load-bearing.
 -->
 <html lang="en">
 <head>
@@ -19,10 +19,15 @@
   <meta name="description" content="AI &amp; Infrastructure Engineer in Munich. Secure, scalable backend services and deployment pipelines — Python, Go, gRPC, Docker, CI/CD.">
   <meta name="theme-color" content="#05070A">
 
+  <!-- §5.2: Archivo only — it carries the LCP element. Preloading all three
+       delays the hero. -->
+  <link rel="preload" href="/fonts/archivo-var-v1.woff2" as="font" type="font/woff2" crossorigin>
+
   <link rel="stylesheet" href="/src/css/tokens.css">
   <link rel="stylesheet" href="/src/css/base.css">
   <link rel="stylesheet" href="/src/css/layout.css">
   <link rel="stylesheet" href="/src/css/components.css">
+  <link rel="stylesheet" href="/src/css/motion.css">
 </head>
 <body>
   <a class="skip" href="#identity">Skip to content</a>

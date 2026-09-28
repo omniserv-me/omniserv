@@ -5,6 +5,65 @@
    those roles are exceptions to.
    ========================================================================== */
 
+/* ── §5.2 Self-hosted faces ────────────────────────────────────────────────
+   public/fonts/*-v1.woff2, unhashed (§12.2): a replaced face is a deliberate
+   bump to -v2, and the Archivo preload in index.html keeps a static href.
+   Subset: printable ASCII plus exactly the non-ASCII characters the page
+   renders (© ° · × – — → ↓ ↗ √). Anything new outside that set falls back
+   per glyph — re-subset when copy changes. */
+@font-face {
+  font-family: "Archivo Variable";
+  src: url("/fonts/archivo-var-v1.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Variable";
+  src: url("/fonts/inter-var-v1.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  src: url("/fonts/jetbrains-mono-var-v1.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Metric-compatible fallbacks, so swap moves nothing (§12.7 CLS). Overrides
+   computed with fontTools from each face's hhea metrics and English-weighted
+   average advance, against Arial-metric sans (Arial ≡ Liberation Sans ≈
+   Helvetica ≈ FreeSans) and 0.6em mono. Archivo is matched on capitals: every
+   Archivo role on the page is uppercase. */
+@font-face {
+  font-family: "Archivo Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Helvetica"), local("FreeSans");
+  size-adjust: 100.61%;
+  ascent-override: 87.27%;
+  descent-override: 20.87%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Helvetica"), local("FreeSans");
+  size-adjust: 110.61%;
+  ascent-override: 87.58%;
+  descent-override: 21.81%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono"), local("FreeMono");
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 *,
 *::before,
 *::after { box-sizing: border-box; }

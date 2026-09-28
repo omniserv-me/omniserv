@@ -36,11 +36,12 @@
   --lh-mono:    1.2;
 
   /* ── Families — §5.1 ─────────────────────────────────────────────────────
-     Stacks only. @font-face and the self-hosted woff2 files are §5.2 and not
-     yet provided, so these currently resolve to their fallbacks. */
-  --font-display: "Archivo Variable", "Arial Narrow", Impact, system-ui, sans-serif;
-  --font-body:    "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono:    "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+     Stacks only; the @font-face blocks are in base.css (§5.2). Each second
+     entry is a metric-matched local fallback, so the swap to the real face
+     shifts nothing (§12.7 CLS). */
+  --font-display: "Archivo Variable", "Archivo Fallback", "Arial Narrow", Impact, system-ui, sans-serif;
+  --font-body:    "Inter Variable", "Inter Fallback", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:    "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* ── Spacing — §3.3 ─────────────────────────────────────────────────────
      Unit u = 8px; only Fibonacci multiples of u are permitted, which grows at

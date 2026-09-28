@@ -35,7 +35,7 @@ part of design.md has exactly one owner — see the **Ownership map** below. A l
 full checkpoint: own session, own commit, own box. Code comments written before the split say
 "checkpoint 6", "checkpoint 8" etc.; the map says which half that now means.
 
-- [ ] 5a. Fonts + split rig — design.md §5.1 (install check), §5.2, §5.4, §9.1 step 3
+- [x] 5a. Fonts + split rig — design.md §5.1 (install check), §5.2, §5.4, §9.1 step 3
       Scope: download and subset the three variable faces to `public/fonts/*-v1.woff2` (§5.2,
       §12.2 — resolve **E2**); the subset is every non-ASCII character actually in `index.html`,
       not just §5.2's list (it misses `©` `°` `–` `↗`), with the mono face's tabular digits kept;
@@ -284,7 +284,7 @@ resolved.
 | # | design.md | Contradiction | Owner | Status |
 |---|---|---|---|---|
 | E1 | §10.1 vs §10.2 | Reduced motion: "one static frame rendered, then the ticker callback is removed" vs "forced to `NONE` when `signals.motion === 'reduced'`", which removes the canvas | 6a | open |
-| E2 | §5.2 vs §12.2 | Fonts "in `src/fonts/`, imported from CSS so Vite fingerprints them" vs `public/fonts/*-v1.woff2`, deliberately unhashed. 5a's scope already follows §12.2 | 5a | open |
+| E2 | §5.2 vs §12.2 | Fonts "in `src/fonts/`, imported from CSS so Vite fingerprints them" vs `public/fonts/*-v1.woff2`, deliberately unhashed. 5a's scope already follows §12.2 | 5a | resolved by 5a — `public/fonts/*-v1.woff2`, unhashed, per §12.2 |
 | E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | open |
 | E-ease | §9.4–§9.8 tables | An Ease column of "—" (button labels, scroll cue, section index, plate row labels, node labels, colophon rows) is undefined, and §9.10's micro-state table has no Ease column at all (CSS transitions, so the rule must also give `cubic-bezier` forms, as §9.9 does for `ease.metal`); GSAP's default `power1.out` is not on the §9.2 list. Settle the rule once (`none`, or a `gsap.defaults` ease); it is cross-cutting after that | 5b | open |
 | E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | open |
@@ -719,3 +719,143 @@ first.
 still checkpoint 3, all nine files were complete, `dist/` post-dated every source edit, and no
 stray processes were left. Every result above comes from runs made after the resume, on the final
 code.
+
+### Checkpoint 5a — Fonts + split rig
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 5a — fonts + split rig`
+
+The page now renders in the three self-hosted faces, and `core/split.js` splits the hero name, the
+four section headings and the four card titles once fonts are ready. There's no choreography yet.
+`src/css/motion.css` exists and carries the §9.5 `.wipe` utility. No element uses it yet.
+
+**E2 resolved (user decision): §12.2 wins.** The fonts live in `public/fonts/*-v1.woff2` and
+aren't hashed. That keeps the Archivo preload href static, and checkpoint 1's Caddy
+`/fonts/*` immutable header already serves them. Replacing a face means bumping to `-v2`.
+design.md §5.2 now says this, and the marker is removed.
+
+**Fonts (§5.1, §5.2).** The sources are OFL builds from `google/fonts`:
+- Archivo 2.001
+- Inter 4.001
+- JetBrains Mono 2.211
+
+**Axis ranges, read from `fvar`:**
+- Archivo: `wght` 100–900, `wdth` **62–125**. This matches §5.1, so §9.4's targets need no scaling.
+- Inter: `opsz` 14–32, `wght` 100–900.
+- JetBrains Mono: `wght` 100–800.
+
+The name really does move on the axis: its width is 66.9 / 101.1 / 127.1 % of its 100 % width at
+`font-stretch` 62 / 100 / 125 %.
+
+**Sizes:** Archivo 48.2 KB, Inter 40.6 KB, JetBrains Mono 31.1 KB, **119.8 KB total** against a
+≤ 140 KB budget.
+
+**The subset is narrower than §5.2's "latin".** Full Latin-1 (U+00A0–00FF) came to 167 KB, which
+is over budget. The fonts carry printable ASCII plus exactly the non-ASCII characters the page
+renders: `© ° · × – — → ↓ ↗ √`. That set was found by parsing `index.html`'s text and attributes,
+not its comments. The JS writes only ASCII and `—`, apart from the `?debug` overlay.
+- Layout features kept: `kern liga calt tnum case ccmp locl rvrn`, plus `zero` for mono.
+- **Any later checkpoint that adds a character outside this set must re-subset.** Otherwise the
+  character falls back glyph by glyph.
+- The recipe is: fontTools venv, then `pyftsubset <src>.ttf --unicodes=U+0020-007E,<the set>
+  --layout-features=… --flavor=woff2`.
+- The OFL text ships as `public/fonts/LICENSE-OFL.txt`, because the licence has to travel with
+  the fonts.
+
+**`@font-face` blocks** are in `base.css` and use the family names the `tokens.css` stacks already
+had. They are `swap` with the full ranges declared. The Archivo preload is in `<head>`.
+
+**Metric fallbacks** are `"Archivo Fallback"`, `"Inter Fallback"` and `"JetBrains Mono Fallback"`,
+each second in its stack.
+- Sources: `local()` Arial → Liberation Sans → Helvetica → FreeSans for the two sans faces, and
+  Courier New → Liberation Mono → FreeMono for mono.
+- The overrides were computed with fontTools from `hhea` and an English-weighted average advance.
+- Archivo is matched on capitals, because every Archivo role is uppercase: `size-adjust`
+  100.61 %, ascent 87.27 %, descent 20.87 %.
+- Inter: 110.61 %, 87.58 %, 21.81 %.
+- JetBrains Mono: 100 %, 102 %, 30 %.
+- All three have `line-gap-override: 0%`.
+
+**Split rig: the API for 5b, 7a and 8a.**
+- `onSplit(kind, (self, el) => timeline)` from `core/split.js`, where the kind is `'name'`,
+  `'heading'` or `'title'`.
+  - Register it before `boot()`.
+  - **The builder must return its timeline.** autoSplit re-splits on font load or a width change,
+    and SplitText then reverts the returned animation, keeps its progress and calls the builder
+    again.
+  - SplitText remembers the `gsap.context()` it was created in and re-runs each split inside it
+    (`this._ctx.add`, SplitText.js:201). So ScrollTriggers a builder creates stay inside the
+    registered branch on re-splits too. That meant the registry change I'd planned wasn't needed.
+- `widthTween(chars, { from, to, ...vars })` is §5.4's mechanism 2. It tweens one proxy array
+  and makes one `fontVariationSettings` write pass per frame. `from` applies immediately.
+- The splits are registered as the first movement (`splits`), and `main.js` imports `split.js`
+  ahead of every section. There is one SplitText per element.
+- **Reduced motion creates no splits at all.** Final states need no pieces, and the authored
+  text is the most robust thing to leave. A motion toggle reverts the splits along with their
+  context.
+- **The tagline's `data-split="lines"` is left unsplit on purpose.** §9.4 wipes the whole
+  element, and §9.5 reserves per-line masks for headings.
+- The pieces are `.line-mask > .line > .word > .char`. SplitText names the mask wrapper
+  `<linesClass>-mask`, not something of ours.
+
+**Two deviations from §9.4's split config, both found by measuring:**
+1. **`type: 'lines,words,chars'`, not `'lines,chars'`.** Without word wrappers every char is a
+   separate inline-block with a break opportunity after it. `.hero__name`'s
+   `max-width: min-content` then collapses to one character per line, which measured at 16
+   lines and 101 px wide. Even with `words` added, chars can still break *inside* the
+   inline-block word, so `motion.css` sets `[data-split] .word { white-space: nowrap }`. design.md
+   §9.4's code block still reads `'lines,chars'`. **5b: don't copy it back.**
+2. **Kerning compensation (`rekern` in `split.js`).** Splitting into inline-block chars loses
+   pair kerning, which moved chars by up to 8.03 px on the 128 px name and 4.53 px on "STACK".
+   - `rekern` measures an invisible, unsplit probe of the original markup and writes the gap
+     difference between neighbours inside each word back as an em `margin-right`.
+   - It's exact at rest. Mid-`wdth`-morph it's only approximately right, which is invisible
+     while chars move.
+
+**`.wipe` (§9.5)** is transcribed inside `@media (scripting: enabled)` and uses `--angle-wipe`.
+- One deviation: the static `will-change: mask-position` §9.5 writes into the rule is left out.
+  §9.1's hygiene rule says it's set on tween start and removed `onComplete`, and a CSS
+  declaration can't be removed that way.
+- Checked by adding the class to the tagline: it's masked at `--wipe: 100%`, half-revealed along
+  the 102° edge at 50 %, and whole at 0 %.
+
+**Verified** in headless Firefox (puppeteer-core, desktop pointer prefs) against `vite preview`,
+with CLS measured in `chrome-headless-shell` 154 because Firefox has no layout-shift API:
+- **Build:** the entry is **62.47 kB** gzipped against ≤ 64, and CSS is 5.27 kB against ≤ 14.
+  **Only ~1.5 kB of entry headroom is left. 5b's `hero.js` will need to watch this.**
+- **Fonts:** all three are `loaded`. The computed family is Archivo on the name, Inter on the
+  tagline and JetBrains Mono on the role line.
+- **CLS 0**, measured with `PerformanceObserver('layout-shift')` in three runs:
+  - fonts immediate
+  - font responses delayed 800 ms at 1440 px, which really swaps from the fallback face
+  - the same delay at 700 px
+
+  A cross-check with fonts blocked against real fonts, JS off, shows no x, y or height change on
+  any block. Only the text widths inside boxes differ; the fallback name is 45 px narrower,
+  because Archivo's metrics were taken at its default weight of 600 and the name is 800. That
+  isn't a shift. If a later checkpoint ever makes the name's box shrink-to-fit something
+  positioned after it, revisit this.
+- **No reflow from splits:** at 1440, 1000 and 700 px, every split element keeps its box to
+  0.00 px and every char keeps its x to 0.00 px against the unsplit text.
+  - Pixel diff, split against unsplit: the title is identical.
+  - The name and heading differ only by anti-aliasing along glyph edges on some lines, which is
+    a sub-pixel baseline rounding of the block line wrappers.
+  - The `.silver-type` gradient survives the split in Firefox as one continuous 180° sheet.
+    **Note for 5b:** Chromium's `background-clip: text` is known to drop descendants that get
+    their own compositing layer. Check the name mid-entrance in Chrome once chars carry `y`
+    transforms or `will-change`.
+- **Leaks.** Test builders were injected through `?debug`'s `__rig.onSplit`: a `widthTween` +
+  `y` timeline for the name, a ScrollTrigger timeline per heading, and a tween per title.
+  - Five 1440↔1000 resizes: global-timeline children / triggers held at 13/5 each time, and the
+    name re-split and rebuilt 10 times.
+  - Two 900 px crossings: 17/5 on every rebuild.
+  - Three motion toggles: 17/5 on and **1/1 off**, the same as checkpoint 4's baseline, with 0
+    splits and 0 `.char` under reduced motion.
+  - `widthTween` left every char at `"wdth" 100`.
+- **a11y:** each split element has `aria-label` set to its text, and every generated piece is
+  `aria-hidden="true"`, with 0 exceptions.
+- **No JS:** at 1440, 900 and 640 px, all five sections are there, `hidden-text=0`, no split
+  pieces and no masks exist, the page renders in the real fonts, and there's no horizontal
+  overflow.
+
+**Left alone:** E3, E4, E-ease and E20 (5b) and E11 (§5.1's "§9.3" ref, 11b) all touch this area
+and all have other owners.

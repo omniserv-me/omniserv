@@ -429,13 +429,16 @@ the second decisive:
 
 Setup:
 
-- Variable `woff2` only, in `src/fonts/`, imported from CSS so Vite fingerprints them. *(errata E2)*
+- Variable `woff2` only, in `public/fonts/` with a version in the filename
+  (`archivo-var-v1.woff2` etc.), deliberately unhashed — see §12.2 for why.
 - `@font-face` with `font-display: swap`, and the full variable range declared:
   `font-weight: 100 900; font-stretch: 62% 125%;`
 - `<link rel="preload" as="font" type="font/woff2" crossorigin>` for **Archivo only** — it
   carries the LCP element. Preloading all three delays the hero.
-- Subset to `latin` + the specific punctuation used (`—`, `·`, `√`, `↓`, `→`, `×`). Keep digits
-  tabular-capable for the mono face.
+- Subset to printable ASCII + exactly the non-ASCII characters the page renders: `©` `°` `·` `×`
+  `–` `—` `→` `↓` `↗` `√`. Full Latin-1 puts the three faces at ~167 KB, over §12.7's 140 KB;
+  this set is ~117 KB. Re-subset when copy gains a character outside it — it would fall back per
+  glyph. Keep digits tabular-capable for the mono face (`tnum` is kept in all three).
 
 ### 5.3 Roles
 

@@ -1,0 +1,43 @@
+/* ============================================================================
+   motion.css — animation initial states and the utilities GSAP drives.
+   design.md §10.3, §9.5, §9.4.
+
+   Every rule that hides, offsets or masks content lives inside
+   @media (scripting: enabled). This is the load-bearing detail of §10.3: with
+   JS off the query is false, nothing here applies, and the served page is
+   complete. Later checkpoints add their entrance states to this file, inside
+   the same block — never to components.css.
+
+   Reduced motion (§10.1) is each movement's staticStates branch: it gsap.set()s
+   every state below to its final value, so nothing here may rely on an
+   animation to be undone.
+   ========================================================================== */
+
+@media (scripting: enabled) {
+
+  /* ── §9.5 The 102° mask wipe — the page's standard body-copy reveal ──────
+     One element, one animated property: gsap.to(el, { '--wipe': '0%',
+     duration: 8 * T, ease: 'mask' }). At 100% the transparent half of the
+     gradient covers the element; at 0% the opaque half does. The angle is
+     --angle-wipe (90° + 12°, §3.6). Opt-in by class, so an element only starts
+     hidden once a checkpoint has written the tween that reveals it. */
+  .wipe {
+    --wipe: 100%;
+    -webkit-mask-image: linear-gradient(var(--angle-wipe), #000 0 45%, transparent 55%);
+    mask-image: linear-gradient(var(--angle-wipe), #000 0 45%, transparent 55%);
+    -webkit-mask-size: 260% 100%;
+    mask-size: 260% 100%;
+    -webkit-mask-position: var(--wipe) 0;
+    mask-position: var(--wipe) 0;
+    /* §9.5 writes will-change: mask-position here; §9.1's hygiene rule wins —
+       the tween sets it on start and clears it onComplete, so a page of
+       settled paragraphs holds no compositing layers. */
+  }
+
+  /* ── §9.4 Split pieces (core/split.js) ────────────────────────────────────
+     SplitText styles its own pieces inline (block lines, inline-block words
+     and chars). Adjacent inline-blocks are break opportunities, so a word
+     would otherwise wrap between its characters: keep each word whole. Never
+     hides anything — chars rest in place until a builder tweens them. */
+  [data-split] .word { white-space: nowrap; }
+}
