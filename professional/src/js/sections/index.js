@@ -6,3 +6,4 @@
    headings split. 7b, 8a and 9b add their modules here. */
 
 import './about.js';
+import './stack.js';

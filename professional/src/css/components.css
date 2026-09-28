@@ -615,7 +615,11 @@
 .cluster__nodes { display: flex; flex-wrap: wrap; gap: var(--s-1); }
 
 /* The chain-link stadium again, at small scale. A <button>, so hover has a
-   keyboard equivalent (§6.5, §10.4); 44px tall to clear the target floor. */
+   keyboard equivalent (§6.5, §10.4); 44px tall to clear the target floor.
+   The seat (scale 1.06, back.out) is a tween in sections/stack.js, so no
+   transform transition here to smear it; colour is the only hover state that
+   also holds with no JS and under reduced motion (§9.6). Transitions run out
+   over 2τ and in over 1τ — the destination state's duration wins. */
 .node {
   --node-h: calc(5.5 * var(--u));
   display: inline-flex;
@@ -626,15 +630,61 @@
   border: 1px solid var(--hairline);
   border-radius: calc(var(--node-h) / 2);
   transition:
-    border-color var(--beat-1) ease,
-    transform var(--beat-1) ease,
-    opacity var(--beat-2) ease;
+    border-color var(--beat-2) var(--ease-glyph),
+    opacity var(--beat-2) var(--ease-metal);
 }
 
 .node:hover,
-.node:focus-visible { border-color: var(--hairline-blue); transform: scale(1.06); }
+.node:focus-visible,
+.node.is-linked { border-color: var(--hairline-blue); transition-duration: var(--beat-1), var(--beat-2); }
 
 .lattice__readout { margin-top: var(--s-3); }
+
+/* ── The graph (§6.5, §9.6) — JS only, > 640px, with a stage ─────────────
+   sections/stack.js resolves lattice coordinates to px and positions each
+   node's <li> and each cluster label; the DOM order (and so the tab order) is
+   the columns'. Edges are one SVG behind the nodes, user units = px. */
+
+.lattice.is-graph { display: block; position: relative; }
+.lattice.is-graph .cluster,
+.lattice.is-graph .cluster__nodes { display: block; }
+.lattice.is-graph .cluster__nodes > li { position: absolute; display: flex; justify-content: center; }
+.lattice.is-graph .node { white-space: nowrap; }
+.lattice.is-graph .cluster__label { position: absolute; white-space: nowrap; }
+
+.lattice__edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--hairline-strong);
+  stroke-width: 1;
+}
+
+.lattice__edges path {
+  transition:
+    stroke var(--beat-2) var(--ease-metal),
+    stroke-width var(--beat-2) var(--ease-metal),
+    opacity var(--beat-2) var(--ease-metal);
+}
+
+.lattice__edges .is-lit { stroke: var(--blue); transition-duration: var(--beat-1), var(--beat-1), var(--beat-2); }
+
+/* Full motion at MED/HIGH only: the lit width, the linked labels tracking out
+   (errata E40 — the mono face has no wdth axis), and the dim to the floor. */
+.lattice.is-kinetic .lattice__edges .is-lit { stroke-width: 2; }
+.lattice.is-kinetic .node.is-linked .node__label { letter-spacing: 0.12em; transition-duration: var(--beat-1), var(--beat-2); }
+/* A dimmed node dims its label and border, never its --void ground: the
+   capsule has to stay opaque over the branch chain that hangs in behind it. */
+.lattice.is-kinetic .node__label { transition: letter-spacing var(--beat-2) var(--ease-glyph), opacity var(--beat-2) var(--ease-metal); }
+.lattice.is-kinetic.is-focus .node:not(.is-active, .is-linked) {
+  border-color: color-mix(in srgb, var(--hairline) 60%, transparent);
+}
+.lattice.is-kinetic.is-focus .node:not(.is-active, .is-linked) .node__label,
+.lattice.is-kinetic.is-focus .lattice__edges path:not(.is-lit) { opacity: var(--dim-floor); }
 
 @media (max-width: 900px) {
   .lattice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -902,7 +952,8 @@
   #stage, .grain, .plate::before { display: none; }
   .principles::before, .principles::after { border-color: CanvasText; }
   .card, .plate, .node, .chip, .tag { border-color: CanvasText; }
-  .plate__frame, .chamfer, .rail__glyph, .row__glyph { stroke: CanvasText; }
+  .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
+  .lattice__edges .is-lit { stroke: Highlight; }
   .rail__indicator { background: Highlight; }
   .rail__cta, .btn--metal { background-image: none; }
 }

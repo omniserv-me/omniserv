@@ -106,7 +106,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Done when: DOSSIER animates per §9.5's tables; body copy never parallaxes; no resting text
       below the dim floor; toggle reverts cleanly.
 
-- [ ] 7b. LATTICE — design.md §6.5 (geometry), §9.6
+- [x] 7b. LATTICE — design.md §6.5 (geometry), §9.6
       Scope: lattice coordinates in `sections/stack.js` resolved to px (pitch 88 px desktop, 62 px
       tablet), the edge SVG (`pathLength="100"`, 30°/150°/90° only), absolute placement on top of
       CP3's markup — the four-column layout stays for `s`, no-JS and no-WebGL. Growth (BFS order,
@@ -243,7 +243,7 @@ level.**
 | §6.2 Navigation rail | 3 (markup, CSS, done) · 9a (shrink, ground/hairline fade, indicator) |
 | §6.3 IDENTITY | 3 (markup, copy, aperture CSS, done) · 5b (animation) |
 | §6.4 DOSSIER | 3 — done |
-| §6.5 LATTICE | 3 (columns markup, fallback, done) · 7b (geometry, coordinates, edges); node-label colour → E5 |
+| §6.5 LATTICE | 3 (columns markup, fallback, done) · 7b (geometry, coordinates, edges, incl. E38, E39 — done); node-label colour → E5 |
 | §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry) · 8b (readout, linking behaviour) |
 | §6.7 LINK · §6.8 Colophon | 3 (markup, copy, done) · 4 (year, toggle, tier readout, done) |
 | §7.1 Stage · §7.2 Catenary · §7.3 Links · §7.4 Material · §7.6 Guard | 6a (§7.3's degenerate-tangent guard → 6b, it fires only at the loop top) |
@@ -256,10 +256,10 @@ level.**
 | §9.3 CAST | 10 (incl. E17) |
 | §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
 | §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest, incl. E35, E36, E37's plate part; header helper reused by 7b/8a/9b) |
-| §9.6 LATTICE | 7b (arrow keys optional/deferred; edge draws → E25); "4.6:1" → E21 |
+| §9.6 LATTICE | 7b (done, incl. E25's edges, E40's part; arrow keys deferred, not built); "4.6:1" → E21 |
 | §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch; chamfer draw → E37) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
-| §9.8 LINK | 9b (incl. E8; exposure uniform → 10) |
-| §9.9 Navigation rail | 9a (incl. E3's `power3.out`; `--sweep` spec text → E13) |
+| §9.8 LINK | 9b (incl. E8, E40's row-label part; exposure uniform → 10) |
+| §9.9 Navigation rail | 9a (incl. E3's `power3.out`, E40's item-hover part; `--sweep` spec text → E13) |
 | §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
 | §10.1 Motion preference | 4 (resolution, done) · each checkpoint's reduced branch (cross-cutting; nav indicator row → 9a) · chain row → 6a via E1 · 11a audit |
 | §10.2 Quality tiers | 6a (incl. E1) · 11a verification |
@@ -268,7 +268,7 @@ level.**
 | §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
 | §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
 | §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
-| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 11b full audit (zstd transfer) |
+| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 7b (total raised to 228 KB) · 11b full audit (zstd transfer) |
 | §13 Implementation order | superseded by this checklist (see note in design.md §13) |
 | §14 Open items | 11b (items 1–3; item 4 closed by 3) |
 | Appendix | reference only |
@@ -309,7 +309,7 @@ resolved.
 | E22 | §9.2 | The `catenary` ease ("chain slack relaxation only") has no consumer: sag reads velocity directly with no tween (§7.2) and nothing in §7/§9 names it. Give it one or strike it from §9.2 | 6a | resolved by 6a — struck from §9.2, the Appendix and `core/easings.js` |
 | E23 | §9.4 × §6.3 | The entrance fades "button labels" in after the buttons seat, but each label is a bare text node inside `.btn`, so there is no element to fade | 5b | resolved by 5b — each hero button's content is one `<span class="btn__label">` (inline-flex, `gap: inherit`, so no visual change) |
 | E24 | §9.2 | With E4 settled as `none`, `shut` ("apertures closing, hero exit") has no consumer left | 5b | resolved by 5b — struck from §9.2, the Appendix and `core/easings.js` |
-| E25 | §6.3, §9.4, §9.6 | `pathLength="100"` "so DrawSVG maths is in whole percent", but DrawSVG ignores `pathLength`: it measures a `<rect>` as sharp corners and a `<path>` by `getTotalLength()`, while the browser reads the dash in `pathLength` units, so draws complete after a fraction of their tween (the hero ring appeared whole at ~9 %) | 5b (hero ring) · 7b (§9.6 lattice edges) | 5b's part resolved by 5b — the ring tweens `stroke-dasharray` `'0 100' → '100 0'` directly; §9.6's edges open for 7b |
+| E25 | §6.3, §9.4, §9.6 | `pathLength="100"` "so DrawSVG maths is in whole percent", but DrawSVG ignores `pathLength`: it measures a `<rect>` as sharp corners and a `<path>` by `getTotalLength()`, while the browser reads the dash in `pathLength` units, so draws complete after a fraction of their tween (the hero ring appeared whole at ~9 %) | 5b (hero ring) · 7b (§9.6 lattice edges) | resolved — 5b: the ring tweens `stroke-dasharray` `'0 100' → '100 0'` directly; 7b: the lattice edges do the same, no DrawSVG |
 | E26 | §9.4 scroll-out vs §9.4 / §4.3 | "meta, role, tagline `opacity → 0` by 40 % progress" leaves them wholly on screen at 0.375 and 0 at 1440×900, against the section's own "nothing rests below 0.60" (and meta/role are `--silver`, which may not be dimmed at all) | 5b | resolved by 5b — every scroll-out fade (incl. the name's 0.06) is bound to the element's own exit: full opacity while wholly on screen, fading only while the viewport's top edge cuts through it |
 | E27 | §9.1 teardown | "`ScrollTrigger.saveStyles()` on every animated selector", but ScrollTrigger restores every saved style on *any* media-query change (`matchMediaRevert`, incl. its own `(orientation: portrait)` query), even when no context toggled — after a 900 px crossing into a portrait viewport it wiped the rebuilt hero (hairline invisible). The hero registers no selectors; its context revert and cleanup restore everything | 11b (§9.1 text, registry comment, cross-cutting audit) | open |
 | E28 | §12.7 CLS vs §5.4 / §9.4 | CLS budget 0, but a per-character `wdth` morph changes glyph advances, so following characters really move and Layout Instability counts it: the hero entrance measures **0.002** in Chrome 154 (all sources `DIV.char`); breathing registers 0; 7a's heading morphs will add their own | 11b (§12.7 audit) | open |
@@ -322,6 +322,9 @@ resolved.
 | E35 | §9.5 vs §1.3 I2 / §4.3 | The fact plate's sheen sweeps `--silver-sheen` (a 0.55 `--chrome` peak) behind the plate's text, which drops to ~2:1 at the band (the `--blue-lift` links 1.23:1), while I2 forbids any on-screen text animating below 4.5:1 | 7a | resolved by 7a — the sweep layer runs at opacity 0.22 (peak 0.121 `--chrome`): links 4.61:1, labels 5.55:1 at the peak |
 | E36 | §9.5 × §6.4 | The plate's 45° `.chamfer` hairline sits on the bevel, but §9.5 draws the border as "4 DrawSVG segments" and never mentions it, so it would hang fully drawn while the frame draws in around it | 7a | resolved by 7a — the chamfer draws (1τ, mask) as the top edge's eased draw reaches the bevel, handing over to the right edge; 4 segments, 8τ |
 | E37 | §9.5, §9.7 (E25's mechanism) | `.chamfer`'s path `M0 0 L24 24` carries `pathLength="100"` but is 24√2 ≈ 33.94 long: DrawSVG writes its dash in real units, the browser reads them in `pathLength` units, so the draw stops at 34 %. The plate's frame paths are exactly 100 long, so DrawSVG is right there | 7a (plate) · 8a (§9.7 card chamfers) | 7a's part resolved by 7a — the plate's chamfer tweens `stroke-dasharray '0 100' → '100 0'`, as the hero ring does; §9.7's card row open for 8a |
+| E38 | §6.5 × §7.5 | The wireframe arranges the clusters 2×2, but §7.5's fallback roots are four distinct left-to-right X values, and a 2×2 sends the lower row's branch chains through the upper clusters (6b's log); with capsules up to 217 px, four across only fits wide screens | 7b | resolved by 7b — four across where the measured spans fit (≥ ~1280 px), 2×2 otherwise; each cluster its own lattice (no edge leaves one), packed a gutter apart, rows on a shared lattice row |
+| E39 | §6.5 | The wireframe draws horizontal edges, but the text allows only 30°/150°/90°, and claims integer basis combinations give those axes "therefore" (`b₁ − b₂` is horizontal); a one-step 30° neighbour is narrower than most capsules | 7b | resolved by 7b — edges are `k·b₁`, `k·b₂`, `k·(b₁+b₂)` only; the wireframe is topology; rows and same-row nodes two units apart; three wireframe edges replaced by the nearest legal ones |
+| E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9b, 9a open |
 
 ## Log
 
@@ -1445,3 +1448,123 @@ against `vite preview`:
   wherever they pass behind text.
 - **Left alone, owned elsewhere:** E25 (7b's lattice edges), E27/E28 (11b), E3 (9a), E16–E18 (10),
   E19 (11a).
+
+### Checkpoint 7b — LATTICE
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 7b — LATTICE`
+
+§6.5's geometry and §9.6 are built in `sections/stack.js`, imported from `sections/index.js`
+(§12.2 already listed it). CP3's markup is unchanged: above 640 px, with the tier not NONE, JS adds
+`.lattice.is-graph`, positions each node's `<li>` and each cluster label, and prepends one
+`<svg class="lattice__edges">`. The columns stay the layout at `s`, with no JS and at tier NONE (a
+NONE result arriving after boot reverts to them). The DOM order, and so the tab order, is the
+columns'.
+
+**Errata decisions (user, this session):**
+- **E25, 7b's part:** edges keep `pathLength="100"`, and the growth tweens `stroke-dasharray '0 100'
+  → '100 0'` directly, as the hero ring and plate chamfer do. E25 is now fully resolved.
+- **New E38 (clusters):** four across where the measured spans fit, 2×2 otherwise.
+  - As first built, each cluster's origin was snapped to one shared lattice. Measured, that lost up
+    to one step per cluster to rounding and parity: 4-across never fit, even at the 1200 px max
+    content width, and 641–699 px fell to one column.
+  - **Second user decision:** each cluster is its own lattice (no edge leaves a cluster, so every
+    edge keeps its axis). Clusters are packed exactly a gutter apart, and rows of clusters share a
+    lattice row.
+  - Result: 4-across from 1280 px viewports, 2×2 from 641 to 1279. The one-column arrangement
+    survives only as a guard and is never reached at any tested width.
+- **New E39 (axes):** edges are `k·b₁`, `k·b₂`, `k·(b₁+b₂)` only, and the wireframe is topology.
+  Rows are two lattice units apart (so no two rows' capsules touch), as are nodes sharing a row.
+  Three wireframe edges had no legal geometry in a two-column cluster and were replaced by the
+  nearest legal ones: Java–C/C++ (for Go–Java), SQL–MongoDB (for FastAPI–SQL), and Traefik–Caddy
+  (for Docker–Caddy and Traefik–Linux). gRPC–MongoDB follows the wireframe's diagonal under gRPC.
+- **New E40 (mono `font-stretch`):** connected-node labels tween `letter-spacing 0.08em → 0.12em`.
+  The §9.8 row label and §9.9 rail item hover have the same no-op and stay open for 9b and 9a
+  (markers added).
+- **Owner decision, §12.7:** total JS budget **224 → 228 KB**.
+
+**My decisions where the spec is silent (written into §6.5/§9.6):**
+- **Roots.** Each cluster's root is its first node, which is also its topmost, so its branch chain
+  crosses none of its own nodes. Those are the same nodes 6b's `columnRoots()` already measured, so
+  6b's feed needed no new API.
+  - It's renamed `clusterRoots()` and still reads the first node's offsets on every refresh.
+  - `place()` runs on `refreshInit`, before that read.
+  - Each `<li>` is the node's rest box (left/top/width, no translate), and the button centres in
+    it, so the offsets are the node's even while a linked label tracks out.
+  - This deviates from the plan's "shared getter": it's the same data with no coupling between
+    chunks.
+- **Cluster labels** sit above the root, starting `0.022·vh + 8 px` right of its centre: clear of
+  the branch chain's half-width (§7.3).
+- **Growth timing.** Clusters grow in parallel. Edge `k` of a cluster starts at `3τ + k·0.5τ`, and
+  the root seats from its centre at 0 with the cluster label. Infra's 9 edges rest at 13τ.
+  - Each edge is drawn from the end BFS dequeued first.
+  - A node seats on its first incoming edge's completion, `transformOrigin` at that edge's start in
+    node-local px.
+  - Label opacity is cleared at rest, so the hover's CSS dim can reach it.
+- **Hover.** Colour, tracking and the dim are CSS transitions on classes (`is-lit`, `is-linked`,
+  `is-active`, `.lattice.is-focus`), in 1τ and out 2τ. Only the 1.06 seat is a tween (`back.out`
+  has no CSS form).
+  - Hover and focus share one state, hover winning.
+  - `.node`'s static CSS `scale(1.06)` hover is gone: it would have scaled under reduced motion and
+    smeared the growth's tween.
+  - `.node` transitions now use the `--ease-*` tokens (E-ease; 7b owns `.node`).
+- **The dim is on the label and border, not the capsule.** First built as opacity on the button,
+  it made the `--void` ground translucent, and the branch chain showed through the root labels
+  (screenshot). The border goes to `color-mix(… --hairline 60 %)`.
+- **Edges** use `--hairline-strong` (§9.6 names no colour; `--hairline` at 0.22 barely read), 1 px,
+  `Highlight` when lit in forced colours.
+- **Readout:** the cluster's name, restored to the authored "22 nodes · 4 clusters" markup on
+  leave. E6 (JS writing text) stays 11b's.
+- **LOW** is read from `signals.tier`, live. A LOW result before the growth has played kills its
+  trigger and jumps it to rest.
+- **Arrow-key traversal:** deferred, not built.
+
+**Verified** in headless Firefox (desktop pointer prefs) against `vite preview`:
+- **Build:**
+  - entry `index` 4.25 + `depth` 2.23 + `easings` 58.91 = **65.39 kB** against ≤ 66;
+  - sections **3.60** (was 1.21), stage 5.73, late 14.55, `three` 135.68;
+  - **total 224.95 kB against the new ≤ 228**;
+  - CSS 5.85 kB.
+- **Geometry**, at 641 / 700 / 900 / 901 / 1100 / 1280 / 1440 / 1920:
+  - graph at every width, the edge angles are {30, 90, 150}° exactly, no overlaps between capsules
+    or labels (4 px margin), no edge under a non-incident capsule, the lattice inside its box, no
+    page overflow;
+  - lattice heights 766 px (2×2 at 62 px pitch), 990 px (2×2 at 88), 594 px (four across).
+- **Growth (1440):**
+  - 150 ms: roots overshooting at 1.08, cluster labels at 2.39 px of tracking and 0.86 opacity, no
+    edges drawn;
+  - 500 ms: first edges at 99 / 95 / 72 of 100;
+  - 1.0 s: every edge drawn, nodes mid-seat;
+  - 1.7 s: all 22 nodes at scale 1, labels at 2.04 px = 0.18em.
+- **Hover = focus:** hovering and `focus()`ing gRPC give identical class sets, label opacities and
+  letter-spacing, and the same `matrix(1.06…)`. There are 3 lit edges, 3 linked nodes at 0.12em,
+  18 labels at 0.60, and the readout says "Backend"; leaving restores everything.
+- **Dim floor:** the minimum label opacity while hovering is 0.60, i.e. `--silver-light` on
+  `--void` = **4.96:1**.
+- **Keyboard:** Tab from the heading visits all 22 nodes in DOM order, all on screen at 1440.
+- **Branch roots:** the four chains end on Python / Docker / Flutter/Dart / Git (screenshots at 1440
+  and 800).
+- **`s` (600 px):** columns, no SVG.
+- **Reduced motion:** graph, edges drawn (`dasharray none`), no scale; hover lights 3 edges at 1 px,
+  dims nothing, and swaps the readout.
+- **Forced LOW** (`hardwareConcurrency` 4): edges drawn and nodes at rest 150 ms after scrolling in,
+  with no growth; hover has no scale and no dim.
+- **WebGL off:** tier NONE, columns.
+- **Leaks:**
+  - Motion toggle ×3: **27 children / 14 triggers ON, 1 / 5 OFF** every cycle, the same OFF
+    baseline as 6b and 7a. ON is 7a's 13 plus the STACK heading's scroll depth, which 7b's
+    `sectionHeader` call newly registers.
+  - Resizes 1000 / 800 / 600 / 1100 / 1440: 12–14 triggers, graph on and off across 640 px, no
+    errors.
+- **No JS** at 1440 / 900 / 640: 5 sections, no hidden text, no overflow, no graph.
+- **Not measured this session:** CLS/LCP in Chrome. The graph switch happens at boot, below the
+  fold, and the growth is transform/opacity only, so neither should move; worth confirming in 11b.
+
+**Carried forward:**
+- **9a / 9b:** E40's `font-stretch` on mono text in your rows (rail item hover, LINK row label).
+- **11b:** at 2×2 (641–1279 px) the lower clusters' branch chains pass behind the upper clusters,
+  and behind the STACK heading at every width. The heading, cluster labels and nodes aren't
+  `[data-copy]`, so the §7.6 guard doesn't dim links there. It's worth a look in the I2 audit. E21's
+  "4.6:1" is measured here as 4.96:1.
+- **8a:** sections chunk headroom inside the 228 KB total is ~3 KB.
+- **Left alone, owned elsewhere:** E5 (11b), E6 (11b), E21 (11b), E27/E28 (11b), E3 (9a), E16–E18
+  (10), E19 (11a), E37's card part (8a).

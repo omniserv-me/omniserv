@@ -788,10 +788,26 @@ where a tag cloud cannot. It is also the one place the chain's branching makes s
 ```
 
 **Geometry.** Nodes sit on a triangular lattice: basis vectors at 30° and 150°, pitch 88 px
-desktop (62 px tablet). Every node's position is an integer linear combination of the basis — no
-node is placed freehand, and edges are therefore always at 30°, 150° or 90°. Positions are
-authored once as lattice coordinates in `js/sections/stack.js` and resolved to pixels at runtime,
-so the lattice rescales without redrawing.
+desktop (62 px tablet, 641–900 px). Every node's position is an integer linear combination of the
+basis — no node is placed freehand. That alone does not fix the edge angles (`b₁ − b₂` is
+horizontal), so edges are further restricted: every edge is `k·b₁`, `k·b₂` or `k·(b₁ + b₂)` for an
+integer `k ≥ 1`, i.e. 30°, 150° or 90° only, never horizontal. The wireframe above gives the
+topology — which node connects to which — not the geometry; its horizontal runs become zigzags.
+One step along a basis vector (76 px across, 44 px down at 88 px) is narrower than most capsules,
+so neighbours on the same axis are two or more steps apart: rows are two lattice units apart, and
+nodes sharing a row two units apart. Where the axis rule leaves no room for a wireframe edge, the
+nearest legal one stands in (Java hangs from C/C++, SQL from MongoDB, and Traefik–Caddy replaces
+Docker–Caddy and Traefik–Linux).
+
+Positions are authored once per cluster as lattice coordinates relative to the cluster's root (its
+first node, which is also its topmost, so the §7.5 branch chain hanging into it crosses none of its
+own nodes), in `js/sections/stack.js`, and resolved to pixels at runtime, so the lattice rescales
+without redrawing. No edge leaves a cluster, so each cluster is its own lattice: the clusters are
+packed a gutter apart, **four across** where their measured spans fit (≥ ~1280 px) and **2×2** as
+the wireframe draws them otherwise, rows of clusters sharing a lattice row. In 2×2 the lower
+clusters' branch chains pass behind the upper clusters (§7.5). Each cluster's label sits above its
+root, starting clear of the chain's half-width. The positions are applied to CP3's column markup —
+the DOM, and so the tab order, is unchanged.
 
 **Node form.** A capsule — the chain-link stadium again, at small scale — 1 px `--hairline`
 border on `--void`, mono label in `--silver` *(errata E5)*. Focusable `<button>` elements, not `<span>`, so the
@@ -1704,15 +1720,20 @@ Header as §9.5. Then the graph grows like a circuit trace being etched.
 | Order | Target | Change | Dur | Ease |
 |---|---|---|---|---|
 | 1 | cluster label | `opacity 0→1`, `letter-spacing 0.4em→0.18em` | 5τ | glyph |
-| 2 | edge | `drawSVG '0 0' → '0 100'` | 2τ | mask |
+| 2 | edge | `stroke-dasharray '0 100' → '100 0'` | 2τ | mask |
 | 3 | node (on its edge completing) | `scale 0→1`, origin = the edge's start point | 3τ | chain |
 | 4 | node label | `opacity 0→1` | 1τ | — |
 
-Edges are emitted in **BFS order from each cluster root**, stagger 0.5τ. Every `<path>` carries
-`pathLength="100"` so DrawSVG values are whole percentages regardless of actual path length *(errata E25)*. Node
-`transformOrigin` is set to the incoming edge's start point, so nodes appear to be *pushed out
-along the wire* rather than popping in place — the single detail that makes the growth read as
-propagation.
+Edges are emitted in **BFS order from each cluster root**, stagger 0.5τ, the clusters in parallel:
+edge `k` of a cluster starts at `3τ + k·0.5τ`, so the largest cluster (9 edges) rests at 13τ. Each
+edge is drawn from the end BFS reached first. Every `<path>` carries `pathLength="100"`, and the
+draw tweens `stroke-dasharray '0 100' → '100 0'` in those units, as the hero ring does (§6.3) — not
+DrawSVG, which ignores `pathLength` and writes the dash in real px, so a long edge would appear
+whole early in its draw. The root seats from its centre at 0, with its cluster label. Every other
+node seats as the first edge reaching it completes, its `transformOrigin` set to that edge's start
+point, so nodes appear to be *pushed out along the wire* rather than popping in place — the single
+detail that makes the growth read as propagation. Edges are `--hairline-strong`, 1 px, one SVG
+behind the nodes.
 
 **Hover and focus** — identical behaviour for both, since nodes are `<button>` elements:
 
@@ -1720,19 +1741,24 @@ propagation.
 |---|---|---|---|
 | the node | `scale 1→1.06` | 1τ | chain |
 | incident edges | `stroke → --blue`, `stroke-width 1→2` | 1τ | metal |
-| connected nodes | label `font-stretch 100%→110%`, border → `--hairline-blue` | 1τ | glyph |
-| every other node and edge | `opacity → 0.60` (the dim floor, §4.3) | 2τ | metal |
+| connected nodes | label `letter-spacing 0.08em→0.12em`, border → `--hairline-blue` | 1τ | glyph |
+| every other node and edge | label and edge `opacity → 0.60` (the dim floor, §4.3), node border to 60 % | 2τ | metal |
 | cluster readout | `textContent` swap to the hovered node's cluster | — | none |
 
-Leave/blur reverses over 2τ. The dim floor is the hard limit here — non-focused labels stay
-readable at 4.6:1 *(errata E21)*, which is why this interaction is permitted at all.
+Leave/blur reverses over 2τ. Node labels are JetBrains Mono, which has no `wdth` axis, so
+connected labels track out rather than stretch. A dimmed node keeps its `--void` ground opaque —
+dimming the whole capsule would let the branch chain behind it show through the label. Colour,
+tracking and the dim are CSS transitions on classes (the destination's duration wins: in 1τ, out
+2τ); the seat is the one tween, since `back.out` has no CSS form. The dim floor is the hard limit
+here — non-focused labels stay readable at 4.6:1 *(errata E21)*, which is why this interaction is permitted at all.
 
 **Optional, HIGH value:** arrow-key traversal between graph-adjacent nodes (←/→ within a cluster,
 ↑/↓ between clusters). It costs about 30 lines and makes the lattice feel like an instrument rather
 than a picture. Not required for launch.
 
 **Reduced motion / LOW tier:** edges render fully drawn, nodes at `scale: 1`, no growth. Hover
-keeps only the colour change — no dimming, no scaling.
+keeps only the colour change — no dimming, no scaling, no tracking, 1 px edges. A LOW result that
+arrives before the growth has played cancels it.
 
 ### 9.7 Movement 04 — WORKS
 
@@ -1868,7 +1894,7 @@ value `opacity 0→1` 2τ.
 | Target | Change | Dur | Ease | Stagger |
 |---|---|---|---|---|
 | link glyph | MorphSVG open `C` → closed `O` | 3τ | chain | — |
-| label | `x 0→8px`, `font-stretch 100%→108%` | 1τ | glyph | — |
+| label | `x 0→8px`, `font-stretch 100%→108%` *(errata E40)* | 1τ | glyph | — |
 | underline | `drawSVG 0→100` in `--blue` | 3τ | mask | — |
 | value | `--silver → --blue-lift` | 2τ | metal | — |
 | email chips (row 03) *(errata E8)* | `scale 0.9→1`, `opacity 0→1` | 1τ | chain | 0.5τ |
@@ -1918,7 +1944,7 @@ Flip.from(state, { duration: 3 * T, ease: 'power3.out' });   // errata E3
 Flip is used rather than measuring offsets because nav labels have different widths and the
 indicator must land exactly on each. Hand-rolled measurement here is re-implementing Flip, worse.
 
-**Item hover:** `font-stretch 100% → 112%` 1τ, colour `--silver → --chrome` 1τ.
+**Item hover:** `font-stretch 100% → 112%` *(errata E40)* 1τ, colour `--silver → --chrome` 1τ.
 
 **Mobile panel:** 15° polygon sweep from the top-right (§3.6), via a registered custom property so
 the interpolation is typed:
@@ -2322,7 +2348,7 @@ reads as if it were doing something.
 | Entry JS chunk (compressed) | ≤ 66 KB |
 | Late plugins chunk — Flip + MorphSVG (compressed, idle after `load`) | ≤ 16 KB |
 | `three` chunk (compressed) | ≤ 180 KB |
-| Total JS (compressed) | ≤ 224 KB |
+| Total JS (compressed) | ≤ 228 KB |
 | CSS (compressed) | ≤ 14 KB |
 | Fonts (3 × variable woff2, subset) | ≤ 140 KB |
 | LCP (hero name, cable) | < 2.0 s |
@@ -2345,7 +2371,10 @@ moves when motion starts, not when the hero paints.
 
 The total was 220 KB until checkpoint 6b: `three` alone is ~136 KB, and the chain's movement
 states (the LATTICE branch, the horizontal run, the loop) brought the total to 220.7 KB. Raised to
-224 KB by owner decision (2026-09-28). Checkpoint 10's composer passes need their own decision.
+224 KB by owner decision (2026-09-28). Raised again to 228 KB by owner decision (2026-09-28), when
+checkpoint 7b's lattice (`sections/stack.js`, +2.4 KB in the sections chunk) brought it to 225.0 KB,
+leaving ~3 KB for the remaining section modules. Checkpoint 10's composer passes need their own
+decision.
 
 The ordering rule: **the hero must be readable before the stage exists.** The canvas starts at
 `opacity: 0` and is faded in once the first frame has rendered, so WebGL initialisation can never

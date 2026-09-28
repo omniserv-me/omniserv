@@ -24,9 +24,11 @@ import { docOffset } from '../util/rect.js';
 
 let entered = false;
 
-/* The root nodes, document px — CP3's four columns: each cluster's first
-   node. 7b replaces this with the lattice's resolved cluster roots. */
-function columnRoots() {
+/* The root nodes, document px: each cluster's first node. In 7b's graph that
+   node is the cluster's lattice root (sections/stack.js positions it on
+   `refreshInit`, before this runs on `refresh`); with the graph off it is the
+   top of CP3's column. Offsets, so the growth's scale never moves the root. */
+function clusterRoots() {
   return [...document.querySelectorAll('[data-cluster]')].map((c) => {
     const n = c.querySelector('.node');
     if (!n?.offsetParent) return null;
@@ -39,7 +41,7 @@ export function movements(stage) {
   const { chain, lattice } = stage;
   const state = chain.state;
 
-  const feedRoots = () => lattice.setRoots(columnRoots());
+  const feedRoots = () => lattice.setRoots(clusterRoots());
 
   function full(desktop) {
     const scrub = (trigger, from, to, start, end) => gsap.fromTo(state, from, {
