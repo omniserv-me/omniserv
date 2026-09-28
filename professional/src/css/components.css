@@ -286,6 +286,10 @@
 .btn--ghost:hover,
 .btn--ghost:focus-visible { border-color: var(--hairline-blue); color: var(--chrome); }
 
+/* A button's contents as one element, so §9.4 can fade the label after the
+   button has seated (errata E23). It lays out exactly as the button did. */
+.btn__label { display: inline-flex; align-items: center; gap: inherit; }
+
 .rail__toggle {
   display: none;
   place-items: center;
@@ -372,9 +376,31 @@
 
 #identity { min-height: 100vh; align-content: center; }
 
-.hero__text { display: grid; gap: var(--s-3); justify-items: start; }
+.hero__text {
+  display: grid;
+  /* minmax(0, 1fr), not the implicit auto: an auto track grows to its widest
+     child's min-content, which let the 704 px tagline measure (and at phone
+     widths the name) stretch the track past its own column — and would let
+     §9.4's role, held on one line while tracked out from 0.6em, reflow the
+     tagline and buttons mid-entrance. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-3);
+  justify-items: start;
+}
 
-.hero__role { margin-top: calc(-1 * var(--s-1)); }
+.hero__role { position: relative; margin-top: calc(-1 * var(--s-1)); }
+
+/* The role hairline (§9.4, errata E20) — decoration under the role line, at
+   the role's own width, drawn in by the entrance. Absolutely positioned, so it
+   adds no row to the hero's grid. A border rather than a background so forced
+   colours keep it as a stroke. */
+.hero__rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--s-1));
+  border-top: 1px solid var(--hairline-strong);
+}
 
 .hero__actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
 

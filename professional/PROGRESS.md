@@ -51,7 +51,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       CLS 0 on load; splits produce no visible reflow; resizing/re-splitting leaks no tweens
       (`gsap.globalTimeline.getChildren()` count stable); no-JS page still complete.
 
-- [ ] 5b. IDENTITY choreography — design.md §9.4 (everything but the split config), §3.7
+- [x] 5b. IDENTITY choreography — design.md §9.4 (everything but the split config), §3.7
       Scope: `sections/hero.js`. The §9.4 entrance timeline (every row, incl. per-char width morph,
       role tracking, role hairline, tagline wipe, portrait stadium aperture + image scale, buttons,
       ring DrawSVG, scroll cue). The role hairline has no element yet — resolve **E20** (a
@@ -110,7 +110,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Scope: lattice coordinates in `sections/stack.js` resolved to px (pitch 88 px desktop, 62 px
       tablet), the edge SVG (`pathLength="100"`, 30°/150°/90° only), absolute placement on top of
       CP3's markup — the four-column layout stays for `s`, no-JS and no-WebGL. Growth (BFS order,
-      origin-at-edge-start nodes), hover/focus dim-and-highlight, cluster readout, reduced/LOW
+      origin-at-edge-start nodes — resolve **E25**'s edge part: DrawSVG ignores `pathLength`), hover/focus dim-and-highlight, cluster readout, reduced/LOW
       branch. Feed the resolved cluster-root positions to 6b's branch-roots setter (§7.5), on every
       resize. Arrow-key traversal (§9.6) is **optional and deferred** — build only if time remains.
       Done when: every edge sits on a permitted axis; hover never dims a label below 0.60; keyboard
@@ -194,7 +194,8 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       items 2–3 left as the spec handles them; full §12.7 budget table measured, with transfer sizes
       taken under Caddy's actual `zstd` encoding (checkpoint 4's log); §6.1's scroll extents
       measured against the ≈ 810 vh total; the **cross-cutting audit** (see map); the spec-text
-      errata **E5, E6, E11, E12, E13, E14, E21** fixed in design.md.
+      errata **E5, E6, E11, E12, E13, E14, E21** fixed in design.md; **E27** (saveStyles vs media
+      changes) and **E28** (CLS from the width morphs) settled.
       Done when: every §10.4 row verified; Lighthouse a11y ≥ 95; every §12.7 budget met or logged;
       cross-cutting audit clean or logged; every Errata row is marked resolved.
 
@@ -250,12 +251,12 @@ level.**
 | §7.7 Performance | 6a (DPR, links, clearcoat) · 10 (MSAA, post, incl. E16) · 8b (tethers) |
 | §8.1 Pass chain · §8.2 Metal pass · §8.3 Why these four · §8.4 Exposure flash | 10 (§8.4's trigger → 9b; §8.1's MED/LOW `antialias` depends on 6a's renderer decision; MED streak vs no composer → E16) |
 | §8.5 CSS grain sheet | 10 (plus the background ramp, incl. E18) |
-| §9.1 Global rig | 4 — done, except: step 1 tier probe → 6a · step 3 splits → 5a · step 6 veil → 10 · "one clock" → 6a · depth module → 5b · `axis` signal set by 8a · `will-change` cross-cutting |
+| §9.1 Global rig | 4 — done, except: step 1 tier probe → 6a · step 3 splits → 5a · step 6 veil → 10 · "one clock" → 6a · depth module → 5b · `axis` signal set by 8a · `will-change` cross-cutting · `saveStyles` → E27 (11b) |
 | §9.2 Named easings | 4 — done; usage cross-cutting; off-list eases elsewhere → E3, E4, E15, E-ease; unused `catenary` → E22 (6a) |
 | §9.3 CAST | 10 (incl. E17) |
 | §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
 | §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest; header helper reused by 7b/8a/9b) |
-| §9.6 LATTICE | 7b (arrow keys optional/deferred); "4.6:1" → E21 |
+| §9.6 LATTICE | 7b (arrow keys optional/deferred; edge draws → E25); "4.6:1" → E21 |
 | §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
 | §9.8 LINK | 9b (incl. E8; exposure uniform → 10) |
 | §9.9 Navigation rail | 9a (incl. E3's `power3.out`; `--sweep` spec text → E13) |
@@ -267,7 +268,7 @@ level.**
 | §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
 | §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
 | §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
-| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP) · 6a (three chunk, canvas fade-in, draw calls) · 11b full audit (zstd transfer) |
+| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 11b full audit (zstd transfer) |
 | §13 Implementation order | superseded by this checklist (see note in design.md §13) |
 | §14 Open items | 11b (items 1–3; item 4 closed by 3) |
 | Appendix | reference only |
@@ -285,9 +286,9 @@ resolved.
 |---|---|---|---|---|
 | E1 | §10.1 vs §10.2 | Reduced motion: "one static frame rendered, then the ticker callback is removed" vs "forced to `NONE` when `signals.motion === 'reduced'`", which removes the canvas | 6a | open |
 | E2 | §5.2 vs §12.2 | Fonts "in `src/fonts/`, imported from CSS so Vite fingerprints them" vs `public/fonts/*-v1.woff2`, deliberately unhashed. 5a's scope already follows §12.2 | 5a | resolved by 5a — `public/fonts/*-v1.woff2`, unhashed, per §12.2 |
-| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | open |
-| E-ease | §9.4–§9.8 tables | An Ease column of "—" (button labels, scroll cue, section index, plate row labels, node labels, colophon rows) is undefined, and §9.10's micro-state table has no Ease column at all (CSS transitions, so the rule must also give `cubic-bezier` forms, as §9.9 does for `ease.metal`); GSAP's default `power1.out` is not on the §9.2 list. Settle the rule once (`none`, or a `gsap.defaults` ease); it is cross-cutting after that | 5b | open |
-| E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | open |
+| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | 5b's part resolved by 5b — breathing is a true sine computed per frame on the ticker, no eased tween; 9a and 6a open |
+| E-ease | §9.4–§9.8 tables | An Ease column of "—" (button labels, scroll cue, section index, plate row labels, node labels, colophon rows) is undefined, and §9.10's micro-state table has no Ease column at all (CSS transitions, so the rule must also give `cubic-bezier` forms, as §9.9 does for `ease.metal`); GSAP's default `power1.out` is not on the §9.2 list. Settle the rule once (`none`, or a `gsap.defaults` ease); it is cross-cutting after that | 5b | resolved by 5b — "—" means `glyph`, written out; `gsap.defaults({ ease: 'none' })`; CSS `--ease-mask/glyph/metal` tokens (§9.2), §9.10 gained an Ease column; existing CSS `ease` keywords are converted by their owners (9a, 9b), audited by 11b |
+| E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | resolved by 5b — scrubs are `none` with no exception; the aperture closes linearly |
 | E5 | §6.5 vs §5.3 / §4.3 | Node label "mono label in `--silver`" vs `--silver-light` (dimmable, AA at the floor). Code already follows §5.3 (`components.css`, `.node__label`) | 11b (text) | resolved in code by 3 |
 | E6 | §1.3 I1 | "The only text JS writes is the copyright year and the diagnostic tier readout", but the CAST counter, card index scramble, WORKS progress label and lattice cluster readout also write text. Reword to what I1 means: JS never supplies *content* | 11b (text) | open |
 | E7 | §10.4 vs §9.7 | "the WORKS pin's `focusin` handler" vs "Do not add a `focusin` listener", i.e. use the smoother's `onFocusIn` | 8b | open |
@@ -303,9 +304,15 @@ resolved.
 | E17 | §9.3 × §10.1, §10.2, §7.7 | CAST shows "the single spinning link from the WebGL stage", but its behaviour with no stage (tier NONE, WebGL failure, reduced motion forced to NONE per E1) and its exit under reduced motion are unspecified. The tier probe runs *after* first paint while CAST renders *from* it, and no rule says which tier's parameters apply until the probe resolves | 10 (with 6a's renderer decision) | open |
 | E18 | §8.5, §3.7 | "The page's background ramp" / the depth-5 "background gradient sheet" is referenced but never specified: no gradient, stops, angle or element | 10 | open |
 | E19 | §10.3 | NONE fallback uses "a `--silver-sheet` radial", but `--silver-sheet` is a 168° linear gradient, so the radial form is undefined; the static chain strip is "positioned where the spine would run", but the spine's `X` changes per movement | 11a | open |
-| E20 | §9.4 × §6.3 | The entrance table animates a "role hairline" and §6.3's wireframe draws one, but §6.3's markup has no such element, and neither does CP3's `index.html` | 5b | open |
+| E20 | §9.4 × §6.3 | The entrance table animates a "role hairline" and §6.3's wireframe draws one, but §6.3's markup has no such element, and neither does CP3's `index.html` | 5b | resolved by 5b — `<span class="hero__rule" aria-hidden="true">` inside the role line, absolutely positioned `border-top` at the role's width |
 | E21 | §9.6, §4.2 | Spec-text slips outside E11/E12: §9.6's dimmed labels at "4.6:1" vs §4.3's 4.96:1 on `--void` (the nodes' ground); §4.2's `--silver-sheen` "animated via background-position (§9.4)", but §9.4 has no sheen (§9.5/§9.7/§9.8 do) | 11b (text) | open |
 | E22 | §9.2 | The `catenary` ease ("chain slack relaxation only") has no consumer: sag reads velocity directly with no tween (§7.2) and nothing in §7/§9 names it. Give it one or strike it from §9.2 | 6a | open |
+| E23 | §9.4 × §6.3 | The entrance fades "button labels" in after the buttons seat, but each label is a bare text node inside `.btn`, so there is no element to fade | 5b | resolved by 5b — each hero button's content is one `<span class="btn__label">` (inline-flex, `gap: inherit`, so no visual change) |
+| E24 | §9.2 | With E4 settled as `none`, `shut` ("apertures closing, hero exit") has no consumer left | 5b | resolved by 5b — struck from §9.2, the Appendix and `core/easings.js` |
+| E25 | §6.3, §9.4, §9.6 | `pathLength="100"` "so DrawSVG maths is in whole percent", but DrawSVG ignores `pathLength`: it measures a `<rect>` as sharp corners and a `<path>` by `getTotalLength()`, while the browser reads the dash in `pathLength` units, so draws complete after a fraction of their tween (the hero ring appeared whole at ~9 %) | 5b (hero ring) · 7b (§9.6 lattice edges) | 5b's part resolved by 5b — the ring tweens `stroke-dasharray` `'0 100' → '100 0'` directly; §9.6's edges open for 7b |
+| E26 | §9.4 scroll-out vs §9.4 / §4.3 | "meta, role, tagline `opacity → 0` by 40 % progress" leaves them wholly on screen at 0.375 and 0 at 1440×900, against the section's own "nothing rests below 0.60" (and meta/role are `--silver`, which may not be dimmed at all) | 5b | resolved by 5b — every scroll-out fade (incl. the name's 0.06) is bound to the element's own exit: full opacity while wholly on screen, fading only while the viewport's top edge cuts through it |
+| E27 | §9.1 teardown | "`ScrollTrigger.saveStyles()` on every animated selector", but ScrollTrigger restores every saved style on *any* media-query change (`matchMediaRevert`, incl. its own `(orientation: portrait)` query), even when no context toggled — after a 900 px crossing into a portrait viewport it wiped the rebuilt hero (hairline invisible). The hero registers no selectors; its context revert and cleanup restore everything | 11b (§9.1 text, registry comment, cross-cutting audit) | open |
+| E28 | §12.7 CLS vs §5.4 / §9.4 | CLS budget 0, but a per-character `wdth` morph changes glyph advances, so following characters really move and Layout Instability counts it: the hero entrance measures **0.002** in Chrome 154 (all sources `DIV.char`); breathing registers 0; 7a's heading morphs will add their own | 11b (§12.7 audit) | open |
 
 ## Log
 
@@ -859,3 +866,162 @@ with CLS measured in `chrome-headless-shell` 154 because Firefox has no layout-s
 
 **Left alone:** E3, E4, E-ease and E20 (5b) and E11 (§5.1's "§9.3" ref, 11b) all touch this area
 and all have other owners.
+
+### Checkpoint 5b — IDENTITY choreography
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 5b — IDENTITY choreography`
+
+`sections/hero.js` builds §9.4: the entrance, idle breathing, pointer parallax, the scroll-out and
+the reduced branch. `core/depth.js` is §9.1's "one module owns the depths" (§3.7). Neither file is
+in §12.2's layout; both are named by this checkpoint's scope.
+
+**Errata decisions (user, this session):**
+- **E3, 5b's part:** breathing is a true sine on the ticker clock, `wdth_i = 100 + 3·A·sin(2π(t −
+  0.08i)/6)`, with the amplitude `A` ramped in over 8τ and out over 3τ (`glyph`). A `sine.inOut` yoyo
+  over 3 s is exactly a cosine, so this is the motion the spec meant, with no curve added to §9.2.
+  E3's other parts stay open for 9a (`power3.out`) and 6a (`power2.out`).
+- **E4:** scrubs are `none` with no exception. Measured at 1440×900: the portrait leaves the view
+  at 53 % of the scroll-out, where `shut` had closed only 5 %. Linear, it's visibly closing.
+- **E-ease:** a "—" means `glyph`, written out explicitly; `gsap.defaults({ ease: 'none' })` in
+  `easings.js`, so an omitted ease can't be `power1.out`. CSS forms are `--ease-mask/glyph/metal`
+  in `tokens.css`, and §9.10 gained an Ease column. **Not converted here:** the plain `ease`
+  keyword in the existing CSS transitions (the panel's belongs to 9a, the micro-states' to 9b).
+  Their owners convert them, and 11b audits.
+- **E20:** the hairline is `<span class="hero__rule" aria-hidden="true">` inside `<p data-role>`,
+  absolutely positioned 1 px `border-top` (`--hairline-strong`, so forced colours keep it) at the
+  role's width. There's no layout change. Its `scaleX(0)` is the hero's only CSS-hidden state.
+- **New E23** (user agreed): button labels are `<span class="btn__label">` (inline-flex, `gap:
+  inherit`). Verified: the arrow glyphs sit at the same pixels as before.
+- **New E24** (user agreed): `shut` struck from §9.2, the Appendix and `easings.js`.
+- **New E26** (user agreed): the scroll-out's fades are bound to each element's own exit (full
+  opacity while wholly on screen, fading only while the top edge cuts through it). The name's
+  window is divided by `k = 1 + 0.12·vh / section height`, because it also rises 12vh. It's computed
+  from untransformed `offsetTop`, so a refresh mid-scroll can't skew it.
+- **Owner decision, §12.7:** entry budget **64 → 66 KB**. See "Carried forward".
+
+**Found and settled in code, with rows opened for other owners:**
+- **E25, DrawSVG ignores `pathLength`.** It measured the ring `<rect>` as 1088 (sharp corners),
+  while the browser read the dash in `pathLength` units, so the ring appeared whole at ~9 % of its
+  draw. The hero ring now tweens `stroke-dasharray '0 100' → '100 0'` itself. **7b:** §9.6's edges
+  carry `pathLength="100"` too, and `getTotalLength()` has the same mismatch.
+- **E27, `saveStyles` vs media changes.** ScrollTrigger answers every `matchMediaRevert` by
+  restoring *all* `saveStyles` records, even when no context toggled. Its own `(orientation:
+  portrait)` query counts. So crossing 900 px into a portrait viewport reverted and rebuilt the
+  hero, and then a second media event wiped the rebuilt state: the hairline became invisible.
+  **The hero registers no `selectors`**, and its context revert plus `full()`'s cleanup restore
+  everything (verified below). **7a onward: don't register `selectors` either** until 11b settles
+  E27.
+- **E28, CLS.** Chrome 154 measures the entrance at **0.002**, every source `DIV.char`: §9.4's
+  `wdth` morph changes glyph advances, so later chars really move. Breathing registers 0. It's far
+  under 0.1 ("good"), but the §12.7 budget is 0, so it's left to 11b's audit. 7a's heading morph
+  will add its own.
+
+**Deviations and decisions where the spec is silent:**
+- **The hero is readable before any JS runs**, per the done-when. Nothing is hidden in CSS apart
+  from the hairline, and the entrance sets its own from-states when built. On a load without CAST,
+  the hero therefore paints and is then re-hidden by the build step before the entrance plays it
+  in. **Note for 10:** CAST's veil covers that. Wire it with `holdEntrance()` before boot and
+  `playEntrance()` at CAST t = 5τ (both exported from `hero.js`).
+- **The entrance is a page-load event.** A rebuild after it has played (motion toggle, breakpoint)
+  builds no timeline: it sets the hairline, jumps the chars to rest and arms breathing. Jumping a
+  freshly built timeline to `progress(1)` was tried first and left `.btn__label { opacity: 0 }`
+  behind on the next revert, which hid the labels under reduced motion.
+- **Two writers on one value compose in CSS.** The entrance tweens `--in` and `--ap-in`, the
+  scroll-out `--out` and `--ap-out`, and `motion.css` multiplies them: `opacity: calc(var(--in, 1) *
+  var(--out, 1))`, `clip-path: inset(calc(50% − 50%·in·out) 0 round 116px)`. The latter is a true
+  stadium at every height, because the round radii scale down together. All default to 1, so
+  nothing is hidden pre-JS.
+- **The name's width has three drivers** (entrance, scroll-out, breathing) and one writer,
+  `writeWidth()`: `wdth = lerp(enter + breath, 62, out)`. `widthTween` isn't used for it, and
+  `debug.js` no longer re-exports `widthTween`, which kept it in the entry for nothing. 7a/8a
+  importing it brings it back.
+- **The char timeline is paused and driven by the master's `onUpdate`** (`time − 1τ`). SplitText's
+  progress restore then keeps a re-split in step.
+- **Buttons seat through the `scale` property** (`scale: 1 var(--sy)`), not `transform`, so
+  `.btn--metal`'s transform transition never smears the entrance.
+- **The role holds `white-space: nowrap`** while tracking from 0.6em. At 0.6em it's ~452 px and
+  wrapped at ≤ 390 px, which pushed the tagline and buttons down mid-entrance.
+- **`.hero__text` gets `grid-template-columns: minmax(0, 1fr)`** (in `components.css`). The
+  implicit `auto` track grew to its widest child's min-content. That was the nowrap role, but also
+  already the 704 px tagline measure at 1440 (column: 690) and "YESAULOV" at 375. The tagline box
+  now stays inside its column: 690 not 704 at 1440, 315 not 358 at 375, with the same height and
+  line count. That's the only layout change from 5a, and JS-on and no-JS rest layouts are now
+  identical at 375/640/900/1440.
+- **Split gradient type:** Chromium drops transformed descendants from an ancestor's
+  `background-clip: text`. The split name rendered as one silver blob, **even at rest** (5a's note
+  was right). Once split (`.silver-type:has(.char)`), each char paints `--silver-text` itself,
+  with `--sheet-h` (the element's height) and its own `--sheet-y` measured at split. The gradient
+  is vertical, so horizontal position and `wdth` don't matter. Pixel check: Chrome, rest vs no-JS,
+  27 of 324 000 px differ. Firefox matches row-mean colour to within 1–4 levels, differing only at
+  glyph edges, as in 5a. 7a's heading and 8a's title splits aren't `.silver-type`, but the rule is
+  generic if one ever is.
+- **Breathing is gated** to "after the entrance has rested" and "hero on screen". The §9.4 wording
+  covers neither; without them it would run behind the reader forever.
+- **The tagline's `.wipe` class** is added by `full()` and removed when its tween completes, which
+  drops the mask layer. The cleanup removes it too.
+
+**Depth module, the API for 6b, 7a, 8a and 10** (`core/depth.js`):
+- `DEPTH` (heading 0, plate/card 1, portrait 2, chainFore 3, chainMid 4, background 5) and
+  `amplitude(layer, 'pointer' | 'scroll')` = `4·√2ⁿ` px, ×4 for scroll.
+- `pointerOffset(layer, out)`: the inverted px offset, for the WebGL consumers (6b chain, 10
+  background) to read per frame.
+- `pointerParallax(el, layer)` and `scrollParallax(el, layer, stVars)` return cleanups. Call them
+  inside a registered branch and return the cleanup from it: gsap.context runs a branch's returned
+  function on revert.
+- **The module owns the element's CSS `translate` property**, pointer + scroll summed in one write,
+  so GSAP's `x`/`y`/`transform` stay free for choreography. The hero name's scroll-out `y` and its
+  pointer parallax coexist that way. Pointer writes fire only when the (already lerped) signal
+  changes.
+
+**Verified** in headless Firefox (desktop pointer prefs) and chrome-headless-shell 154, against
+`vite preview` on the final build:
+- **Build:** entry **64.11 kB** (Vite's gzip figure; `gzip -6` 63.4 kB, zstd −3 66.3 kB, see 11b's
+  zstd note), inside the new 66 KB; CSS 5.53 kB; late 14.56 kB.
+- **Entrance per §9.4:**
+  - The master is 2.52 s = 21τ. Sampled at four points, each row starts on its beat (the role at
+    8.07 px of tracking on the first frame, the tagline mask at 71 % at 0.75 s, the buttons
+    overshooting to `scale 1 1.10` on `back.out`, the ring drawing progressively from 1.2 s).
+  - At rest every value is the authored one: tracking 0.18em, `wdth` 100, no `.wipe`, `scaleX(1)`,
+    aperture `inset(0)`, image `scale(1)`, dash `100 0`.
+  - 14 chars, lines at 1τ/3τ.
+- **Breathing:**
+  - It starts ~4 s after rest, spans exactly **97–103**, and a pointer move takes `A` to 0 within
+    3τ.
+  - Its clock stops (checked by `t` freezing, since GSAP's own ticker traffic pollutes an add/remove
+    count), and it re-arms after 4 s.
+  - A motion toggle OFF mid-breath stops it. It's never active under reduced motion.
+- **Scroll-out:**
+  - Linear (name `wdth` 96.2 / 90.5 / 81 at 10 / 25 / 50 %); the aperture ends at `inset(49.68%)`
+    = 2 px of 312.
+  - At 1440×900, 1280×700, 800×900 and 390×844, scanned in 5 % steps: the minimum opacity of any
+    text wholly on screen is **1.0**.
+- **LCP** (`.hero__text`, or the portrait at 390): 32–136 ms unthrottled, **364 ms** at 8 Mbps /
+  60 ms / 4× CPU.
+- **Readable before JS:** with the entry script held 3 s, at 1.2 s the hero is complete (opacity
+  1 throughout, no `__rig`), with only the decorative hairline undrawn.
+- **Leaks, Firefox:**
+  - Motion toggle ×3: **24 children / 6 triggers ON, 1 / 1 OFF** every cycle, the same OFF
+    baseline as checkpoints 4 and 5a.
+  - 5 resizes 1440↔1000 and 4 crossings of 900 px: stable at 23–24 / 6. The one-child swing is a
+    live breathing ramp.
+  - The hero rests correctly after every rebuild, including a crossing 250 ms into the entrance.
+    No page errors.
+- **Reduced motion** (OS pref and toggle): no splits, no `.wipe`, the hairline drawn, no parallax
+  (`translate` only GSAP's own `none`), every text at opacity 1.
+- **Parallax:** at the pointer's corners the name moves ∓3.99 px and the portrait ∓7.98 px,
+  inverted.
+- **a11y:** the accessible names are unchanged ("Selected work →", "Dossier ↓ PDF"), the role's
+  text is unchanged, and `.hero__rule` is `aria-hidden`.
+- **No JS** at 1440/900/640: five sections, no hidden text, no horizontal overflow, real fonts,
+  hairline drawn.
+
+**Carried forward:**
+- **7a onward:** entry headroom is ~1.9 KB. DOSSIER and later sections should load as their own
+  chunk right after boot rather than grow the entry (owner decision; the total JS budget ≤ 220 KB
+  still governs). Also: register no `saveStyles` selectors (E27), and use `core/depth.js` for
+  heading and plate depth.
+- **6b:** chain pointer depth comes from `pointerOffset('chainFore' | 'chainMid')`.
+- **10:** `holdEntrance()` / `playEntrance()`, and the background sheet's depth is
+  `pointerOffset('background')`.
+- **Left alone, owned elsewhere:** E3 (9a, 6a), E15 (6b, the same scrub-ease question for the chain
+  migration, which E4's "no exception" wording now informs), E21 (§4.2's "§9.4" sheen reference).

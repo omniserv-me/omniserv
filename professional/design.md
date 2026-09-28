@@ -627,7 +627,7 @@ A fixed hairline bar. Not a card, not a pill, not frosted glass — a rule with 
 
   <h1 id="identity-h" class="hero__name" data-split="name">Leonid Yesaulov</h1>
 
-  <p class="hero__role mono" data-role>AI &amp; Infrastructure Engineer</p>
+  <p class="hero__role mono" data-role>AI &amp; Infrastructure Engineer<span class="hero__rule" aria-hidden="true"></span></p>
 
   <p class="hero__tagline lead" data-split="lines">
     Secure, scalable systems end to end — backend services, deployment
@@ -635,9 +635,9 @@ A fixed hairline bar. Not a card, not a pill, not frosted glass — a rule with 
   </p>
 
   <div class="hero__actions">
-    <a class="btn btn--metal" href="#works">Selected work <span aria-hidden="true">→</span></a>
+    <a class="btn btn--metal" href="#works"><span class="btn__label">Selected work <span aria-hidden="true">→</span></span></a>
     <a class="btn btn--ghost" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
-      Dossier <span class="mono" aria-hidden="true">↓ PDF</span>
+      <span class="btn__label">Dossier <span class="mono" aria-hidden="true">↓ PDF</span></span>
     </a>
   </div>
 
@@ -664,7 +664,12 @@ A fixed hairline bar. Not a card, not a pill, not frosted glass — a rule with 
 - Tagline: `Secure, scalable systems end to end — backend services, deployment lifecycles, and the mathematics underneath.`
 - Meta line: `Munich, DE · 48.1375° N 11.5755° E` — Munich's actual coordinates. It is true, it is
   precise, and it sets the telemetry register in the first line the reader sees.
-- CTAs: `Selected work →` and `Dossier ↓ PDF`; scroll cue `02 About ↓`.
+- CTAs: `Selected work →` and `Dossier ↓ PDF`; scroll cue `02 About ↓`. Each button's content is one
+  `.btn__label` span (laid out exactly as the button's own flex row), so §9.4 can fade the label in
+  after the button has seated.
+- Role hairline: `.hero__rule`, an empty `aria-hidden` span inside the role line, absolutely
+  positioned 1 px (`border-top`, `--hairline-strong`) under the text at the role's own width — the
+  wireframe's rule under the role, drawn in by §9.4. It adds no row to the layout.
 
 **The portrait aperture** is the design's tightest link between motif and layout. The shape is a
 **stadium** — a rectangle capped by two semicircles, `border-radius: 116px` on a 232×312
@@ -677,7 +682,10 @@ axis, and it matches the SVG ring's own `rx="116"` (SVG rect rounding clamps `rx
 independently per axis, so it needs no such care). The portrait is framed by the negative
 space of the page's central motif. `object-fit: cover`, `object-position: 50% 42%` to keep the
 face in the upper third of the stadium. The ring around it is a single SVG `<rect>` with
-`pathLength="100"` so DrawSVG maths is in whole percent (§9.4).
+`pathLength="100"` so the draw is in whole percent (§9.4). The draw tweens `stroke-dasharray`
+itself, `'0 100' → '100 0'` in those units — not DrawSVG, which measures a `<rect>` as sharp corners
+(2·232 + 2·312 = 1088) and ignores `pathLength`, so its lengths come out in the wrong units and the
+ring would appear whole after ~9 % of its draw.
 
 The hero is the LCP element. Text paints from HTML and CSS alone; the canvas fades in afterwards
 (§12.7). No layout in this section depends on JavaScript.
@@ -1395,7 +1403,7 @@ and a visibly reflowing headline:
 5. `ScrollTrigger.refresh()`.
 6. Dismiss the veil (§9.3).
 
-**Teardown.** `ScrollTrigger.saveStyles()` on every animated selector before any context is
+**Teardown.** *(errata E27)* `ScrollTrigger.saveStyles()` on every animated selector before any context is
 created, and all breakpoint- or preference-dependent work inside `gsap.matchMedia()`:
 
 ```js
@@ -1410,14 +1418,13 @@ on 40 split characters — it is a per-element compositing layer and the memory 
 
 ### 9.2 Named easings
 
-Five `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page. *(errata E3, E-ease)*
+Four `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page. *(errata E3)*
 
 ```js
 CustomEase.create('mask',     'M0,0 C0.16,1 0.3,1 1,1');      // ≈ expo.out  — wipes, apertures, draws
 CustomEase.create('glyph',    'M0,0 C0.08,0.82 0.17,1 1,1');  // ≈ power4.out — all type
 CustomEase.create('metal',    'M0,0 C0.5,0 0.5,1 1,1');       // symmetric   — sheens, exposure, blur
 CustomEase.create('catenary', 'M0,0 C0.18,0.92 0.08,1 1,1');  // fast settle, long tail — chain relax
-CustomEase.create('shut',     'M0,0 C0.7,0 0.84,0.06 1,1');   // ≈ expo.in   — apertures closing
 // plus: 'back.out(1.8)' referred to as ease.chain — the snap of a link seating
 ```
 
@@ -1428,10 +1435,22 @@ CustomEase.create('shut',     'M0,0 C0.7,0 0.84,0.06 1,1');   // ≈ expo.in   �
 | `chain` = `back.out(1.8)` | anything that *seats*: tags, nodes, buttons, link snap |
 | `metal` | sheen sweeps, exposure flash, blur, colour crossfades |
 | `catenary` | chain slack relaxation only *(errata E22)* |
-| `shut` | apertures closing, hero exit |
 
-Scrubbed animations always use `ease: 'none'`. An eased scrub means the content lags the scroll
-non-linearly, which reads as broken rather than smooth. *(errata E4)*
+Scrubbed animations always use `ease: 'none'`, with no exception — every tween inside a scrubbed
+timeline included. An eased scrub means the content lags the scroll non-linearly, which reads as
+broken rather than smooth. (A fifth curve, `shut` ≈ expo.in for "apertures closing, hero exit", was
+struck once the hero's scroll-out went linear: nothing else closed an aperture on a clock.)
+
+**A "—" in an Ease column means `glyph`**, written out explicitly: every such row (button labels,
+scroll cue, section index, plate row labels, node labels, colophon rows) animates type, and `glyph`
+is "every type animation". `core/easings.js` sets `gsap.defaults({ ease: 'none' })`, so an omitted
+ease is never GSAP's own `power1.out` (off this list) and a scrub is linear by construction.
+
+**CSS forms**, for transitions (`tokens.css`): `--ease-mask: cubic-bezier(0.16, 1, 0.3, 1)`,
+`--ease-glyph: cubic-bezier(0.08, 0.82, 0.17, 1)`, `--ease-metal: cubic-bezier(0.5, 0, 0.5, 1)`.
+Colour, border and crossfade transitions use metal; transforms of type and lifts use glyph; draws
+and wipes use mask. `back.out(1.8)` overshoots, which a cubic-bezier cannot express faithfully, so
+seating stays in GSAP.
 
 ### 9.3 Movement 00 — CAST (preloader)
 
@@ -1526,13 +1545,13 @@ gsap.to(proxies, {
 | 1τ | name chars, line 1 | `y 100%→0`, `wdth 62→100` | 5τ | glyph | 0.5τ |
 | 3τ | name chars, line 2 | same | 5τ | glyph | 0.5τ |
 | 5τ | role line | `letter-spacing 0.6em→0.18em`, `opacity 0→1` | 8τ | glyph | — |
-| 5τ | role hairline *(errata E20)* | `scaleX 0→1`, origin left | 8τ | mask | — |
+| 5τ | role hairline (`.hero__rule`, §6.3) | `scaleX 0→1`, origin left | 8τ | mask | — |
 | 6τ | tagline | 102° mask wipe (§9.5), `y 12→0` | 5τ | mask | — |
 | 8τ | portrait aperture | stadium hole `height 0→100%` | 8τ | mask | — |
 | 8τ | portrait image | `scale 1.18→1` | 13τ | glyph | — |
 | 8τ | buttons | `scaleY 0→1`, origin bottom | 3τ | chain | 1τ |
 | 9τ | button labels | `opacity 0→1` | 2τ | — | 1τ |
-| 10τ | aperture ring | `drawSVG '0 0' → '0 100'` | 8τ | mask | — |
+| 10τ | aperture ring | `stroke-dasharray '0 100' → '100 0'` (§6.3) | 8τ | mask | — |
 | 13τ | scroll cue | `opacity 0→1`, `y 6→0` | 3τ | — | — |
 
 Wall clock ≈ 2.52 s to full rest — set by the portrait image tween (starts 8τ, runs 13τ, ends at
@@ -1541,25 +1560,42 @@ to a composed timeline.
 
 **Idle breathing.** After 4 s with no scroll and no pointer movement, every character's `wdth`
 oscillates **±3 units on a 6 s sine**, phase-offset `i × 0.08 s` — a slow travelling wave through
-the name. `repeat: -1, yoyo: true, ease: 'sine.inOut'` *(errata E3)*. Killed on any input, restarted after
-another 4 s of quiet. Never runs under reduced motion. This is the detail that makes the headline
-feel alive rather than finished.
+the name. It is a true sine computed per frame on the GSAP ticker (the one clock, §9.1), not an
+eased tween, so it needs no curve from §9.2:
+
+```js
+wdth[i] = 100 + 3 · A · sin(2π · (t − 0.08·i) / 6)    // t in seconds since breathing began
+```
+
+The amplitude `A` ramps `0 → 1` over 8τ (`glyph`) when breathing starts and `→ 0` over 3τ on any
+input, after which the ticker callback is removed, so the name never jumps. Armed once the entrance
+has come to rest; restarted after another 4 s of quiet; only while the hero is on screen. Never
+runs under reduced motion. This is the detail that makes the headline feel alive rather than
+finished.
 
 **Pointer parallax**, amplitudes straight from §3.7: name 4 px, portrait 8 px, chain 11.31 px,
 background 22.63 px — all inverted relative to pointer direction, lerped at 0.08.
 
-**Scroll-out** — `trigger: '#identity', start: 'top top', end: 'bottom top', scrub: 0.6` *(errata E4)*:
+**Scroll-out** — `trigger: '#identity', start: 'top top', end: 'bottom top', scrub: 0.6`, every
+tween linear (§9.2):
 
 | Target | Change | Note |
 |---|---|---|
 | name chars | `wdth 100→62` | compresses as it leaves — the entrance, reversed |
 | name | `y 0 → −12vh`, `opacity 1→0.06` | |
-| portrait aperture | stadium `height 100% → 2px`, ease `shut` | the aperture shuts |
-| meta, role, tagline | `opacity → 0` by 40 % progress | |
+| portrait aperture | stadium `height 100% → 2px` | the aperture shuts |
+| meta, role, tagline | `opacity → 0` while crossing the top edge | each over its own exit |
+
+**Fades are bound to each element's own exit**, not to a share of the section's progress: an element
+keeps full opacity while it is wholly on screen and fades only while the viewport's top edge is
+cutting through it — its own scrubbed range, `top top → bottom top` of that element. The name's
+`opacity 1→0.06` is bound the same way; since it also rises 12vh across the section, its range is
+divided by `k = 1 + 0.12·vh / section height`. (A fade "by 40 % progress" was measured leaving the
+role and tagline wholly on screen at 0.375 and at 0 at 1440×900.)
 
 The name reaching `opacity 0.06` does **not** violate the dim floor (§4.3): the floor governs
-elements *resting* on screen. At that progress the hero has scrolled out of view and is actively
-leaving. Nothing rests below 0.60.
+elements *resting* on screen, and a fading element is always being clipped away by the viewport's
+edge. Nothing wholly on screen rests below 0.60.
 
 ### 9.5 Movement 02 — DOSSIER
 
@@ -1625,7 +1661,7 @@ Header as §9.5. Then the graph grows like a circuit trace being etched.
 | 4 | node label | `opacity 0→1` | 1τ | — |
 
 Edges are emitted in **BFS order from each cluster root**, stagger 0.5τ. Every `<path>` carries
-`pathLength="100"` so DrawSVG values are whole percentages regardless of actual path length. Node
+`pathLength="100"` so DrawSVG values are whole percentages regardless of actual path length *(errata E25)*. Node
 `transformOrigin` is set to the incoming edge's start point, so nodes appear to be *pushed out
 along the wire* rather than popping in place — the single detail that makes the growth read as
 propagation.
@@ -1867,16 +1903,17 @@ it up the page.
 Colophon: top hairline `scaleX 0→1` 8τ origin left; then rows `opacity 0→1`, `y 8→0`, 2τ, 1τ
 stagger.
 
-**Global micro-states** — everything interactive on the page, for consistency *(errata E-ease)*:
+**Global micro-states** — everything interactive on the page, for consistency. Eases per §9.2's
+rule: CSS transitions use the `--ease-*` tokens, GSAP the named curves.
 
-| Element | Trigger | Change | Dur |
-|---|---|---|---|
-| text link | hover / focus | `--silver-light → --blue-lift`; underline `drawSVG 0→100` | 1τ |
-| `.btn--metal` | hover | sheen sweep repeats; `translate3d(0,−2px,0)` | 1τ |
-| `.btn--ghost` | hover | border `--hairline → --hairline-blue`; text → `--chrome` | 1τ |
-| tag | hover | border → `--hairline-blue` | 1τ |
-| any focusable | `:focus-visible` | 2 px `--blue-lift` outline, 2 px offset, 1 px `--ink` inset ring | 0 (instant) |
-| toggle | click | label swap, 1τ crossfade | 1τ |
+| Element | Trigger | Change | Dur | Ease |
+|---|---|---|---|---|
+| text link | hover / focus | `--silver-light → --blue-lift`; underline `drawSVG 0→100` | 1τ | metal (colour), mask (underline) |
+| `.btn--metal` | hover | sheen sweep repeats; `translate3d(0,−2px,0)` | 1τ | metal (sheen), glyph (lift) |
+| `.btn--ghost` | hover | border `--hairline → --hairline-blue`; text → `--chrome` | 1τ | metal |
+| tag | hover | border → `--hairline-blue` | 1τ | metal |
+| any focusable | `:focus-visible` | 2 px `--blue-lift` outline, 2 px offset, 1 px `--ink` inset ring | 0 (instant) | — |
+| toggle | click | label swap, 1τ crossfade | 1τ | metal |
 
 Focus rings are **instant**. An animated focus ring lags keyboard navigation and feels broken.
 
@@ -2224,14 +2261,14 @@ reads as if it were doing something.
 
 | Metric | Budget |
 |---|---|
-| Entry JS chunk (compressed) | ≤ 64 KB |
+| Entry JS chunk (compressed) | ≤ 66 KB |
 | Late plugins chunk — Flip + MorphSVG (compressed, idle after `load`) | ≤ 16 KB |
 | `three` chunk (compressed) | ≤ 180 KB |
 | Total JS (compressed) | ≤ 220 KB |
 | CSS (compressed) | ≤ 14 KB |
 | Fonts (3 × variable woff2, subset) | ≤ 140 KB |
 | LCP (hero name, cable) | < 2.0 s |
-| CLS | 0 — fixed portrait box, explicit image dimensions, `font-display: swap` with metric-compatible fallbacks |
+| CLS | 0 — fixed portrait box, explicit image dimensions, `font-display: swap` with metric-compatible fallbacks *(errata E28)* |
 | First WebGL frame | after LCP; the canvas fades in over 8τ on `requestIdleCallback` |
 | Draw calls | ≤ 3 |
 
@@ -2239,8 +2276,11 @@ The entry budget was 40 KB until checkpoint 4 measured it: GSAP core + ScrollTri
 ~46 KB gzipped, and everything else in the entry (ScrollSmoother, SplitText, CustomEase, DrawSVG)
 is needed by the first frame of motion. Raised to 64 KB by owner decision (2026-09-27) — ~61 KB
 measured, with ~3 KB of headroom for the project's own code — with Flip and MorphSVG moved to the
-late chunk (§9.1). The entry is a deferred module, so its size moves when motion starts, not when
-the hero paints.
+late chunk (§9.1). Raised again to 66 KB by owner decision (2026-09-28), when checkpoint 5b's hero
+and depth modules brought the entry to 64.0 KB: that headroom was the hero's. Section modules below
+the fold (DOSSIER onward) should load as their own chunk right after boot rather than grow the
+entry further; the total JS budget still governs. The entry is a deferred module, so its size
+moves when motion starts, not when the hero paints.
 
 The ordering rule: **the hero must be readable before the stage exists.** The canvas starts at
 `opacity: 0` and is faded in once the first frame has rendered, so WebGL initialisation can never
@@ -2300,7 +2340,7 @@ Four decisions that need input or an asset, none of which blocks phases 1–6.
 **Beat.** τ = 0.12 s · durations 1/2/3/5/8/13/21τ · glyph stagger 0.5τ · line stagger 1τ
 **Ratio.** √2, from A4 · type step 2^(1/4) · spacing 8 px × Fibonacci · parallax 4 px × √2ⁿ
 **Angles.** 12° wipes · 15° panel · 30/150° lattice · 45° chamfer · 105° sheen · 168° sheet
-**Easings.** mask · glyph · chain (`back.out(1.8)`) · metal · catenary · shut; scrubs are `none`
+**Easings.** mask · glyph · chain (`back.out(1.8)`) · metal · catenary; scrubs are `none`; a "—" is glyph
 **Dim floor.** 0.60 — never lower for anything resting on screen
 **Chain.** `sag(t) = (cosh(1.9(2t−1)) − cosh 1.9)/(1 − cosh 1.9)` · `A = 0.09·H·(1 − |v|)` ·
 phase spring ζ 0.72, ω 14 · 1 link per 12 vh

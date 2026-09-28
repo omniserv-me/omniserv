@@ -40,4 +40,50 @@
      would otherwise wrap between its characters: keep each word whole. Never
      hides anything — chars rest in place until a builder tweens them. */
   [data-split] .word { white-space: nowrap; }
+
+  /* ── §9.4 IDENTITY (sections/hero.js) ─────────────────────────────────────
+     The hero is the LCP block and must be readable before any JS runs
+     (§6.3, §12.7), so it has no hidden initial state here: every factor below
+     defaults to 1, and the entrance sets its own from-states when it is built.
+     The one exception is the role hairline, which is decoration.
+
+     Two animations own some of these values — the entrance brings them in,
+     the scrubbed scroll-out takes them away — so each tweens its own factor
+     and CSS multiplies them: neither can overwrite the other mid-flight. */
+  .hero__text .meta,
+  .hero__role,
+  .hero__tagline { opacity: calc(var(--in, 1) * var(--out, 1)); }
+
+  /* The portrait's stadium hole, open fraction --ap-in × --ap-out, from the
+     centre. inset()'s round radii scale down together as the hole flattens,
+     exactly like border-radius, so every height is still a true stadium. */
+  .aperture {
+    clip-path: inset(calc(50% - 50% * var(--ap-in, 1) * var(--ap-out, 1)) 0 round 116px);
+  }
+
+  /* Buttons seat through the individual `scale` property, not `transform`,
+     so .btn--metal's hover transform and its CSS transition are untouched. */
+  .hero__actions .btn { scale: 1 var(--sy, 1); transform-origin: 50% 100%; }
+
+  .hero__rule { transform: scaleX(0); transform-origin: 0 50%; }
+
+  /* Split gradient type. Chromium leaves transformed descendants out of an
+     ancestor's background-clip: text — the split name rendered as one blob,
+     even at rest (a char keeps `translate(0)`) — so once split, each char
+     paints the sheet itself. --silver-text is vertical, so a char needs only
+     the element's height (--sheet-h) and its own offset in it (--sheet-y),
+     both written by sections/hero.js: the chars read as one continuous sheet,
+     and a rising char carries its own metal. */
+  .silver-type:has(.char) { background-image: none; }
+  .silver-type .char {
+    background-image: var(--silver-text);
+    background-size: 100% var(--sheet-h, 100%);
+    background-position: 0 var(--sheet-y, 0);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+}
+
+@media (scripting: enabled) and (forced-colors: active) {
+  .silver-type .char { background-image: none; }
 }

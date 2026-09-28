@@ -16,6 +16,7 @@ import { motion, startSignals } from './core/signals.js';
 import { boot as bootRegistry } from './core/registry.js';
 import { scrollToHash, bindAnchors } from './core/smoothscroll.js';
 import { resolveMotion } from './util/prefers.js';
+import './sections/hero.js';
 import { initFooter } from './sections/footer.js';
 import { loadLate } from './core/lazy.js';
 
@@ -35,7 +36,9 @@ async function main() {
   await document.fonts.ready;
 
   // 3–4. Signals, colophon, then every registered context: the splits first
-  //      (core/split.js registers at import), then each movement's timelines.
+  //      (core/split.js registers at import), then each movement's timelines —
+  //      sections/hero.js (§9.4) so far. Its entrance plays here until CAST
+  //      (checkpoint 10) holds it and starts it at CAST t = 5τ.
   startSignals();
   initFooter();
   bootRegistry();

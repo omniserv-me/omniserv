@@ -8,7 +8,8 @@ import { gsap, ScrollTrigger } from '../core/easings.js';
 import signals from '../core/signals.js';
 import { getSmoother } from '../core/smoothscroll.js';
 import { getContexts } from '../core/registry.js';
-import { getSplits, onSplit, widthTween } from '../core/split.js';
+import { getSplits, onSplit } from '../core/split.js';
+import { getHero } from '../sections/hero.js';
 
 const fmt = (n) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(3);
 
@@ -43,5 +44,5 @@ export function mountDebug() {
     ].join('\n');
   });
 
-  window.__rig = { signals, gsap, ScrollTrigger, getSmoother, getContexts, getSplits, onSplit, widthTween };
+  window.__rig = { signals, gsap, ScrollTrigger, getSmoother, getContexts, getSplits, onSplit, getHero };
 }

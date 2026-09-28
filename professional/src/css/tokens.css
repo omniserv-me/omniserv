@@ -88,6 +88,15 @@
   --stagger-glyph: calc(0.5 * var(--beat));  /* 0.06s between glyphs */
   --stagger-line:  var(--beat-1);            /* 0.12s between lines, rows, cards */
 
+  /* ── Named easings as CSS — §9.2 ─────────────────────────────────────────
+     The CustomEase curves of js/core/easings.js, for CSS transitions (errata
+     E-ease). Colour, border and crossfade → metal; transforms of type and
+     lifts → glyph; draws and wipes → mask. `back.out(1.8)` overshoots, which
+     a cubic-bezier cannot express faithfully — seating stays in GSAP. */
+  --ease-mask:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-glyph: cubic-bezier(0.08, 0.82, 0.17, 1);
+  --ease-metal: cubic-bezier(0.5, 0, 0.5, 1);
+
   /* ── Fixed angles — §3.6 ────────────────────────────────────────────────
      Every non-orthogonal angle on the page comes from this list. No others. */
   --angle-tilt:      12deg;    /* body-copy wipe, conceptual tilt (CSS form below) */

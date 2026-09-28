@@ -25,20 +25,24 @@ gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText,
    Fibonacci relationship stays visible in the source. */
 export const T = 0.12;
 
-/* §9.2 — five curves plus one built-in. Nothing else is used anywhere on the page.
-   Scrubbed animations always use ease: 'none'. */
+/* §9.2 — four curves plus one built-in. Nothing else is used anywhere on the page.
+   Scrubbed animations always use ease: 'none'.
+
+   The default ease is 'none' (errata E-ease, 5b): an omitted ease is never
+   GSAP's own power1.out, which is off the list, and a scrub is linear by
+   construction. A "—" in a design.md Ease column means glyph, written out. */
+gsap.defaults({ ease: 'none' });
+
 CustomEase.create('mask',     'M0,0 C0.16,1 0.3,1 1,1');      // ≈ expo.out  — wipes, apertures, draws
 CustomEase.create('glyph',    'M0,0 C0.08,0.82 0.17,1 1,1');  // ≈ power4.out — all type
 CustomEase.create('metal',    'M0,0 C0.5,0 0.5,1 1,1');       // symmetric   — sheens, exposure, blur
 CustomEase.create('catenary', 'M0,0 C0.18,0.92 0.08,1 1,1');  // fast settle, long tail — chain relax
-CustomEase.create('shut',     'M0,0 C0.7,0 0.84,0.06 1,1');   // ≈ expo.in   — apertures closing
 
 export const ease = {
   mask: 'mask',
   glyph: 'glyph',
   metal: 'metal',
   catenary: 'catenary',
-  shut: 'shut',
   chain: 'back.out(1.8)',   // anything that seats: tags, nodes, buttons, link snap
 };
 
