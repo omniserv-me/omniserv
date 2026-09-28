@@ -162,7 +162,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Done when: glyph morph is clean (no wobble); loop snap and `flash()` fire exactly once per
       visit; every hover state has a `:focus-visible` twin.
 
-- [ ] 10. Post-processing + CAST — design.md §8, §9.3
+- [x] 10. Post-processing + CAST — design.md §8, §9.3
       Scope: `EffectComposer` + MSAA target, `gl/passes/metal.js`, `OutputPass`, `uStreak` and
       `uVelocity` fed from tier and `signals.velocity` (MED's streak vs "no composer at MED" is
       **E16**); wire 9b's
@@ -250,10 +250,10 @@ level.**
 | §7.5 Per-movement choreography | 6b (IDENTITY → colophon rows, incl. E9, E15, E33, E34; branch-roots setter) · 7b (feeds lattice-resolved roots) · 8a (bind WORKS row to pin, ≤ 900 px return to vertical) · 9b (trigger loop snap) · 10 (CAST row) |
 | §7.7 Performance | 6a (DPR, links, clearcoat) · 10 (MSAA, post, incl. E16) · 8b (tethers) |
 | §8.1 Pass chain · §8.2 Metal pass · §8.3 Why these four · §8.4 Exposure flash | 10 (§8.4's trigger → 9b; §8.1's MED/LOW `antialias` depends on 6a's renderer decision; MED streak vs no composer → E16) |
-| §8.5 CSS grain sheet | 10 (plus the background ramp, incl. E18) |
+| §8.5 CSS grain sheet | 10 (plus the background ramp, incl. E18 — done) |
 | §9.1 Global rig | 4 — done, except: step 1 tier probe → 6a · step 3 splits → 5a · step 6 veil → 10 · "one clock" → 6a · depth module → 5b · `axis` signal set by 8a · `will-change` cross-cutting · `saveStyles` → E27 (11b) |
 | §9.2 Named easings | 4 — done; usage cross-cutting; off-list eases elsewhere → E3, E4, E15, E-ease; unused `catenary` → E22 (6a) |
-| §9.3 CAST | 10 (incl. E17) |
+| §9.3 CAST | 10 (incl. E17, E48 — done) |
 | §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
 | §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest, incl. E35, E36, E37's plate part; header helper reused by 7b/8a/9b) |
 | §9.6 LATTICE | 7b (done, incl. E25's edges, E40's part; arrow keys deferred, not built); "4.6:1" → E21 |
@@ -268,7 +268,7 @@ level.**
 | §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
 | §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
 | §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `tether.js` 8b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
-| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 7b (total raised to 228 KB) · 8b (total raised to 232 KB) · 11b full audit (zstd transfer) |
+| §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 7b (total raised to 228 KB) · 8b (total raised to 232 KB) · 10 (total raised to 236 KB, entry to 68 KB) · 11b full audit (zstd transfer) |
 | §13 Implementation order | superseded by this checklist (see note in design.md §13) |
 | §14 Open items | 11b (items 1–3; item 4 closed by 3) |
 | Appendix | reference only |
@@ -300,9 +300,9 @@ resolved.
 | E13 | §9.9, §12.2 | `--sweep / 100%` is invalid CSS (checkpoint 3's log); `manualChunks` object form fails under vite 8 (checkpoint 1's log) | 11b (text) | resolved in code by 1, 3 |
 | E14 | §3.4 | "These three numbers match the existing CSS breakpoints" is false: the old sheet had 768/900, no 640 (checkpoint 2's log) | 11b (text) | open |
 | E15 | §7.5 vs §9.2 | The `X` migration is "a scrubbed GSAP tween … `ease.metal`", but "scrubbed animations always use `ease: 'none'`". E4 covers only §9.4's scroll-out | 6b | resolved by 6b — scrubbed, `ease: 'none'`; `ease.metal` struck from §7.5 |
-| E16 | §7.7, §8.2 vs §8.1 | MED tier lists "Post: streak taps 3" and `uStreak` "0.6 MED", but §8.1 drops the composer entirely at MED and LOW, so no pass exists for the streak to run in; the shader also has no tap-count parameter | 10 | open |
-| E17 | §9.3 × §10.1, §10.2, §7.7 | CAST shows "the single spinning link from the WebGL stage", but its behaviour with no stage (tier NONE, WebGL failure, reduced motion forced to NONE per E1) and its exit under reduced motion are unspecified. The tier probe runs *after* first paint while CAST renders *from* it, and no rule says which tier's parameters apply until the probe resolves | 10 (with 6a's renderer decision) | open |
-| E18 | §8.5, §3.7 | "The page's background ramp" / the depth-5 "background gradient sheet" is referenced but never specified: no gradient, stops, angle or element | 10 | open |
+| E16 | §7.7, §8.2 vs §8.1 | MED tier lists "Post: streak taps 3" and `uStreak` "0.6 MED", but §8.1 drops the composer entirely at MED and LOW, so no pass exists for the streak to run in; the shader also has no tap-count parameter | 10 | resolved by 10 — §8.1 wins: no composer at MED; post (and `uStreak` 1.0) is HIGH only, MED/LOW render directly with antialias |
+| E17 | §9.3 × §10.1, §10.2, §7.7 | CAST shows "the single spinning link from the WebGL stage", but its behaviour with no stage (tier NONE, WebGL failure, reduced motion forced to NONE per E1) and its exit under reduced motion are unspecified. The tier probe runs *after* first paint while CAST renders *from* it, and no rule says which tier's parameters apply until the probe resolves | 10 (with 6a's renderer decision) | resolved by 10 — CAST's link is inline SVG in the veil at every tier (the stage stays after `load`); gloss bound to progress; `load` replaces PMREM (0.30); reduced motion: static link, fade-only exit |
+| E18 | §8.5, §3.7 | "The page's background ramp" / the depth-5 "background gradient sheet" is referenced but never specified: no gradient, stops, angle or element | 10 | resolved by 10 — fixed `.ground` behind the canvas, `linear-gradient(168deg, --void 0%, --ink 62%)`, inset −24 px, pointer parallax only (n = 5) |
 | E19 | §10.3 | NONE fallback uses "a `--silver-sheet` radial", but `--silver-sheet` is a 168° linear gradient, so the radial form is undefined; the static chain strip is "positioned where the spine would run", but the spine's `X` changes per movement | 11a | open |
 | E20 | §9.4 × §6.3 | The entrance table animates a "role hairline" and §6.3's wireframe draws one, but §6.3's markup has no such element, and neither does CP3's `index.html` | 5b | resolved by 5b — `<span class="hero__rule" aria-hidden="true">` inside the role line, absolutely positioned `border-top` at the role's width |
 | E21 | §9.6, §4.2 | Spec-text slips outside E11/E12: §9.6's dimmed labels at "4.6:1" vs §4.3's 4.96:1 on `--void` (the nodes' ground); §4.2's `--silver-sheen` "animated via background-position (§9.4)", but §9.4 has no sheen (§9.5/§9.7/§9.8 do) | 11b (text) | open |
@@ -332,6 +332,7 @@ resolved.
 | E45 | §9.8 vs §7.5 | The loop snap fires when `#link` reaches `top 60%`, but §7.5's loop scrub closes only at `top center`: at 60 % the loop is 80 % closed, and `snapFinalLink()` returns null before `loop = 1`, so the snap would never fire | 9b | resolved by 9b — the snap fires as the loop closes: a `top center` trigger, and the stage waits on the ticker for `loop = 1` (3 s cap) |
 | E46 | §9.10 vs §4.1 / base.css / E35 | The text link goes `--silver-light → --blue-lift` with a drawn underline, but §4.1, base.css and E35's figures rest links at `--blue-lift` with a native underline; a silver link with no underline can't be told from the text around it (WCAG 1.4.1) | 9b | resolved by 9b — `a.tlink` rests `--silver-light` over a static 1 px `--hairline-strong` SVG underline; hover/focus → `--blue-lift` (1τ metal) and a `--blue` line draws over it (3τ mask); unclassed links keep `--blue-lift` |
 | E47 | §9.10 vs §9.8 / §3.5 | `.btn--metal`'s hover sheen is 1τ in §9.10's table, but §9.8's Dossier CTA hover "repeats" the 8τ sweep and §3.5 gives sheen sweeps 8τ | 9b | resolved by 9b — every sheen sweep is 8τ metal, hover repeats included; §9.10's 1τ is the lift's |
+| E48 | §9.3 existence rule vs checkpoint 10's done-when | "Created only if `readyState !== 'complete'` when the module runs", but the entry is a deferred module that always runs at `interactive`, so CAST would show on every warm reload, against "never appears on a cached reload" | 10 | resolved by 10 — once per tab session: a `sessionStorage` flag on top of the readyState rule |
 
 ## Log
 
@@ -1917,3 +1918,92 @@ Two moves stay instant, both deliberate:
   - The E46 resting underline (`--hairline-strong` over `--ink`) measures **2.77:1**, under 1.4.11's 3:1 for the graphic that identifies a link. It's the owner's choice this session, so re-check it in the §10.4 audit (a solid `--silver-shadow` or a stronger alpha would clear it).
   - The colophon's `TIER · HIGH` sits a few px above the toggle's baseline (CP3's layout, untouched).
 - **Left alone, owned elsewhere:** E6, E13, E27, E28 (11b); E16–E18 (10); E10, E19 (11a).
+
+### Checkpoint 10 — Post-processing + CAST
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 10 — post-processing + CAST`
+
+The new files are:
+- `gl/passes/metal.js`: §8.2's shader, verbatim, as a `ShaderPass` on a `ShaderMaterial` whose `uExposure` *is* the stage's `exposure` object, so 9b's `flash()` reaches it with no extra wiring. `update(axis, velocity)` runs per frame, and `setSize` feeds `uResolution`.
+- `sections/preloader.js`: CAST. `startCast()` is called from `main.js` at module run, so it's in the entry.
+
+Changed:
+- `gl/stage.js`: the composer (HIGH only), the draw-call accounting and `sceneCalls`.
+- `core/tiers.js`: `post` and `streak` per tier.
+- `main.js`: `holdEntrance()` and `onReveal = playEntrance` when there's a CAST; `cast.booted()` at step 6.
+- `hero.js`: the ground's parallax rides in its unbind list.
+- `index.html`: `.ground`.
+- CSS: `.ground` and `.grain` (layout), `--ground-ramp`, `--grain`, `--z-ground` and `--z-cast` (tokens), the `#cast` block, and forced colours (components).
+- `util/debug.js` shows `calls N+2 post`.
+
+**Errata decisions (user, this session — every one the recommended option):**
+- **E16:** §8.1 wins, so there's no composer at MED. HIGH gets the composer, MSAA 4× on a HalfFloat target, and RenderPass → metal (`uStreak` 1.0) → OutputPass. MED and LOW render directly with the antialiased renderer 6a already builds.
+  - design.md §7.7's MED Post cell is now `off`, with a note that MED/LOW have no streak, shear, clip or dither; §8.2's `uStreak` comment is fixed.
+  - **Consequence: MED has no canvas dither.** Banding at MED is possible; nothing measured it (see 11a below).
+- **E17:** CAST's link is **inline SVG in the veil**, never the WebGL stage. The stage chunk loads at idle after `load` (6a; §12.7's "hero readable before the stage exists"), which is exactly when CAST ends, so a WebGL link would almost never exist.
+  - The link: a 3:2 stadium (`min(12vh, 18vw)` tall), a matte `--silver-shadow` stroke, and a gloss stroke in `--silver-sheet`'s stops. The gloss's opacity is bound to progress, which is the "roughness 0.60 → 0.12". It rotates in the plane at 0.6 rad/s on the ticker.
+  - Progress weights: fonts 0.50, **`load` 0.30** (replacing PMREM), me.jpg `decode()` 0.20.
+  - "Before the probe" is moot: CAST never reads the tier.
+  - Reduced motion: no spin, scale or aperture. The meter fades 2τ, then `#cast` fades 2τ (metal).
+- **E18:** the ground is `<div class="ground">` before `#stage`: fixed, `z-index: -1`, inset −24 px, `--ground-ramp: linear-gradient(168deg, var(--void) 0%, var(--ink) 62%)`.
+  - Pointer parallax is `pointerParallax(ground, 'background')`, n = 5.
+  - There's no scroll parallax, because it's fixed.
+  - It's hidden in forced colours, and text over it sits between §4.3's `--void` and `--ink` figures.
+- **§12.7 budgets (owner decision, "measure then raise"):**
+  - total 232 → **236 KB** (measured 234.90);
+  - entry 66 → **68 KB** (measured 67.07). CAST has to run before boot, so it can't go in a lazy chunk.
+- **New E48, found and resolved this session (user agreed):** §9.3's `readyState !== 'complete'` test is practically always true, because a deferred module runs at `interactive`. Measured: a warm reload showed CAST (at 71 ms, then ~1.0 s of exit), against the done-when. Now it's **once per tab session**: a `sessionStorage` flag on top of the readyState rule. Reloads skip CAST and the hero plays at boot; a new tab shows it again. §9.3 is reworded.
+
+**My decisions where the spec is silent:**
+- **Exit timing:**
+  - The exit starts when step 6 has run *and* progress = 1, or at 3 s − 8τ at the latest, so the §9.3 table always finishes inside the hard cap.
+  - `remove()` runs at the timeline's 8τ, while the link and hole are still in their last τ; the mask ease is > 0.99 by then and the veil is at opacity 0.
+  - A cut-short exit (the 3 s cap) still calls `playEntrance()`. If boot hasn't built the hero by then, `held` is already false and it plays when built.
+- **The hole** is animated in px (`attr` x/y/width/height/rx to 110 % of the viewport, rx = h/2), set from the centre at exit start, because GSAP's attr can't tween from `"50%"`. At the end the stadium's ends leave the extreme corners covered, but `#cast`'s opacity fade from 6τ clears them.
+- **Veil pointer events:** `pointer-events: none`, so nothing is ever trapped under it for its ≤ 3 s. It's `aria-hidden`.
+- **Counter:** tweened, 2τ `glyph`, zero-padded (§9.3 gave no duration). Under reduced motion it's written directly.
+- **Draw calls:** `renderer.info.autoReset = false`, with a reset per `draw()`. `sceneCalls` = total − 2 when the composer runs (metal + output are full-screen passes, not scene draws). The dev assert and the debug overlay use `sceneCalls`.
+- **The probe always renders directly.** The composer is built after the tier settles, on whichever renderer survived (6a's note).
+- **Dither order:** as §8.2 is written, the dither sits in the metal pass *before* OutputPass's sRGB conversion, so its amplitude in darks is larger than 1.5/255 once encoded. In the screenshots the link bodies show no visible noise and no banding, so it's transcribed as-is.
+
+**Verified** in headless Firefox 156 (puppeteer-core, desktop pointer prefs) against `vite preview`. Chrome was not run.
+- **Build** (gzip):
+  - entry 5.69 + depth 2.47 + easings 58.91 = **67.07 kB** (≤ 68);
+  - `three` **138.28** (≤ 180; +2.60 for the postprocessing addons);
+  - stage 7.61 (was 6.19), sections 7.02, rect 0.37, late 14.55;
+  - **total 234.90 kB** (≤ 236);
+  - CSS 7.53 kB (≤ 14; the grain data URI is 644 B).
+- **Composer (HIGH):**
+  - passes `RenderPass, ShaderPass, OutputPass` (OutputPass last), target samples 4, HalfFloatType;
+  - renderer antialias off, `uResolution` 1440×900 at DPR 1;
+  - `uExposure === stage.exposure`;
+  - **scene draw calls 1** (+2 post);
+  - colours match the direct path, not washed out (screenshot at LINK: loop metal with clipped white speculars).
+- **`uAxis`:** (0, 1) at the top, **(1, 0) mid-pin**, (0, 1) at LATTICE and LINK.
+- **Resize** 1440 → 1000×700 → 390×844 → 1440: `uResolution`, both composer targets and the drawing buffer follow every time.
+- **Exposure flash:** traced per frame through two passes into LINK with a trip back to DOSSIER between them. That gave **1 episode**: 1.009 1.081 1.146 1.212 **1.249** 1.246 1.224 1.173 1.113 1.021 1.002, then 1.
+- **Forced LOW** (`hardwareConcurrency = 4`): composer `null`, antialias on, 1 call.
+- **CAST:**
+  - A fresh local load: injected at 98 ms (`interactive`); 000 → 100; the exit begins ≈ 190 ms; removed at 1150 ms. The hero hairline starts ≈ 1380 ms, i.e. exit + 5τ + the entrance's own 5τ.
+  - Fonts and portrait delayed 1.5 s: removed 2556 ms after injection.
+  - Fonts delayed 3.5 s: **removed at exactly 3000 ms** after injection, before `load` (3684 ms).
+  - Screenshots of the exit: polished link → 14× link sweeping past the edges → hero typing in under the aperture.
+  - Reduced motion (OS pref): link transform untouched (no spin), fade-only exit, removed at 591 ms; hero hairline at rest.
+  - Reload in the same tab: no `#cast`, and the hero entrance plays (hairline and cue at rest). A new tab shows it again.
+- **Ground:**
+  - pointer at the bottom-right corner gives translate `−22.58px −22.56px`, centre ≈ 0;
+  - under reduced motion there's no inline translate.
+- **Leaks:** motion toggle ×3 gives **4 children / 10 triggers OFF, 211 / 41 ON** every cycle. The OFF children are 9a's reverted rail-panel tweens and none are CAST or ground; 9b's log counted 2 at a different settle time.
+- **No JS:** no `#cast`, 5 sections, no overflow. The ground ramp and grain render (CSS only).
+
+**Carried forward:**
+- **11a:**
+  - The NONE fallback (E19) will sit over `.ground` (z −1), so its sheet should be composed with the ramp in mind.
+  - MED has no canvas dither (E16): look for banding at MED in the §10.2 audit.
+  - `#cast` and `.ground` are in the forced-colours `display: none` list; §10.5's reduced-transparency block may want `.grain` too.
+- **11b:**
+  - E6's list of JS-written text now includes the CAST counter.
+  - Measure LCP with CAST in Chrome. The veil covers the hero for ≤ 3 s on a first visit, but the hero text paints underneath.
+  - Measure CLS in Chrome; not run here.
+  - The total JS budget has ~1.1 KB headroom and the entry ~0.9 KB.
+- **Left alone, owned elsewhere:** E6, E11, E13, E14, E21, E27, E28 (11b); E10, E19 (11a).

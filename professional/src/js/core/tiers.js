@@ -15,15 +15,17 @@ import { gsap } from './easings.js';
 import { tier as tierSignal } from './signals.js';
 import { coarseQuery } from '../util/prefers.js';
 
-/* §7.7. msaa is read by the composer (checkpoint 10); antialias is the
-   renderer's own flag, on wherever there is no composer to supply it (§8.1).
+/* §7.7. post = the composer and its metal pass (§8.1), HIGH only (errata
+   E16): MED and LOW render directly. msaa is the composer target's samples;
+   antialias is the renderer's own flag, on wherever there is no composer to
+   supply it (§8.1). streak is the metal pass's uStreak.
    segments = the torus's [radial, tubular] tessellation. Every tier keeps the
    full link count (errata E32, 6a; E34, 6b): fewer links cannot both interlock
    and span a curve, so the tier cuts triangles per link instead. */
 export const TIERS = {
-  HIGH: { dpr: 2,   segments: [12, 48], clearcoat: true,  msaa: 4, antialias: false },
-  MED:  { dpr: 1.5, segments: [10, 32], clearcoat: false, msaa: 0, antialias: true },
-  LOW:  { dpr: 1,   segments: [8, 24],  clearcoat: false, msaa: 0, antialias: true },
+  HIGH: { dpr: 2,   segments: [12, 48], clearcoat: true,  post: true,  msaa: 4, streak: 1, antialias: false },
+  MED:  { dpr: 1.5, segments: [10, 32], clearcoat: false, post: false, msaa: 0, streak: 0, antialias: true },
+  LOW:  { dpr: 1,   segments: [8, 24],  clearcoat: false, post: false, msaa: 0, streak: 0, antialias: true },
 };
 
 export function hasWebGL2() {

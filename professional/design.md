@@ -260,7 +260,7 @@ scroll parallax multiplies them by 4.
 | portrait | 2 | 8.00 px |
 | chain (foreground links) | 3 | 11.31 px |
 | chain (mid) | 4 | 16.00 px |
-| background gradient sheet | 5 | 22.63 px |
+| background gradient sheet (`.ground`, §8.5; pointer only — it is fixed) | 5 | 22.63 px |
 
 ---
 
@@ -523,6 +523,7 @@ Global DOM shell. ScrollSmoother requires the wrapper/content pair, and the canv
 ```html
 <body>
   <a class="skip" href="#identity">Skip to content</a>
+  <div class="ground" aria-hidden="true"></div>      <!-- fixed background ramp, z-index −1 (§8.5) -->
   <canvas id="stage" aria-hidden="true"></canvas>   <!-- fixed, z-index 0, pointer-events none -->
   <div class="grain" aria-hidden="true"></div>       <!-- static dither sheet, CSS only -->
   <header class="rail">…</header>                    <!-- fixed, z-index 40 -->
@@ -1208,7 +1209,7 @@ IDENTITY → DOSSIER.
 
 | Movement | `X` | State |
 |---|---|---|
-| 00 CAST | — | one link only, centred, spinning at ω = 0.6 rad/s, roughness 0.60 → 0.12 |
+| 00 CAST | — | not on the stage: CAST's link is inline SVG in the veil (§9.3), because the stage loads after `load` (§12.7). One link, centred, spinning at ω = 0.6 rad/s, polishing across progress |
 | 01 IDENTITY | `+0.26` | full spine enters from the top-left, bowing at full `A₀`; runs the gutter between tagline and portrait |
 | 02 DOSSIER | `−0.28` | migrates into the left margin (cols 2–4), vacated now that copy and fact plate both sit in the alternated content block on the right (§3.4, §6.4); the readability guard (§7.6) still applies if a link ever crosses behind copy |
 | 03 LATTICE | branch | spine splits into **four** short chains at `X = −0.30, −0.10, +0.14, +0.32`, one per cluster, each terminating at its cluster root node. The actual root positions come from the lattice through a roots setter, and these X values are the fallback. Each chain hangs from just above the viewport to its root, with links laid from the root upward, so it shortens off the top as the lattice scrolls. The branch is active while the roots are on screen (the node grid's top edge from 80 % to 10 % of the viewport). Cross-faded over 8τ (`metal`, a timed crossfade, not a scrub) by animating a second `InstancedMesh`'s per-instance scale 0→1 while the primary's scales 1→0. **At `s` (≤ 640 px) there is no branch**: the lattice is plain columns there (§6.5), so the spine keeps its DOSSIER state through LATTICE |
@@ -1268,9 +1269,12 @@ torus tessellation (`TorusGeometry(0.5, 0.14, radial, tubular)`) drops instead:
 | Tier | DPR | Segments (tris/link) | MSAA | Post | Clearcoat | Tethers |
 |---|---|---|---|---|---|---|
 | HIGH | `min(dpr, 2)` | 12 × 48 (1152) | 4× | full | yes | yes |
-| MED | `min(dpr, 1.5)` | 10 × 32 (640) | off | streak taps 3 *(errata E16)* | no | no |
+| MED | `min(dpr, 1.5)` | 10 × 32 (640) | off | off | no | no |
 | LOW | `1` | 8 × 24 (384) | off | off | no | no |
 | NONE | — | canvas removed | — | — | — | — |
+
+Post runs only at HIGH (§8.1): MED and LOW drop the composer and render directly with the
+renderer's own antialias, so they have no streak, shear, clip or dither.
 
 Also: `frustumCulled = true`; one shared geometry and material; the PMREM target built once and
 the generator disposed immediately; `renderer.info.render.calls` asserted ≤ 3 in development.
@@ -1309,7 +1313,7 @@ uniform vec2  uResolution;
 uniform vec2  uAxis;       // scroll axis: (0,1) vertical, (1,0) during the pinned track
 uniform float uVelocity;   // smoothed, signed, clamped to [-1, 1]
 uniform float uExposure;   // 1.0; 1.25 for 2τ on the LINK snap (§9.8)
-uniform float uStreak;     // 1.0 HIGH, 0.6 MED, 0.0 off   (errata E16)
+uniform float uStreak;     // 1.0 HIGH, 0.0 off — the pass exists only at HIGH (§8.1)
 varying vec2 vUv;
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
@@ -1379,8 +1383,18 @@ and the metal pass binds its uniform to it.
 ### 8.5 The CSS grain sheet
 
 The canvas can only dither its own pixels. The CSS silver gradients behind it (`--silver-sheet` on
-panels, the page's background ramp *(errata E18)*) band for the same reason and need the same fix. `.grain` from
-§6.1 is a `position: fixed; inset: 0` element with a 64×64 base64 PNG of monochrome noise,
+panels, the page's background ramp) band for the same reason and need the same fix.
+
+**The background ramp** is `.ground` (§6.1): a `position: fixed` sheet behind the canvas
+(`z-index: −1`), `inset: −24px` so its parallax never shows an edge, filled with
+`--ground-ramp: linear-gradient(168deg, var(--void) 0%, var(--ink) 62%)` — palette only, on the
+silver sheet's axis (§3.6). Text over it sits between §4.3's `--void` and `--ink` figures. It is
+§3.7's depth-5 "background gradient sheet": pointer parallax at 22.63 px through the depth module,
+and no scroll parallax, since a fixed sheet has nothing to scroll against. Hidden in forced
+colours.
+
+`.grain` from
+§6.1 is a `position: fixed; inset: 0` element with a 64×64 base64 PNG of monochrome noise (1-bit, 644 B),
 `background-repeat: repeat`, `opacity: 0.028`, `mix-blend-mode: overlay`, `pointer-events: none`,
 `z-index: 1` — above the canvas, below content. Inline as a data URI; it is under 1 KB, and a
 separate request for 900 bytes is worse than the base64 overhead.
@@ -1510,12 +1524,20 @@ seating stays in GSAP.
 ### 9.3 Movement 00 — CAST (preloader)
 
 **Existence rule.** `#cast` is injected by JS and is never in the served HTML (invariant I1). It is
-created only if `document.readyState !== 'complete'` when the module runs, and it is removed by a
-**hard 3 s timeout** regardless of what has or has not loaded. A preloader that can outlive its
-own load event is a broken page.
+created only if `document.readyState !== 'complete'` when the module runs **and this tab has not
+shown it yet** (a `sessionStorage` flag): the entry is a deferred module, which always runs at
+`interactive`, so the readyState test alone would put CAST on every warm reload. Reloads and
+re-visits in the same tab skip it and the hero entrance plays at boot; storage that throws counts
+as "not seen". It is removed by a **hard 3 s timeout** regardless of what has or has not loaded. A
+preloader that can outlive its own load event is a broken page.
 
-**Content.** A mono counter `000`, a 1 px hairline, and the single spinning link from the WebGL
-stage in its CAST state (§7.5). *(errata E17)*
+**Content.** A mono counter `000`, a 1 px hairline, and a single spinning link (§7.5's CAST row),
+drawn as **inline SVG in the veil, not by the WebGL stage**. The stage and its `three` chunk load at
+idle after `load` (§12.7: the hero is readable before the stage exists), which is when CAST ends,
+so CAST never waits on the stage or the tier probe and looks the same at every tier, `NONE`
+included. The link is a 3:2 stadium stroked `--silver-shadow` (matte), under a second stroke in the
+silver sheet's specular gradient whose opacity is bound to progress: the link's "roughness
+0.60 → 0.12" is that gloss going 0 → 1. It rotates in the plane at ω = 0.6 rad/s on the GSAP ticker.
 
 **Progress** is weighted across the three things actually worth waiting for, reported into one
 value:
@@ -1523,13 +1545,16 @@ value:
 | Source | Weight |
 |---|---|
 | `document.fonts.ready` | 0.50 |
-| PMREM environment build | 0.30 |
+| the window `load` event | 0.30 |
 | `assets/me.jpg` decode | 0.20 |
 
-Counter: `gsap.to(counter, { textContent: 100, snap: { textContent: 1 }, ... })` with
+Counter: `gsap.to(counter, { textContent: 100 · progress, snap: { textContent: 1 }, ... })`, 2τ `glyph`, zero-padded to three digits, with
 `tabular-nums` (§5.3) so digits never shift. Hairline: `scaleX` bound *directly* to progress,
 `transformOrigin: left` — no tween, because a tween would let the bar lag behind reality. Link
-roughness `0.60 → 0.12` across progress: it polishes as it loads.
+gloss `0 → 1` across progress, bound the same way: it polishes as it loads.
+
+**When it exits.** Once boot step 6 (§9.1) has run *and* progress is 1, or at 3 s − 8τ at the
+latest, so the exit always completes inside the hard timeout.
 
 **Exit, 8τ total:**
 
@@ -1544,6 +1569,10 @@ roughness `0.60 → 0.12` across progress: it polishes as it loads.
 
 The hero is revealed **through the link's own aperture** — the page's first frame is the motif
 explaining itself.
+
+**Reduced motion:** the link does not spin, scale or open an aperture. The counter and hairline
+fade (2τ, metal), then `#cast` fades (2τ, metal) and is removed; the hero is already at rest
+(§10.1), so it is simply there.
 
 **Implementation caveat, important.** Do **not** implement the aperture as a `clip-path` on
 `#smooth-content`. A clip-path there creates a containing block, breaks `position: fixed`
@@ -2469,10 +2498,10 @@ reads as if it were doing something.
 
 | Metric | Budget |
 |---|---|
-| Entry JS chunk (compressed) | ≤ 66 KB |
+| Entry JS chunk (compressed) | ≤ 68 KB |
 | Late plugins chunk — Flip + MorphSVG (compressed, idle after `load`) | ≤ 16 KB |
 | `three` chunk (compressed) | ≤ 180 KB |
-| Total JS (compressed) | ≤ 232 KB |
+| Total JS (compressed) | ≤ 236 KB |
 | CSS (compressed) | ≤ 14 KB |
 | Fonts (3 × variable woff2, subset) | ≤ 140 KB |
 | LCP (hero name, cable) | < 2.0 s |
@@ -2499,8 +2528,11 @@ states (the LATTICE branch, the horizontal run, the loop) brought the total to 2
 checkpoint 7b's lattice (`sections/stack.js`, +2.4 KB in the sections chunk) brought it to 225.0 KB,
 leaving ~3 KB for the remaining section modules. Raised again to 232 KB by owner decision
 (2026-09-28), when checkpoint 8b's WORKS interaction (focus, deep links, hover, tether, glided
-focus scrolls) brought it to 228.03 KB. That leaves ~4 KB for checkpoints 9a and 9b. Checkpoint
-10's composer passes need their own decision.
+focus scrolls) brought it to 228.03 KB. That leaves ~4 KB for checkpoints 9a and 9b. Raised again
+to 236 KB by owner decision (2026-09-28), when checkpoint 10's composer (EffectComposer,
+RenderPass, OutputPass, the metal pass: +2.6 KB in `three`, +1.4 KB in the stage chunk) and CAST
+brought it to 234.90 KB. The entry was raised to 68 KB in the same decision: CAST must run before
+boot, so `sections/preloader.js` is in the entry (+1.2 KB, to 67.07 KB).
 
 The ordering rule: **the hero must be readable before the stage exists.** The canvas starts at
 `opacity: 0` and is faded in once the first frame has rendered, so WebGL initialisation can never

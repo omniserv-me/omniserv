@@ -45,7 +45,7 @@ export function mountDebug() {
       `motion   ${motion.value}`,
       `smoother ${getSmoother() ? 'on' : 'off'}  contexts ${getContexts().size}  splits ${getSplits().length}`,
       `triggers ${ScrollTrigger.getAll().length}  tweens ${gsap.globalTimeline.getChildren(true, true, true).length}`,
-      stage ? `stage    ${stage.mode ?? '—'}  tris ${stage.chain.triangles}  calls ${stage.renderer.info.render.calls}  ripples ${stage.chain.ripples}` : 'stage    —',
+      stage ? `stage    ${stage.mode ?? '—'}  tris ${stage.chain.triangles}  calls ${stage.sceneCalls}${stage.composer ? '+2 post' : ''}  ripples ${stage.chain.ripples}` : 'stage    —',
       stage ? `chain    links ${stage.chain.count}+${stage.lattice.count}  x ${fmt(stage.chain.state.x)}  h ${stage.chain.state.h.toFixed(2)}  loop ${stage.chain.state.loop.toFixed(2)}  branch ${stage.chain.state.branch.toFixed(2)}` : '',
     ].join('\n');
   });

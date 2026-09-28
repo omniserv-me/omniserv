@@ -17,9 +17,9 @@
 
    The hero must be readable before any JS runs (§6.3, §12.7): nothing is
    hidden in CSS except the decorative role hairline. The entrance sets its own
-   from-states when it is built. Until CAST exists (checkpoint 10) the entrance
-   plays at boot; 10 calls holdEntrance() before boot and playEntrance() at
-   CAST t = 5τ. */
+   from-states when it is built. When CAST is on screen (§9.3), main.js calls
+   holdEntrance() before boot and CAST calls playEntrance() at its exit's 5τ;
+   on a load without CAST the entrance plays at boot. */
 
 import { gsap, T, ease } from '../core/easings.js';
 import { register } from '../core/registry.js';
@@ -156,7 +156,12 @@ function full() {
     });
   });
 
-  const unbind = [pointerParallax(h1, 'heading'), pointerParallax(portrait, 'portrait')];
+  // The page's ground ramp (§8.5, errata E18) rides here with the hero's
+  // layers: it is fixed, so it has pointer depth (n = 5) and no scroll depth.
+  const unbind = [
+    pointerParallax(h1, 'heading'), pointerParallax(portrait, 'portrait'),
+    pointerParallax(document.querySelector('.ground'), 'background'),
+  ];
 
   return () => {
     breathe.stop();

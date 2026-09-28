@@ -21,10 +21,27 @@
   pointer-events: none;   /* also aria-hidden in the markup (§10.4) */
 }
 
+/* §8.5 / §3.7 (errata E18): the background ramp, behind the canvas. Fixed,
+   and oversized by one depth-5 pointer amplitude (22.63 px, rounded up) on
+   every side, so its parallax never shows an edge. */
+.ground {
+  position: fixed;
+  inset: -24px;
+  z-index: var(--z-ground);
+  background: var(--ground-ramp);
+  pointer-events: none;
+}
+
+/* §8.5: the canvas dithers its own pixels; this dithers the CSS gradients
+   behind it (--silver-sheet panels, the ground ramp). Above the canvas, below
+   content. */
 .grain {
   position: fixed;
   inset: 0;
   z-index: var(--z-grain);
+  background: var(--grain) repeat;
+  opacity: 0.028;
+  mix-blend-mode: overlay;
   pointer-events: none;
 }
 

@@ -1113,6 +1113,62 @@ html[data-motion="reduced"] .row__rule { transition: none; }
 /* §10.1: colour only — the blue line appears rather than draws. */
 html[data-motion="reduced"] .tlink__draw { transition: none; }
 
+/* ── §9.3 Movement 00 — CAST (sections/preloader.js) ───────────────────────
+   Injected by JS only, so none of this can hide the served page (I1). The
+   veil is an SVG mask over the whole viewport, never a clip-path on
+   #smooth-content (§9.3's caveat); it takes no pointer events, so nothing is
+   ever trapped under it. The link is one 3:2 stadium, sized so the exit's
+   14× carries it past every edge. */
+#cast {
+  --cast-h: min(12vh, 18vw);
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cast);
+  pointer-events: none;
+}
+
+.cast__mask { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cast__veil { fill: var(--ink); }
+
+.cast__link {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--cast-h) * 1.5);
+  height: var(--cast-h);
+  margin: calc(var(--cast-h) / -2) 0 0 calc(var(--cast-h) * -0.75);
+  overflow: visible;
+}
+.cast__link rect { fill: none; stroke-width: 11; }
+.cast__matte { stroke: var(--silver-shadow); }
+.cast__gloss { stroke: url(#castGloss); opacity: 0; }
+
+.cast__meter {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + var(--cast-h) / 2 + var(--s-3));
+  width: calc(var(--u) * 24);
+  transform: translateX(-50%);
+  display: grid;
+  gap: var(--s-1);
+  justify-items: center;
+}
+.cast__count {
+  font-family: var(--font-mono);
+  font-size: var(--t--2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.18em;
+  color: var(--silver);
+}
+.cast__line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--silver-shadow);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
 /* ── §10.5 Forced colours and reduced transparency ───────────────────────── */
 
 @media (prefers-reduced-transparency: reduce) {
@@ -1120,7 +1176,7 @@ html[data-motion="reduced"] .tlink__draw { transition: none; }
 }
 
 @media (forced-colors: active) {
-  #stage, .grain, .plate::before, .card::after { display: none; }
+  #cast, .ground, #stage, .grain, .plate::before, .card::after { display: none; }
   .principles::before, .principles::after,
   .row::after, .row:first-child::before, #colophon::before { border-color: CanvasText; }
   .rail__cta::after, .btn--metal::after { display: none; }

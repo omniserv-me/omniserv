@@ -1,7 +1,7 @@
 /* stage.js — the WebGL stage. design.md §7.1 (renderer, camera, world mapping),
    §7.7 (tier parameters), §9.1 ("one clock", boot step 1's tier probe), §10.1
    (reduced motion, errata E1), §10.2 (tiers), §12.7 (first frame after LCP,
-   8τ fade-in).
+   8τ fade-in), §8.1 (the composer, HIGH only — errata E16).
 
    Loaded by main.js as its own chunk at idle after `load`, which pulls `three`
    in behind it: the hero is readable long before the stage exists (§12.7).
@@ -17,6 +17,15 @@
        and builds again with antialias on. Only an unforced, slow device pays
        the second build, once, before anything is visible.
 
+   Post-processing (§8.1, errata E16). At HIGH the scene renders through an
+   EffectComposer on a HalfFloat target with 4× MSAA: RenderPass → the metal
+   pass (gl/passes/metal.js) → OutputPass, which must be last — it applies the
+   sRGB conversion the half-float target defers. It is built once the tier is
+   settled, on whichever renderer survived the probe. MED and LOW call
+   renderer.render() directly, with the renderer's own antialias on. The probe
+   always renders directly: it measures the scene, and a MED/LOW result would
+   throw the composer away.
+
    Reduced motion (errata E1, 6a): the chain is drawn but never animated. No
    ticker callback; the frame is redrawn only on scroll and resize, so the
    readability guard (§7.6) keeps dimming links as copy scrolls past them.
@@ -27,9 +36,15 @@
    The movement states (§7.5) are gl/movements.js, installed into the chain's
    registered context (sections/chain.js) once the stage exists. */
 
-import { WebGLRenderer, PerspectiveCamera, Scene, NoToneMapping, SRGBColorSpace, MathUtils } from 'three';
+import {
+  WebGLRenderer, WebGLRenderTarget, PerspectiveCamera, Scene, NoToneMapping, SRGBColorSpace,
+  HalfFloatType, MathUtils,
+} from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { gsap, ScrollTrigger, T, ease } from '../core/easings.js';
-import { velocity, motion } from '../core/signals.js';
+import { velocity, axis, motion } from '../core/signals.js';
 import { getSmoother } from '../core/smoothscroll.js';
 import { TIERS, forcedTier, probe, setTier } from '../core/tiers.js';
 import { pointerOffset } from '../core/depth.js';
@@ -39,6 +54,7 @@ import { createChain } from './chain.js';
 import { createLattice } from './lattice.js';
 import { createTether } from './tether.js';
 import { movements } from './movements.js';
+import { createMetalPass } from './passes/metal.js';
 
 const FOV = 32;
 const CAM_Z = 10;
@@ -54,6 +70,8 @@ function createRenderer(canvas, antialias) {
     powerPreference: 'high-performance',
   });
   renderer.setClearAlpha(0);                  // CSS ground shows through
+  renderer.info.autoReset = false;            // draw() resets once per frame, so the composer's
+                                              // passes are counted together (§7.7)
   renderer.toneMapping = NoToneMapping;       // stark: clipping happens in the metal pass (§8)
   renderer.outputColorSpace = SRGBColorSpace;
   return renderer;
@@ -83,6 +101,13 @@ export async function initStage() {
   let tier = forced ?? 'HIGH';
   let renderer;
   let envRT;
+  let composer = null;
+  let metal = null;
+  let probing = false;
+  let sceneCalls = 0;
+  /* §8.4 — `exposure.value` rests at 1.0; the metal pass binds it as its
+     uExposure uniform, and flash() below is the only thing that moves it. */
+  const exposure = { value: 1 };
   const build = (t) => {
     renderer = createRenderer(canvas, TIERS[t].antialias);
     envRT = chain.bakeEnv(renderer);
@@ -129,16 +154,41 @@ export async function initStage() {
     chain.update(o);
     lattice.update(o, chain.state.branch);
     tether.update(o, !still && tier === 'HIGH');   // §7.7: tethers HIGH only
-    renderer.render(scene, camera);
-    if (import.meta.env.DEV && renderer.info.render.calls > 3) {
-      console.warn(`stage: ${renderer.info.render.calls} draw calls (§7.7 budget ≤ 3)`);
+    renderer.info.reset();
+    if (composer && !probing) {
+      metal.update(axis.value, o.v);
+      composer.render(o.dt);
+    } else {
+      renderer.render(scene, camera);
+    }
+    // §7.7's budget is the scene's: the composer adds its two full-screen
+    // passes (metal, output) on top, which are not scene draw calls.
+    sceneCalls = renderer.info.render.calls - (composer && !probing ? 2 : 0);
+    if (import.meta.env.DEV && sceneCalls > 3) {
+      console.warn(`stage: ${sceneCalls} scene draw calls (§7.7 budget ≤ 3)`);
     }
   }
+
+  /* §8.1 — HIGH only (errata E16). The target is sized to the drawing buffer;
+     the composer clones it for its ping-pong pair, and resizes both. */
+  const buildComposer = (t) => {
+    if (!TIERS[t].post) return;
+    const dpr = renderer.getPixelRatio();
+    const rt = new WebGLRenderTarget(innerWidth * dpr, innerHeight * dpr,
+      { type: HalfFloatType, samples: TIERS[t].msaa });   // MSAA lives here, not on the renderer
+    composer = new EffectComposer(renderer, rt);
+    metal = createMetalPass(exposure, TIERS[t].streak);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(metal);              // §8.2
+    composer.addPass(new OutputPass());   // mandatory, last
+  };
 
   try {
     build(tier);
     if (!forced) {
+      probing = true;
       const probed = await probe(() => draw(1 / 60, gsap.ticker.time, false));
+      probing = false;
       if (probed === 'NONE') {
         renderer.dispose();
         return none();
@@ -154,6 +204,7 @@ export async function initStage() {
       }
       tier = probed;
     }
+    buildComposer(tier);
   } catch {
     renderer?.dispose();
     return none();
@@ -192,6 +243,7 @@ export async function initStage() {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight, false);
+    composer?.setSize(innerWidth, innerHeight);
     measureCopy();
     if (mode !== 'full') requestStill();
   };
@@ -201,10 +253,9 @@ export async function initStage() {
     if (mode !== 'full') requestStill();
   });
 
-  /* §8.4 / §9.8 — the exposure flash. `exposure.value` rests at 1.0; checkpoint
-     10 binds it to the metal pass's uExposure. One flash, 1 → 1.25 → 1 over
-     2τ metal, and only with the snap below. */
-  const exposure = { value: 1 };
+  /* §8.4 / §9.8 — the exposure flash, read by the metal pass's uExposure. One
+     flash, 1 → 1.25 → 1 over 2τ metal, and only with the snap below. At MED
+     and LOW there is no pass to see it (errata E16). */
   const flash = () => (mode === 'full'
     ? gsap.timeline()
       .to(exposure, { value: 1.25, duration: 1 * T, ease: ease.metal })
@@ -232,6 +283,9 @@ export async function initStage() {
     get canvas() { return canvas; },
     get tier() { return tier; },
     get mode() { return mode; },
+    get composer() { return composer; },
+    get metal() { return metal; },
+    get sceneCalls() { return sceneCalls; },
     scene, camera, chain, lattice, tether, H,
     /* Redraw once under reduced motion (after a gsap.set on chain.state).
        Under full motion the ticker already redraws every frame. */
@@ -242,7 +296,7 @@ export async function initStage() {
     drive: chain.drive,
     /** §9.8 — the loop's final link seats; returns the timeline (9b). */
     snapFinalLink: () => (mode === 'full' ? chain.snapFinalLink() : null),
-    /** §8.4 — `exposure.value`, 1.0 at rest, for checkpoint 10's uExposure. */
+    /** §8.4 — `exposure.value`, 1.0 at rest; the metal pass's uExposure. */
     exposure,
     /** §8.4 — one 2τ exposure flash; returns the timeline, or null (reduced). */
     flash,

@@ -32,8 +32,10 @@
 <body>
   <a class="skip" href="#identity">Skip to content</a>
 
-  <!-- §6.1 shell. Both are inert until §7 and §8.5 fill them; the canvas is
-       aria-hidden and pointer-events: none throughout. -->
+  <!-- §6.1 shell. The ground ramp and the grain are CSS only (§8.5); the
+       canvas is inert until §7 fills it. All three are aria-hidden and
+       pointer-events: none throughout. -->
+  <div class="ground" aria-hidden="true"></div>
   <canvas id="stage" aria-hidden="true"></canvas>
   <div class="grain" aria-hidden="true"></div>
 

@@ -7,8 +7,7 @@
      3. create splits
      4. build timelines inside gsap.context() scopes, one per movement
      5. ScrollTrigger.refresh()
-     6. dismiss the veil
-   Steps not yet built are marked with the checkpoint that owns them. */
+     6. dismiss the veil */
 
 import { ScrollTrigger } from './core/easings.js';
 import './core/split.js';   // registers the splits first, so they precede every movement's context
@@ -16,16 +15,26 @@ import { motion, tier, startSignals } from './core/signals.js';
 import { boot as bootRegistry } from './core/registry.js';
 import { scrollToHash, bindAnchors } from './core/smoothscroll.js';
 import { resolveMotion } from './util/prefers.js';
-import './sections/hero.js';
+import { holdEntrance, playEntrance } from './sections/hero.js';
 import './sections/chain.js';   // §7.5 — registers now; its build arrives with the stage chunk
 import { initFooter } from './sections/footer.js';
 import { loadLate } from './core/lazy.js';
+import { startCast } from './sections/preloader.js';
 
 /* §2.3 — legacy anchors. Applied before ScrollTrigger initialises; step 5 then
    resolves the (possibly rewritten) hash, since replaceState does not scroll. */
 const LEGACY = { about: 'dossier', stack: 'lattice', projects: 'works', socials: 'link' };
 const h = location.hash.slice(1);
 if (LEGACY[h]) history.replaceState(null, '', '#' + LEGACY[h]);
+
+/* §9.3 — CAST, as early as the entry can run: only while the page is still
+   loading, gone within 3 s. It holds the hero entrance and starts it at its
+   exit's 5τ; without it the entrance plays at boot. */
+const cast = startCast();
+if (cast) {
+  holdEntrance();
+  cast.onReveal = playEntrance;
+}
 
 async function main() {
   // 1. Motion preference. The registry re-resolves it inside matchMedia (so a
@@ -43,8 +52,7 @@ async function main() {
   // 3–4. Signals, colophon, then every registered context: the splits first
   //      (core/split.js registers at import), then each movement's timelines —
   //      sections/hero.js (§9.4) and the sections chunk (§9.5 onward). The
-  //      hero entrance plays here until CAST
-  //      (checkpoint 10) holds it and starts it at CAST t = 5τ.
+  //      hero entrance is built paused while CAST holds it.
   startSignals();
   initFooter();
   bootRegistry();
@@ -54,7 +62,8 @@ async function main() {
   ScrollTrigger.refresh();
   scrollToHash(location.hash);
 
-  // 6. Veil — §9.3.
+  // 6. Veil — §9.3. It exits once progress reaches 1 too (or at its cap).
+  cast?.booted();
 
   // Flip + MorphSVG (§12.7) at idle after the load event — a dynamic import
   // started earlier is waited on by `load` (verified: rIC alone fired first).

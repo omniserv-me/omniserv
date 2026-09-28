@@ -170,11 +170,23 @@
   --dim-floor: 0.60;
 
   /* ── Shell layers — §6.1 ───────────────────────────────────────────────
-     The canvas sits fixed behind content, outside the smoothed subtree. */
+     The canvas sits fixed behind content, outside the smoothed subtree; the
+     ground ramp (§8.5) behind the canvas; CAST's veil (§9.3) over everything. */
+  --z-ground: -1;
   --z-stage:   0;
   --z-grain:   1;
   --z-content: 10;
   --z-rail:    40;
+  --z-cast:    50;
+
+  /* ── Ground and grain — §8.5, §3.7 (errata E18) ────────────────────────
+     The page's background ramp: --void falling to --ink on the silver sheet's
+     168° axis (§3.6), so the top of every screen reads a shade lifted. Text
+     over it stays between §4.3's --void and --ink figures. The grain is a
+     64×64 1-bit monochrome noise PNG (644 B), inline: a request for it would
+     cost more than the base64. */
+  --ground-ramp: linear-gradient(168deg, var(--void) 0%, var(--ink) 62%);
+  --grain: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAACCEkxzAAACS0lEQVR42gFAAr/9AKpexRYvDr0JAL6TnUW1Ih9+ALyp+ND1ez5eAOtnpLo4Y6bsAOtbqEshma3wAAvMfKjUlKC7AF7rp8wcsvbxACfjhjZk4/QeAJW9fcP0Z2Q9AA/vLDBiH6sDAIC4nzBnv6IeACHCYgC9C/jGANDuKjnDFPnIAOz0fqImzIS4AMf6StB1CgYRAF0UIaF4pQ+FADPRSWCFvkt5AFUw+6KF6yhcAPMNoUHbLmtNAA8xMpHEQJfKAPg/iythXdbxADYwcIEJd1J5ALhrZ6FPMK15AE1WFgvcv+VaAJFr53JUW4GXAMYky3wY1lIWADYHjM4yPe4XABDNLByLjGP1ACTMEMjnqbz3AM8qMlaKGAXeAHRmDTXwtjQYAHtG5omJajiUAKMW4ZWtxNTeAOMtXXUTHAAJABIcPr845iRVAItW2oOz3pW9ACG4kuVEgSt6ALCx/rWHAqxTAEBlLiedwii6AG8hCilY+MhYANTIlZnr0dQ6AH1ao4kVPT9TANF7s/HQVI+3ADixVgQezgZWAO61hTHsiFlJAHU25jYiNkPfAE54wx2lt2R5AH4GYkqU9OuMAPFEl3szq8w3ACpvutb4GawlAMz8gPAc5XaNAE/Gd6J5vyv3AKl8jl2UvHB+AHGAUN43uUJoACMK8EdYRKR9APruC1GHUlc8AIfNDU8hmo0/AFHH7cdk+vljAA20761+v2DfAIqJH9g1Dmv8ANgQNqkUkW7FANvJxzdMIjMnAAdm3UN9cugfAPLQEfbydR3kQDn9O+jqAykAAAAASUVORK5CYII=");
 }
 
 /* Breakpoints — §3.4: s ≤ 640px, m 641–900px, l 901–1280px, xl > 1280px.
