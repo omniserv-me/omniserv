@@ -179,7 +179,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       outlives 3 s, never appears on a cached reload that is already complete, never exists with JS
       off; draw calls still ≤ 3.
 
-- [ ] 11a. Degradation — design.md §10.1–10.3, §10.5
+- [x] 11a. Degradation — design.md §10.1–10.3, §10.5
       Scope: audit §10.1's reduced table against every section built so far and fill gaps; verify
       §10.2's forced LOW/NONE rules on real conditions; the NONE-tier CSS fallback (silver-sheet
       radial + static inline-SVG chain strip — resolve **E19**); §10.5 reduced-transparency and forced-colours blocks
@@ -294,7 +294,7 @@ resolved.
 | E7 | §10.4 vs §9.7 | "the WORKS pin's `focusin` handler" vs "Do not add a `focusin` listener", i.e. use the smoother's `onFocusIn` | 8b | resolved by 8b — §9.7 wins: the smoother's `onFocusIn` via `setFocusIn()`, no `focusin` listener; §10.4 and §13 reworded |
 | E8 | §9.8 | Email chips `scale 0.9→1, opacity 0→1` on row hover imply hidden chips at rest: unreachable on touch and invisible without hover, against I1/I3 and CP3's "nothing hides content" | 9b | resolved by owner decision (8b session) — the chips are removed; row 03 is one `mailto:` row like the others, so there is nothing left to hide |
 | E9 | §7.5 × §6.5 | The LATTICE chain branch terminates at cluster root nodes, but at `s` the lattice is four plain columns with no edges; the chain's behaviour there is unspecified | 6b | resolved by 6b — no branch at `s` (≤ 640 px): the spine keeps its DOSSIER state through LATTICE |
-| E10 | §10.5 | Block targets a `.hairline` class that does not exist, and `.card { backdrop-filter: none }` although cards have none | 11a | open |
+| E10 | §10.5 | Block targets a `.hairline` class that does not exist, and `.card { backdrop-filter: none }` although cards have none | 11a | resolved by 11a — forced colours names every real hairline; reduced transparency makes only `.rail` opaque (cards keep `--graphite`) and turns the sheen bands off |
 | E11 | §1.4, §5.1, §12.1 | Wrong references: §1.4 "one pinned section (§6.5)" → §6.6; §5.1 "animation targets in §9.3" → §9.4; §12.1 "Three addons" lists five | 11b (text) | open |
 | E12 | §4.3, §3.2 | `--void`/`--graphite` luminances misprinted (0.0043/0.0094 → 0.0040/0.0108); `--t-5` 38.06 → 38.05 (checkpoint 2's log) | 11b (text) | resolved in code by 2 |
 | E13 | §9.9, §12.2 | `--sweep / 100%` is invalid CSS (checkpoint 3's log); `manualChunks` object form fails under vite 8 (checkpoint 1's log) | 11b (text) | resolved in code by 1, 3 |
@@ -303,7 +303,7 @@ resolved.
 | E16 | §7.7, §8.2 vs §8.1 | MED tier lists "Post: streak taps 3" and `uStreak` "0.6 MED", but §8.1 drops the composer entirely at MED and LOW, so no pass exists for the streak to run in; the shader also has no tap-count parameter | 10 | resolved by 10 — §8.1 wins: no composer at MED; post (and `uStreak` 1.0) is HIGH only, MED/LOW render directly with antialias |
 | E17 | §9.3 × §10.1, §10.2, §7.7 | CAST shows "the single spinning link from the WebGL stage", but its behaviour with no stage (tier NONE, WebGL failure, reduced motion forced to NONE per E1) and its exit under reduced motion are unspecified. The tier probe runs *after* first paint while CAST renders *from* it, and no rule says which tier's parameters apply until the probe resolves | 10 (with 6a's renderer decision) | resolved by 10 — CAST's link is inline SVG in the veil at every tier (the stage stays after `load`); gloss bound to progress; `load` replaces PMREM (0.30); reduced motion: static link, fade-only exit |
 | E18 | §8.5, §3.7 | "The page's background ramp" / the depth-5 "background gradient sheet" is referenced but never specified: no gradient, stops, angle or element | 10 | resolved by 10 — fixed `.ground` behind the canvas, `linear-gradient(168deg, --void 0%, --ink 62%)`, inset −24 px, pointer parallax only (n = 5) |
-| E19 | §10.3 | NONE fallback uses "a `--silver-sheet` radial", but `--silver-sheet` is a 168° linear gradient, so the radial form is undefined; the static chain strip is "positioned where the spine would run", but the spine's `X` changes per movement | 11a | open |
+| E19 | §10.3 | NONE fallback uses "a `--silver-sheet` radial", but `--silver-sheet` is a 168° linear gradient, so the radial form is undefined; the static chain strip is "positioned where the spine would run", but the spine's `X` changes per movement | 11a | resolved by 11a — `--silver-sheet-radial` (the sheet's five stops, `farthest-corner`); the strip follows X per movement (+0.26 / −0.28 / +0.30, bow-adjusted) with a 3τ metal dip |
 | E20 | §9.4 × §6.3 | The entrance table animates a "role hairline" and §6.3's wireframe draws one, but §6.3's markup has no such element, and neither does CP3's `index.html` | 5b | resolved by 5b — `<span class="hero__rule" aria-hidden="true">` inside the role line, absolutely positioned `border-top` at the role's width |
 | E21 | §9.6, §4.2 | Spec-text slips outside E11/E12: §9.6's dimmed labels at "4.6:1" vs §4.3's 4.96:1 on `--void` (the nodes' ground); §4.2's `--silver-sheen` "animated via background-position (§9.4)", but §9.4 has no sheen (§9.5/§9.7/§9.8 do) | 11b (text) | open |
 | E22 | §9.2 | The `catenary` ease ("chain slack relaxation only") has no consumer: sag reads velocity directly with no tween (§7.2) and nothing in §7/§9 names it. Give it one or strike it from §9.2 | 6a | resolved by 6a — struck from §9.2, the Appendix and `core/easings.js` |
@@ -2007,3 +2007,95 @@ Changed:
   - Measure CLS in Chrome; not run here.
   - The total JS budget has ~1.1 KB headroom and the entry ~0.9 KB.
 - **Left alone, owned elsewhere:** E6, E11, E13, E14, E21, E27, E28 (11b); E10, E19 (11a).
+
+### Checkpoint 11a — Degradation
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 11a — degradation`
+
+The work covers §10.1's audit, §10.2's verification, §10.3's NONE fallback and §10.5's blocks. There is one new file, `sections/fallback.js` (sections chunk, listed in §12.2). Other changes:
+- `index.html`: the `.fallback` layer.
+- `tokens.css`: `--spine-x`, `--spine-side`, `--spine-at`, `--silver-sheet-radial`.
+- `layout.css`: `.fallback`.
+- `components.css`: §10.5.
+- `footer.js`: `data-tier` on `<html>`.
+- `core/registry.js`: the reader's place is kept across rebuilds.
+
+**Errata decisions (user, this session; each was the recommended option):**
+- **E10:** the block is retargeted to elements that exist.
+  - Forced colours names every real hairline (CP3/7a/9b had already done this in code).
+  - Reduced transparency makes only `.rail` (and `.rail.is-compact`) opaque `--void` with no blur, and drops `.card`: cards are already opaque `--graphite`, so the literal rule would have repainted them `--void` for nothing.
+  - The translucent sheen bands swept over text (`.plate::before`, `.card::after`, `.btn--metal::after`, `.rail__cta::after`) are off under reduced transparency.
+- **E19, form:** `--silver-sheet-radial` is `--silver-sheet`'s five stops (the 52 % flip kept) as a `farthest-corner` radial, at 18 % over the E18 ground.
+  - Contrast at the brightest stop: `--silver` 5.92:1 and `--silver-light` 8.36:1 on the composite over `--ink`.
+  - The lattice never dims at NONE (it's columns there), so §4.3's dimmed-text case can't arise.
+- **E19, position:** the strip follows X per movement: +0.26 → −0.28 from DOSSIER (LATTICE and WORKS keep it) → +0.30 from LINK. Two start-only triggers set it, as in 6b's reduced branch. A change is a 3τ `metal` opacity dip with the move at the trough (sampled: 1 → 0 over ~180 ms, X switches, 0 → 1 over ~180 ms); under reduced motion it moves instantly.
+
+**My decisions where the spec is silent (written into §10.3 / §4.2 / §10.5 / §10.1):**
+- **The strip is bow-adjusted.** At X itself a straight strip crossed the hero portrait (1069–1101 px at 1440, portrait from 1074). The real spine only holds the gutter because it bows toward centre (6b measured its links at 994–1059 px). So `--spine-at` moves X in by 8vh (≈ 0.08·H, the at-rest bow). The strip now sits at 997–1029 px at IDENTITY, in the tagline–portrait gutter, and at 370–402 px at DOSSIER, clear of the copy at 522.
+- **Shown by `html[data-tier="NONE"]`**, written by the colophon's tier subscription. It's never shown with JS off: §10.3's fallback is the no-WebGL bullet, and the no-JS page keeps its plain ground. The colophon readout's query is scoped to `#colophon [data-tier]`, since `<html>` now carries the attribute too.
+- **NONE is known only after the stage chunk has probed** (after `load`). So `fallback.js` joins its build to the live `fallback` context through `getContexts().get('fallback').add()`, the pattern `sections/chain.js` uses. It builds nothing at any other tier. On first appearance it fades in over 8τ, as the canvas would have.
+- **Strip geometry:** one SVG `<pattern>`, with a link diameter of 100 units and a pitch of 72 (§7.3). The viewBox is `100 / 0.044` tall, so the strip is exactly one viewport high at any size. Face-on links are two concentric stadiums, edge-on links a bar, all stroked `--silver-light` (2.5 units ≈ 1 px at 900 px tall). Pattern content lives in tile space: the first version drew with centred coordinates and showed half-links.
+- **Forced colours, three gaps found by screenshot and fixed:**
+  - `.head__rule` and the WORKS progress bar are drawn as backgrounds, which forced colours erased (the `02 ── ABOUT` rule vanished). They're now `CanvasText` / `GrayText`.
+  - The compact rail kept its 72 % alpha, so LINK row 03 showed through the nav. It's now `Canvas`.
+  - `html[data-tier="NONE"] .fallback` out-ranked the forced-colours `display: none`, so the rule is wrapped in `@media (forced-colors: none)`.
+- **Reading position across rebuilds (§10.1; carried from 7a, 8a/8b and 9a's logs).**
+  - `setMotion()` restored a raw px value, so a toggle OFF mid-pin landed ~D px further down (in LINK), and a toggle back drifted further each round.
+  - The place is now a fraction between the current section's top and the next one's, in scroll px (`smoother.offset()` under the smoother, so the pin spacer counts), and it's resolved against the rebuilt page.
+  - `main section`, not `main > section`: the pin-spacer wraps `#works`, which first dropped it from the list.
+  - A 900 px crossing reset the scroll to 0 *before* gsap.matchMedia's revert runs (measured), so it can't capture its own place. The place is recorded 300 ms after scrolling stops (plain timers, nothing on the global timeline), and a media-driven rebuild restores it on every `refresh` for 1 s. ScrollTrigger's own debounced resize refresh moved the scroll again after a single restore.
+
+**§10.1 audit** (headless Firefox, desktop pointer prefs, against `vite preview`). Run under the OS preference, and again under the toggle, at 1440 / 800 / 390, scrolling the whole page in half-viewport steps:
+- no smoother, no pin;
+- no text below 0.99 opacity;
+- no running CSS animations;
+- 0 stage renders over 1 s idle;
+- the only live tween is the nav indicator's (feedback, allowed).
+
+Every hover, checked on 13 interactive elements, changes no transform, translate, scale, opacity or weight. The one exception is the LINK glyph's open/closed CSS crossfade, which is 9b's reduced fallback: a shape swap with no movement, kept.
+
+No gaps were found in any section's reduced branch; the only fix was the reading position above.
+
+**§10.2 verified under real conditions:**
+
+| Condition | Tier | Result |
+|---|---|---|
+| default | HIGH | composer on, AA off |
+| `dom.maxHardwareConcurrency` = 4 | LOW | AA on, no composer |
+| coarse pointer, no `deviceMemory` (Firefox) | LOW | — |
+| a probe frame that throws (`drawElementsInstanced` patched) | NONE | canvas removed, fallback shown, colophon NONE |
+| `webgl.disabled` | NONE | — |
+| main thread slowed ~21 ms/frame | MED | AA on, no composer |
+
+**MED banding (E16's consequence):** screenshots at IDENTITY and LINK show no banding in the ground ramp or the link bodies.
+
+**Verified, done-when:**
+- **No JS** at 1440 / 900 / 640: 5 sections, no overflow, no fallback, `data-tier` unset. The only hidden block is CP3's deliberately hidden colophon controls.
+- **No WebGL** at 1440 / 900 / 640: `#stage` removed; the fallback shows at X 0.26 / −0.28 (DOSSIER, LATTICE, WORKS) / 0.30 (LINK, colophon); no overflow, no errors. The screenshots read as finished.
+- **Reduced motion:** see the audit above.
+- **LOW:** complete. After the page has been scrolled through, every resting text is at opacity 1; the only zeros are the hero's scroll-out, off screen.
+- **Forced colours** (`ui.useAccessibilityTheme` + `document_color_use=2`), with WebGL on and off: a plain black-on-white document. `#stage`, `.ground`, `.grain`, `.fallback` and the sheens are hidden, and borders and rules are `CanvasText`.
+- **Reduced transparency** (`ui.prefersReducedTransparency`): the rail is `rgb(10,13,18)` with `backdrop-filter: none` at rest and compact; cards stay `rgb(23,27,33)`; all four sheen layers are `display: none`.
+- **Reading position:**
+  - toggles ×3 mid-pin round-trip exactly (4244 ↔ 3562, readout back at `03 / 04`);
+  - a DOSSIER toggle holds at 1218;
+  - 1440 → 800 → 1440 in LATTICE stays in LATTICE (was: 0);
+  - under reduced motion, WORKS −500 → −497 → −500.
+
+  The in-section offset is approximate where the layout changes height (the lattice goes 2×2 → four across).
+- **Leaks:**
+  - toggle ×3 at HIGH: **10 triggers / 4 children OFF** every cycle, checkpoint 10's baseline;
+  - at LOW: 10 / 4;
+  - at NONE: 8 / 4 (no chain triggers, the fallback's 2 reverted), ON stable at 18.
+- **Build:**
+  - entry 5.72 + depth 2.82 + easings 58.91 = **67.45 kB** (≤ 68);
+  - sections 7.40 (was 7.02), stage 7.61, rect 0.37, late 14.55, `three` 138.28;
+  - **total 235.66 kB** (≤ 236, ~0.3 kB left);
+  - CSS 7.74 kB.
+
+**Carried forward to 11b:**
+- **Budget:** total JS headroom is ~0.3 kB and the entry ~0.5 kB.
+- **Portrait phones (6b's note):** at 390×844 the LINK loop runs behind row 04's value and under the Dossier CTA (opaque). It's crowded but readable; it's worth a look in the I2 audit.
+- **Forced colours:** the plate's `omniserv.me` link shows no resting underline (the e-mail's does). It's still `LinkText`, so it's identifiable; check it in the §10.4 audit.
+- **Harness note:** a `localStorage` motion setting persists across pages in one browser, so run toggle tests in fresh browsers.
+- **Left alone, owned elsewhere:** E6, E11, E14, E21, E27, E28 (11b).

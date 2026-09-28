@@ -289,13 +289,22 @@ as text; `--blue-lift` is the accessible variant (§4.3). Using `--blue` for a l
 
 ### 4.2 Silver gradient tokens
 
-Silver is never a flat fill. Four gradient tokens, each with a specular flip — a bright stop
+Silver is never a flat fill. Four gradient tokens (plus the sheet's radial form for the tier-NONE
+fallback, §10.3), each with a specular flip — a bright stop
 immediately adjacent to a dark one, which is the only thing that reads as metal rather than grey.
 
 ```css
 /* Panel/sheet metal — decorative surfaces only, never behind text (§4.3).
    Flip at 52 %. Angle 168° per §3.6. */
 --silver-sheet: linear-gradient(168deg,
+  #C9CED4 0%, #6E757C 38%, #E8EBEE 52%, #8A9199 63%, #3A4149 100%);
+
+/* The same five stops as a radial, for the tier-NONE fallback only (§10.3). Centred on
+   --spine-at: the spine's X (--spine-x, §7.5) moved in by the chain's at-rest bow. */
+--spine-x: 0.26;
+--spine-side: 1;   /* sign of --spine-x */
+--spine-at: calc(50% + var(--spine-x) * 100% - var(--spine-side) * 8vh);
+--silver-sheet-radial: radial-gradient(farthest-corner at var(--spine-at) 50%,
   #C9CED4 0%, #6E757C 38%, #E8EBEE 52%, #8A9199 63%, #3A4149 100%);
 
 /* Text-bearing metal: the DOSSIER CTA and any filled button. Range-limited so
@@ -2179,6 +2188,14 @@ What `reduced` means, concretely:
 
 Reduced motion is not a degraded page. It is the same page, still, and it must look deliberate.
 
+Switching modes keeps the reader's place. A raw scroll position does not survive the switch: the
+WORKS pin adds its travel under full motion and none under reduced. So `core/registry.js` holds the
+place as a fraction between the current section's top and the next one's (in scroll px, pin spacer
+included) and resolves it against the rebuilt page. A breakpoint or OS-preference rebuild does the
+same with the place last recorded once scrolling has been still for 300 ms, re-applied on each
+refresh for a second after the rebuild, because by the time the media change reverts, the resize has
+already reset the scroll.
+
 ### 10.2 Quality tiers
 
 A 30-frame probe after first paint, discarding the first 5 frames:
@@ -2217,9 +2234,19 @@ Both resolve to the same static page, and both must look finished rather than br
   `@media (scripting: enabled)` — **this is the load-bearing detail.** If `opacity: 0` initial
   states were unconditional, a JS failure would produce a blank page. The canvas element is inert.
 - **No WebGL (tier `NONE`):** the canvas is removed from the DOM. A CSS fallback layer takes over:
-  a fixed sheet combining a `--silver-sheet` radial *(errata E19)* at 18 % opacity and a static inline-SVG chain
-  strip at 0.18 opacity, positioned where the spine would run. The motif survives; the motion does
-  not.
+  `<div class="fallback" aria-hidden="true">`, fixed at the canvas's z-index, shown by
+  `html[data-tier="NONE"]` (the colophon's tier subscription writes `data-tier` on `<html>`),
+  never with JS off and never under forced colours. It combines `--silver-sheet-radial` (§4.2:
+  the sheet's five stops, 52 % flip included, `farthest-corner` so it has no edge) at 18 % opacity
+  and a static inline-SVG chain strip at 0.18 opacity: face-on and edge-on links alternating at
+  §7.3's pitch, one link diameter = 0.044 × the viewport height, stroked `--silver-light`. Both sit
+  where the spine visibly runs: X per §7.5 (+0.26 in IDENTITY, −0.28 from DOSSIER — LATTICE and
+  WORKS keep it, since a static strip has no branch and no horizontal run — and +0.30 from LINK),
+  moved toward centre by the chain's at-rest bow (8vh), so at IDENTITY it holds the
+  tagline–portrait gutter. `sections/fallback.js` switches X with two start-only triggers
+  (`#dossier`, `#link` at `top center`), each change a 3τ `metal` opacity dip with the move at the
+  trough; the layer fades in over 8τ when NONE is first reported. Under reduced motion it moves
+  instantly. The motif survives; the motion does not.
 
 ### 10.4 Accessibility requirements
 
@@ -2245,15 +2272,33 @@ Both resolve to the same static page, and both must look finished rather than br
 
 ```css
 @media (prefers-reduced-transparency: reduce) {
-  .rail, .card { backdrop-filter: none; background: var(--void); }
+  /* The rail is the one translucent, blurred surface. Cards are already opaque --graphite. */
+  .rail, .rail.is-compact { backdrop-filter: none; background: var(--void); }
+  /* The sheen bands are translucent layers swept over text. */
+  .plate::before, .card::after, .rail__cta::after, .btn--metal::after { display: none; }
 }
 @media (forced-colors: active) {
-  #stage, .grain { display: none; }
-  .silver-type  { color: CanvasText; background-image: none; }
-  .hairline, .card, .plate { border-color: CanvasText; }   /* errata E10 */
+  #cast, .ground, #stage, .grain, .plate::before, .card::after { display: none; }
+  .rail__cta::after, .btn--metal::after { display: none; }
+  .silver-type { color: CanvasText; background-image: none; }
+  /* Every hairline by name — there is no .hairline class. */
+  .principles::before, .principles::after,
+  .row::after, .row:first-child::before, #colophon::before { border-color: CanvasText; }
+  .card, .plate, .node, .tag { border-color: CanvasText; }
+  .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
+  .lattice__edges .is-lit { stroke: Highlight; }
+  .tlink__rest, .tlink__draw { stroke: LinkText; }
+  /* Lines drawn as backgrounds, which forced colours would otherwise erase. */
+  .head__rule, .works__bar-fill { background: CanvasText; }
+  .works__bar { background: GrayText; }
   .rail__indicator { background: Highlight; }
+  .rail__cta, .btn--metal { background-image: none; }
+  /* The compact rail's 72 % alpha survives forced colours; nothing may show through the nav. */
+  .rail.is-compact { background: Canvas; }
 }
 ```
+
+The tier-NONE `.fallback` (§10.3) is excluded by its own `@media (forced-colors: none)` guard.
 
 Under forced colours the page is a plain, high-contrast, fully readable document. That is the
 correct outcome, and it is the last proof that the aesthetic is a layer rather than the substance.
@@ -2365,6 +2410,7 @@ professional/
                  registry.js  late.js  lazy.js
       sections/  preloader.js nav.js hero.js about.js stack.js projects.js contact.js footer.js
                  chain.js     ← registers the chain's movement states (built by gl/movements.js)
+                 fallback.js  ← moves the tier-NONE fallback's X per movement (§10.3)
                  header.js    ← the §9.5 section-header reveal + heading depth, shared by 02–05
                  index.js     ← the sections chunk: about.js onward, fetched alongside the fonts
                                 and awaited before boot, so the entry does not grow (§12.7)

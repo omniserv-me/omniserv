@@ -32,6 +32,44 @@
   pointer-events: none;
 }
 
+/* §10.3 (errata E19): the tier-NONE fallback, in the canvas's place. The
+   motif survives, the motion does not: a --silver-sheet radial at 18 % and a
+   static chain strip at 0.18, both centred on the spine's X for the current
+   movement. Shown only once the probe reports NONE — never with JS off. */
+.fallback {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  pointer-events: none;
+}
+/* Never under forced colours (§10.5): there the page is a plain document. */
+@media (forced-colors: none) {
+  html[data-tier="NONE"] .fallback { display: block; }
+}
+.fallback::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--silver-sheet-radial);
+  opacity: 0.18;
+}
+.fallback__strip {
+  position: absolute;
+  top: 0;
+  left: var(--spine-at);
+  height: 100%;
+  width: auto;
+  transform: translateX(-50%);
+  overflow: visible;
+  opacity: 0.18;
+}
+.fallback__strip pattern rect {
+  fill: none;
+  stroke: var(--silver-light);
+  stroke-width: 2.5;   /* user units: ≈ 1 px at a 900 px viewport (a diameter is ~40 px) */
+}
+
 /* §8.5: the canvas dithers its own pixels; this dithers the CSS gradients
    behind it (--silver-sheet panels, the ground ramp). Above the canvas, below
    content. */

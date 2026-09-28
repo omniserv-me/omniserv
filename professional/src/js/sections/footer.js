@@ -52,6 +52,11 @@ export function initFooter() {
     });
   }
 
-  const tierOut = document.querySelector('[data-tier]');
+  const tierOut = document.querySelector('#colophon [data-tier]');   // <html> carries data-tier too
   if (tierOut) tier.subscribe((t) => { tierOut.textContent = t ?? '—'; });
+  // …and on <html>, for CSS: the §10.3 NONE fallback keys off data-tier.
+  tier.subscribe((t) => {
+    if (t) document.documentElement.dataset.tier = t;
+    else delete document.documentElement.dataset.tier;
+  });
 }

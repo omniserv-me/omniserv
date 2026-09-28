@@ -144,6 +144,18 @@
   --silver-sheet: linear-gradient(168deg,
     #C9CED4 0%, #6E757C 38%, #E8EBEE 52%, #8A9199 63%, #3A4149 100%);
 
+  /* The tier-NONE fallback sheet (§10.3, errata E19): --silver-sheet's five
+     stops, flip at 52 % included, as a radial centred on the spine's X
+     (--spine-x, the fraction of viewport width from centre, §7.5; written on
+     <html> by sections/fallback.js), moved in by the chain's at-rest bow so it
+     sits where the spine visibly runs. farthest-corner, so it has no edge.
+     --spine-at is a length on the fixed, viewport-wide .fallback. */
+  --spine-x: 0.26;
+  --spine-side: 1;   /* sign of --spine-x: the at-rest bow (≈ 0.08·H) leans toward centre */
+  --spine-at: calc(50% + var(--spine-x) * 100% - var(--spine-side) * 8vh);
+  --silver-sheet-radial: radial-gradient(farthest-corner at var(--spine-at) 50%,
+    #C9CED4 0%, #6E757C 38%, #E8EBEE 52%, #8A9199 63%, #3A4149 100%);
+
   /* Text-bearing metal: the DOSSIER CTA and any filled button. Range-limited so
      --ink text holds 8.00:1 at the worst stop (§4.3). NOT interchangeable with --silver-sheet. */
   --silver-fill: linear-gradient(168deg,

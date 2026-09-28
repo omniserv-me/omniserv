@@ -34,6 +34,69 @@ const CONDITIONS = {
   osReduced: '(prefers-reduced-motion: reduce)',
 };
 
+/* §10.1 — the reader's place survives a rebuild. A raw px position does not:
+   the WORKS pin adds ~D px of scroll under full motion and none under reduced
+   (a toggle mid-pin landed in LINK), and a 900 px crossing reset it to 0.
+   So the place is held as "this far through
+   that section" — the fraction between its top and the next one's, in scroll
+   px, pin spacer included — and resolved again against the rebuilt page. */
+const PLACES = 'main section, #colophon';   // not main > section: the pin-spacer wraps #works
+
+function startOf(el) {
+  const smoother = getSmoother();
+  const y = smoother ? smoother.offset(el, 'top top')
+    : el.getBoundingClientRect().top + window.scrollY;
+  return Math.min(y, ScrollTrigger.maxScroll(window));   // the colophon's top may never reach the top
+}
+
+function scrollPos() { return getSmoother()?.scrollTop() ?? window.scrollY; }
+
+function place() {
+  const els = [...document.querySelectorAll(PLACES)];
+  const y = scrollPos();
+  const max = ScrollTrigger.maxScroll(window);
+  const starts = els.map(startOf);
+  let i = starts.length - 1;
+  while (i > 0 && starts[i] > y) i--;
+  const end = i + 1 < starts.length ? starts[i + 1] : max;
+  return { el: els[i], f: end > starts[i] ? (y - starts[i]) / (end - starts[i]) : 0, next: els[i + 1] };
+}
+
+function restore({ el, f, next }) {
+  const start = startOf(el);
+  const end = next ? startOf(next) : ScrollTrigger.maxScroll(window);
+  const y = start + f * Math.max(end - start, 0);
+  const smoother = getSmoother();
+  if (smoother) smoother.scrollTop(y);
+  else window.scrollTo(0, y);
+}
+
+let held = null;      // a place captured by setMotion(), which restores it itself
+let pending = null;   // the place a media-driven rebuild restores
+/* A media change can't capture its own place: by the time gsap.matchMedia
+   reverts, the resize has already reset the scroll to 0 (measured at 1440 →
+   800). So the place is recorded once scrolling has been still for 300 ms, and
+   a media-driven rebuild restores the last one — on every refresh for the next
+   second, since ScrollTrigger's own debounced resize refresh moves the scroll
+   again after the first. */
+let settled = null;
+let restoring = null;
+let settleId = 0;
+let restoreId = 0;
+function onScroll() {   // plain timers: nothing of the registry's own sits on the global timeline
+  clearTimeout(settleId);
+  settleId = setTimeout(() => { if (!restoring) settled = place(); }, 300);
+}
+function holdRestore() {
+  clearTimeout(restoreId);
+  restoreId = setTimeout(() => { restoring = null; onScroll(); }, 1000);
+}
+function onRefresh() {
+  if (!restoring) return;
+  restore(restoring);
+  holdRestore();
+}
+
 const movements = [];
 const contexts = new Map();   // movement name → its live gsap.context()
 let mm = null;
@@ -61,7 +124,16 @@ function build() {
       contexts.set(m.name, gsap.context(() => m[branch]?.()));
     }
 
+    // A media change (breakpoint, OS preference) rebuilds on its own; its
+    // place is restored once ScrollTrigger has re-measured the new layout.
+    if (pending) {
+      restoring = pending;
+      pending = null;
+      holdRestore();
+    }
+
     return () => {
+      if (!held) pending = settled;
       contexts.forEach((ctx) => ctx.revert());
       contexts.clear();
       killSmoother();
@@ -73,17 +145,16 @@ export function boot() {
   const selectors = movements.flatMap((m) => m.selectors ?? []);
   if (selectors.length) ScrollTrigger.saveStyles(selectors.join(','));
   build();
+  ScrollTrigger.addEventListener('refresh', onRefresh);
+  window.addEventListener('scroll', onScroll, { passive: true });
 }
 
 export function setMotion(mode) {
-  // Hold the reader's place: the smoother and native scroll share window.scrollY,
-  // but killing or creating the smoother changes the body height for a moment.
-  const y = getSmoother()?.scrollTop() ?? window.scrollY;
+  held = place();
   storeMotion(mode);
   mm.revert();
   build();
   ScrollTrigger.refresh();
-  const smoother = getSmoother();
-  if (smoother) smoother.scrollTop(y);
-  else window.scrollTo(0, y);
+  restore(held);
+  held = null;
 }

@@ -37,6 +37,25 @@
        pointer-events: none throughout. -->
   <div class="ground" aria-hidden="true"></div>
   <canvas id="stage" aria-hidden="true"></canvas>
+  <!-- §10.3 (errata E19): the tier-NONE fallback — a --silver-sheet radial and
+       a static chain strip where the spine would run. Hidden unless the probe
+       reports NONE (html[data-tier="NONE"]); sections/fallback.js moves its X
+       per movement. Units: one link diameter (0.044·H) = 100, pitch 72 (§7.3),
+       viewBox height = 100 / 0.044, so the strip is exactly one viewport tall.
+       Pattern content is in tile space (0–80), centred on x = 40. -->
+  <div class="fallback" aria-hidden="true">
+    <svg class="fallback__strip" viewBox="-40 0 80 2273" preserveAspectRatio="xMidYMin meet" focusable="false">
+      <defs>
+        <pattern id="fallback-links" patternUnits="userSpaceOnUse" x="-40" y="0" width="80" height="144">
+          <rect x="34" y="-50" width="12" height="100" rx="6"/>
+          <rect x="34" y="94" width="12" height="100" rx="6"/>
+          <rect x="10" y="22" width="60" height="100" rx="30"/>
+          <rect x="22" y="34" width="36" height="76" rx="18"/>
+        </pattern>
+      </defs>
+      <rect x="-40" y="0" width="80" height="2273" fill="url(#fallback-links)"/>
+    </svg>
+  </div>
   <div class="grain" aria-hidden="true"></div>
 
   <!-- ══ Navigation rail — §6.2. Outside #smooth-content (§9.9), or the
