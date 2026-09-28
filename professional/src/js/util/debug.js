@@ -41,8 +41,18 @@ export function mountDebug() {
       `motion   ${motion.value}`,
       `smoother ${getSmoother() ? 'on' : 'off'}  contexts ${getContexts().size}  splits ${getSplits().length}`,
       `triggers ${ScrollTrigger.getAll().length}  tweens ${gsap.globalTimeline.getChildren(true, true, true).length}`,
+      stage ? `stage    ${stage.mode ?? '—'}  tris ${stage.chain.triangles}  calls ${stage.renderer.info.render.calls}  ripples ${stage.chain.ripples}` : 'stage    —',
     ].join('\n');
   });
+
+  // The stage chunk is already loaded (or loading) by main.js; this shares it.
+  let stage = null;
+  const poll = () => import('../gl/stage.js').then((m) => {
+    stage = m.getStage();
+    window.__rig.stage = stage;
+    if (!stage && signals.tier.value !== 'NONE') setTimeout(poll, 250);
+  });
+  poll();
 
   window.__rig = { signals, gsap, ScrollTrigger, getSmoother, getContexts, getSplits, onSplit, getHero };
 }

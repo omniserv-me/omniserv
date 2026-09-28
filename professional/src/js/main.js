@@ -12,7 +12,7 @@
 
 import { ScrollTrigger } from './core/easings.js';
 import './core/split.js';   // registers the splits first, so they precede every movement's context
-import { motion, startSignals } from './core/signals.js';
+import { motion, tier, startSignals } from './core/signals.js';
 import { boot as bootRegistry } from './core/registry.js';
 import { scrollToHash, bindAnchors } from './core/smoothscroll.js';
 import { resolveMotion } from './util/prefers.js';
@@ -28,8 +28,8 @@ if (LEGACY[h]) history.replaceState(null, '', '#' + LEGACY[h]);
 
 async function main() {
   // 1. Motion preference. The registry re-resolves it inside matchMedia (so a
-  //    live OS change is honoured); this early read is for the tier probe.
-  //    Tier probe — checkpoint 6 (tiers.js).
+  //    live OS change is honoured). The tier probe runs after first paint, on
+  //    the stage's own renderer (core/tiers.js, loaded with gl/stage.js below).
   motion.set(resolveMotion());
 
   // 2. Fonts gate.
@@ -55,8 +55,15 @@ async function main() {
   // Both motion modes: the nav indicator is feedback and survives reduced
   // motion (§10.1). A failure only costs the animation; every consumer degrades
   // to static until late() resolves.
+  //
+  // The WebGL stage (§7, §12.7) the same way: its chunk pulls `three` in behind
+  // it, the tier probe runs on it, and its first frame lands after LCP. A
+  // failed chunk leaves the canvas transparent and reports NONE.
   const idle = window.requestIdleCallback ?? ((f) => setTimeout(f, 200));
-  const prefetch = () => idle(() => loadLate().catch(() => {}));
+  const prefetch = () => idle(() => {
+    loadLate().catch(() => {});
+    import('./gl/stage.js').then((m) => m.initStage()).catch(() => tier.set('NONE'));
+  });
   if (document.readyState === 'complete') prefetch();
   else window.addEventListener('load', prefetch, { once: true });
 

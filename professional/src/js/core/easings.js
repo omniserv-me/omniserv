@@ -1,4 +1,4 @@
-/* easings.js — plugin registration, the beat, and the six named easings.
+/* easings.js — plugin registration, the beat, and the named easings.
    design.md §9.1 (plugins), §3.5 (beat grid), §9.2 (easings).
 
    Registration lives here rather than in main.js because ES imports hoist: this
@@ -25,7 +25,7 @@ gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText,
    Fibonacci relationship stays visible in the source. */
 export const T = 0.12;
 
-/* §9.2 — four curves plus one built-in. Nothing else is used anywhere on the page.
+/* §9.2 — three curves plus one built-in. Nothing else is used anywhere on the page.
    Scrubbed animations always use ease: 'none'.
 
    The default ease is 'none' (errata E-ease, 5b): an omitted ease is never
@@ -36,13 +36,11 @@ gsap.defaults({ ease: 'none' });
 CustomEase.create('mask',     'M0,0 C0.16,1 0.3,1 1,1');      // ≈ expo.out  — wipes, apertures, draws
 CustomEase.create('glyph',    'M0,0 C0.08,0.82 0.17,1 1,1');  // ≈ power4.out — all type
 CustomEase.create('metal',    'M0,0 C0.5,0 0.5,1 1,1');       // symmetric   — sheens, exposure, blur
-CustomEase.create('catenary', 'M0,0 C0.18,0.92 0.08,1 1,1');  // fast settle, long tail — chain relax
 
 export const ease = {
   mask: 'mask',
   glyph: 'glyph',
   metal: 'metal',
-  catenary: 'catenary',
   chain: 'back.out(1.8)',   // anything that seats: tags, nodes, buttons, link snap
 };
 

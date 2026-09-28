@@ -1011,9 +1011,13 @@ point `i` (`t = i/8`) sits at:
 
 ```
 y_i = lerp(H * 0.8, -H * 0.8, t)          // spans 1.6 viewport heights, so ends are off-screen
-x_i = X(movement) + A * sag(t) + ripple(i)
+x_i = X(movement) + A * sag(t)
 z_i = 0
 ```
+
+The ripple (below) is not part of the curve: it is added to each *link's* `x` after the link is
+placed on the curve (§7.3), because its 6-link wavelength cannot be carried by 9 control points
+spaced ≈ 6.3 links apart.
 
 **`sag(t)` is the true hanging-chain profile**, not a sine approximation. A chain suspended
 between two points follows `y = a·cosh(x/a)`. Normalised to 0 at both ends and 1 at the centre:
@@ -1066,10 +1070,16 @@ phase += vel * dt;
 this is what a real chain does when you stop pulling it:
 
 ```
+link.x += ripple(k, t)                     // per link, after sampling the curve
+k      = u · N                             // the link's position along the chain, in links from the top end
 ripple(k, t) = amp · exp(−0.105·k) · sin( 2π · (k/6 − 8·(t − t₀)) ) · env(t − t₀)
 amp = 0.35 · linkOuterDiameter · min(|Δv| / 2000, 1)
-env = power2.out envelope over a 1.2 s lifetime      (errata E3)
+env(τ) = (1 − τ / 1.2)²                    // 1.2 s lifetime; = 1 − power2.out, computed per frame, not tweened
 ```
+
+`Δv` is measured on the smoothed signal, which crosses zero gradually: it is the peak speed in the
+old direction plus the speed in the new one. A chain that has come fully to rest (`v` exactly 0)
+forgets its direction, so scrolling back later is not a reversal.
 
 `exp(−0.105k)` is a 0.9× decay per link; wavelength 6 links; temporal frequency 8 Hz — the wave
 therefore propagates at wavelength × frequency = `6 × 8 = 48` links/s, not the 8 Hz term read in
@@ -1088,13 +1098,14 @@ which is not a coincidence: the portrait frame and the link aperture are the sam
 |---|---|
 | Uniform scale `s` | `0.044·H / 1.28` → outer diameter = 4.4 % of viewport height |
 | Arc spacing | `0.72 × outerDiameter` = `0.0317·H` — closer than one diameter, so links visibly interlock |
-| Link count `N` | `ceil(1.6·H / spacing)`, clamped `[18, 51]`; ≈ 51 by this formula. `H` is set only by the fixed FOV/camera distance (§7.1), not by `window.innerHeight` in px, so this value is constant across viewport sizes |
+| Link count `N` | `ceil(1.6·H / spacing)`, clamped `[18, 51]`; ≈ 51 by this formula. `H` is set only by the fixed FOV/camera distance (§7.1), not by `window.innerHeight` in px, so this value is constant across viewport sizes — and across tiers: fewer links could not both interlock and span the curve, so the tier cuts tessellation instead (§7.7) |
 | Instancing | one `THREE.InstancedMesh`, `DynamicDrawUsage` on the matrix attribute |
 
 **Orientation — alternating, as a real chain.** Each link's plane contains the curve tangent, and
 consecutive links are rotated 90° about it:
 
 ```js
+const UP = new THREE.Vector3(0, 0, 1);   // the camera axis: every curve here lies in the xy-plane
 const u = ((i + phase) / N) % 1;
 const p = curve.getPointAt(u);
 const T = curve.getTangentAt(u).normalize();
@@ -1105,8 +1116,12 @@ q.setFromUnitVectors(Z_AXIS, axis);
 m.compose(p, q, SCALE); mesh.setMatrixAt(i, m);
 ```
 
-Guard the degenerate case where `T ∥ UP` (cross product → zero vector): fall back to
-`UP = (0,0,1)` for that frame. It happens at the top of the loop coil (§7.5).
+`UP` is the camera axis `(0,0,1)`, not world-up: the spine is vertical, so world-up would be
+parallel to the tangent at every bow apex, and `(1,0,0)` to the whole WORKS horizontal run. Even
+links then read edge-on and odd links face-on. Every curve on the page (spine, branches, the
+horizontal run, the LINK loop) lies in the xy-plane, so `T` is never parallel to `UP`; still guard
+the degenerate case (cross product → zero vector) by falling back to `(1,0,0)` for that frame, in
+case a curve is ever tilted out of the plane.
 
 ### 7.4 Material and light
 
@@ -1124,11 +1139,11 @@ is a scene of emissive boxes; `PMREMGenerator.fromScene` bakes it:
 ```js
 const pmrem = new THREE.PMREMGenerator(renderer);
 const env   = new RoomEnvironment();
-// Tint the environment itself so reflections carry the palette (§4.4):
+// Tint the environment itself so reflections carry the palette (§4.4). The light panels carry
+// their light in `emissive` × emissiveIntensity (their `color` is black), so the tint goes there:
+// the two far-left panels (x ≈ −16) turn --blue-lift; the rest stay white, the walls neutral.
 env.traverse(o => {
-  if (!o.isMesh || !o.material.color) return;
-  const bright = o.material.color.getHSL({}).l > 0.5;
-  if (bright) o.material.color.set(o.position.x < 0 ? 0x6C9BFF : 0xFFFFFF);
+  if (o.isMesh && o.material.emissive && o.position.x < -8) o.material.emissive.set(0x6C9BFF);
 });
 scene.environment = pmrem.fromScene(env, 0.04).texture;
 pmrem.dispose();
@@ -1210,13 +1225,14 @@ smoothed scroller moves content every frame and the reads would force layout eac
 ### 7.7 Performance
 
 51 links × 1152 tris ≈ 58.8 k triangles in one instanced draw call — negligible. The costs that
-matter are pixel-bound, so they scale by tier (§10.2):
+matter are pixel-bound, so they scale by tier (§10.2). Every tier keeps all 51 links (§7.3); the
+torus tessellation (`TorusGeometry(0.5, 0.14, radial, tubular)`) drops instead:
 
-| Tier | DPR | Links | MSAA | Post | Clearcoat | Tethers |
+| Tier | DPR | Segments (tris/link) | MSAA | Post | Clearcoat | Tethers |
 |---|---|---|---|---|---|---|
-| HIGH | `min(dpr, 2)` | 51 | 4× | full | yes | yes |
-| MED | `min(dpr, 1.5)` | 36 | off | streak taps 3 *(errata E16)* | no | no |
-| LOW | `1` | 18 | off | off | no | no |
+| HIGH | `min(dpr, 2)` | 12 × 48 (1152) | 4× | full | yes | yes |
+| MED | `min(dpr, 1.5)` | 10 × 32 (640) | off | streak taps 3 *(errata E16)* | no | no |
+| LOW | `1` | 8 × 24 (384) | off | off | no | no |
 | NONE | — | canvas removed | — | — | — | — |
 
 Also: `frustumCulled = true`; one shared geometry and material; the PMREM target built once and
@@ -1418,13 +1434,12 @@ on 40 split characters — it is a per-element compositing layer and the memory 
 
 ### 9.2 Named easings
 
-Four `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page. *(errata E3)*
+Three `CustomEase` curves plus one built-in. Nothing else is used anywhere on the page. *(errata E3)*
 
 ```js
 CustomEase.create('mask',     'M0,0 C0.16,1 0.3,1 1,1');      // ≈ expo.out  — wipes, apertures, draws
 CustomEase.create('glyph',    'M0,0 C0.08,0.82 0.17,1 1,1');  // ≈ power4.out — all type
 CustomEase.create('metal',    'M0,0 C0.5,0 0.5,1 1,1');       // symmetric   — sheens, exposure, blur
-CustomEase.create('catenary', 'M0,0 C0.18,0.92 0.08,1 1,1');  // fast settle, long tail — chain relax
 // plus: 'back.out(1.8)' referred to as ease.chain — the snap of a link seating
 ```
 
@@ -1434,12 +1449,13 @@ CustomEase.create('catenary', 'M0,0 C0.18,0.92 0.08,1 1,1');  // fast settle, lo
 | `glyph` | every type animation: character rises, width morphs, tracking |
 | `chain` = `back.out(1.8)` | anything that *seats*: tags, nodes, buttons, link snap |
 | `metal` | sheen sweeps, exposure flash, blur, colour crossfades |
-| `catenary` | chain slack relaxation only *(errata E22)* |
 
 Scrubbed animations always use `ease: 'none'`, with no exception — every tween inside a scrubbed
 timeline included. An eased scrub means the content lags the scroll non-linearly, which reads as
 broken rather than smooth. (A fifth curve, `shut` ≈ expo.in for "apertures closing, hero exit", was
-struck once the hero's scroll-out went linear: nothing else closed an aperture on a clock.)
+struck once the hero's scroll-out went linear: nothing else closed an aperture on a clock. A
+`catenary` curve, "chain slack relaxation only", was struck for the same reason: the sag reads
+velocity directly (§7.2) and the ripple envelope is a closed form, so nothing consumed it.)
 
 **A "—" in an Ease column means `glyph`**, written out explicitly: every such row (button labels,
 scroll cue, section index, plate row labels, node labels, colophon rows) animates type, and `glyph`
@@ -1946,7 +1962,7 @@ What `reduced` means, concretely:
 | Entrance timelines | `gsap.set` to final states; nothing animates in |
 | Scrubbed animations | not created |
 | WORKS pin | not created; vertical stack |
-| Chain | one static frame rendered, then the ticker callback is removed *(errata E1)* |
+| Chain | drawn, never animated: no ticker callback, no phase spring, no sag response, no ripples. The frame is redrawn only on scroll and resize, so the readability guard (§7.6) keeps dimming links as copy scrolls past. The tier stays whatever the probe measured |
 | Idle breathing, scramble, sheen, ripples | never created |
 | Hover states | colour and border changes only; no transforms, no dimming |
 | Focus rings, nav indicator | unchanged — these are feedback, not decoration |
@@ -1971,7 +1987,13 @@ Forced to `LOW` regardless of probe when `navigator.hardwareConcurrency <= 4`, o
 the comparison is `undefined < 4`, always `false`; treating `undefined` itself as "assume low" on a
 coarse-pointer device is what actually catches iOS Safari, the exact low-power-mobile population
 this heuristic exists for. Forced to `NONE` when WebGL2 context creation
-fails, when `signals.motion === 'reduced'` *(errata E1)*, or when the probe itself throws.
+fails or when the probe itself throws. Reduced motion does not change the tier (§10.1).
+
+`antialias` is fixed at context creation, but the tier that decides it (§8.1) comes from a probe
+that needs a renderer. A forced tier builds the right renderer first time. Otherwise the renderer
+is built for HIGH (antialias off) on the real canvas, the probe renders the real chain on it while
+the canvas is still at `opacity: 0`, and a MED/LOW result swaps in a fresh `<canvas id="stage">`
+and builds again with antialias on — once, before anything is visible.
 
 Tier parameters are in §7.7; the selected tier is printed in the colophon (§6.8) so a performance
 report from a real visitor is actionable.
@@ -2340,7 +2362,7 @@ Four decisions that need input or an asset, none of which blocks phases 1–6.
 **Beat.** τ = 0.12 s · durations 1/2/3/5/8/13/21τ · glyph stagger 0.5τ · line stagger 1τ
 **Ratio.** √2, from A4 · type step 2^(1/4) · spacing 8 px × Fibonacci · parallax 4 px × √2ⁿ
 **Angles.** 12° wipes · 15° panel · 30/150° lattice · 45° chamfer · 105° sheen · 168° sheet
-**Easings.** mask · glyph · chain (`back.out(1.8)`) · metal · catenary; scrubs are `none`; a "—" is glyph
+**Easings.** mask · glyph · chain (`back.out(1.8)`) · metal; scrubs are `none`; a "—" is glyph
 **Dim floor.** 0.60 — never lower for anything resting on screen
 **Chain.** `sag(t) = (cosh(1.9(2t−1)) − cosh 1.9)/(1 − cosh 1.9)` · `A = 0.09·H·(1 − |v|)` ·
 phase spring ζ 0.72, ω 14 · 1 link per 12 vh

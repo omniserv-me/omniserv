@@ -66,7 +66,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       and dies on input; scroll-out never leaves text resting below 0.60; LCP < 2.0 s (§12.7) with
       the hero readable before any JS runs; motion toggle reverts it cleanly.
 
-- [ ] 6a. Chain core (WebGL) — design.md §7.1–7.4, §7.6, §7.7, §10.2
+- [x] 6a. Chain core (WebGL) — design.md §7.1–7.4, §7.6, §7.7, §10.2
       Scope: `gl/stage.js`, `gl/chain.js`: renderer/camera, catenary + velocity sag, phase spring,
       reversal ripples, instanced links + alternating orientation, `RoomEnvironment` tint + three
       lights, `aDim` readability guard with its document-space rect cache in `util/rect.js`
@@ -284,9 +284,9 @@ resolved.
 
 | # | design.md | Contradiction | Owner | Status |
 |---|---|---|---|---|
-| E1 | §10.1 vs §10.2 | Reduced motion: "one static frame rendered, then the ticker callback is removed" vs "forced to `NONE` when `signals.motion === 'reduced'`", which removes the canvas | 6a | open |
+| E1 | §10.1 vs §10.2 | Reduced motion: "one static frame rendered, then the ticker callback is removed" vs "forced to `NONE` when `signals.motion === 'reduced'`", which removes the canvas | 6a | resolved by 6a — §10.1 wins: the chain is drawn but never animated (no ticker callback), redrawn only on scroll/resize so the guard holds; tier unaffected |
 | E2 | §5.2 vs §12.2 | Fonts "in `src/fonts/`, imported from CSS so Vite fingerprints them" vs `public/fonts/*-v1.woff2`, deliberately unhashed. 5a's scope already follows §12.2 | 5a | resolved by 5a — `public/fonts/*-v1.woff2`, unhashed, per §12.2 |
-| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | 5b's part resolved by 5b — breathing is a true sine computed per frame on the ticker, no eased tween; 9a and 6a open |
+| E3 | §9.2 vs §9.9, §9.4, §7.2 | "Nothing else is used anywhere", yet: Flip `ease: 'power3.out'` (§9.9), idle breathing `ease: 'sine.inOut'` (§9.4), ripple "power2.out envelope" (§7.2) | 9a · 5b · 6a respectively | 5b's part resolved by 5b — breathing is a true sine computed per frame on the ticker, no eased tween; 6a's part resolved by 6a — ripple `env = (1 − τ/1.2)²` computed per frame; 9a open |
 | E-ease | §9.4–§9.8 tables | An Ease column of "—" (button labels, scroll cue, section index, plate row labels, node labels, colophon rows) is undefined, and §9.10's micro-state table has no Ease column at all (CSS transitions, so the rule must also give `cubic-bezier` forms, as §9.9 does for `ease.metal`); GSAP's default `power1.out` is not on the §9.2 list. Settle the rule once (`none`, or a `gsap.defaults` ease); it is cross-cutting after that | 5b | resolved by 5b — "—" means `glyph`, written out; `gsap.defaults({ ease: 'none' })`; CSS `--ease-mask/glyph/metal` tokens (§9.2), §9.10 gained an Ease column; existing CSS `ease` keywords are converted by their owners (9a, 9b), audited by 11b |
 | E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | resolved by 5b — scrubs are `none` with no exception; the aperture closes linearly |
 | E5 | §6.5 vs §5.3 / §4.3 | Node label "mono label in `--silver`" vs `--silver-light` (dimmable, AA at the floor). Code already follows §5.3 (`components.css`, `.node__label`) | 11b (text) | resolved in code by 3 |
@@ -306,13 +306,17 @@ resolved.
 | E19 | §10.3 | NONE fallback uses "a `--silver-sheet` radial", but `--silver-sheet` is a 168° linear gradient, so the radial form is undefined; the static chain strip is "positioned where the spine would run", but the spine's `X` changes per movement | 11a | open |
 | E20 | §9.4 × §6.3 | The entrance table animates a "role hairline" and §6.3's wireframe draws one, but §6.3's markup has no such element, and neither does CP3's `index.html` | 5b | resolved by 5b — `<span class="hero__rule" aria-hidden="true">` inside the role line, absolutely positioned `border-top` at the role's width |
 | E21 | §9.6, §4.2 | Spec-text slips outside E11/E12: §9.6's dimmed labels at "4.6:1" vs §4.3's 4.96:1 on `--void` (the nodes' ground); §4.2's `--silver-sheen` "animated via background-position (§9.4)", but §9.4 has no sheen (§9.5/§9.7/§9.8 do) | 11b (text) | open |
-| E22 | §9.2 | The `catenary` ease ("chain slack relaxation only") has no consumer: sag reads velocity directly with no tween (§7.2) and nothing in §7/§9 names it. Give it one or strike it from §9.2 | 6a | open |
+| E22 | §9.2 | The `catenary` ease ("chain slack relaxation only") has no consumer: sag reads velocity directly with no tween (§7.2) and nothing in §7/§9 names it. Give it one or strike it from §9.2 | 6a | resolved by 6a — struck from §9.2, the Appendix and `core/easings.js` |
 | E23 | §9.4 × §6.3 | The entrance fades "button labels" in after the buttons seat, but each label is a bare text node inside `.btn`, so there is no element to fade | 5b | resolved by 5b — each hero button's content is one `<span class="btn__label">` (inline-flex, `gap: inherit`, so no visual change) |
 | E24 | §9.2 | With E4 settled as `none`, `shut` ("apertures closing, hero exit") has no consumer left | 5b | resolved by 5b — struck from §9.2, the Appendix and `core/easings.js` |
 | E25 | §6.3, §9.4, §9.6 | `pathLength="100"` "so DrawSVG maths is in whole percent", but DrawSVG ignores `pathLength`: it measures a `<rect>` as sharp corners and a `<path>` by `getTotalLength()`, while the browser reads the dash in `pathLength` units, so draws complete after a fraction of their tween (the hero ring appeared whole at ~9 %) | 5b (hero ring) · 7b (§9.6 lattice edges) | 5b's part resolved by 5b — the ring tweens `stroke-dasharray` `'0 100' → '100 0'` directly; §9.6's edges open for 7b |
 | E26 | §9.4 scroll-out vs §9.4 / §4.3 | "meta, role, tagline `opacity → 0` by 40 % progress" leaves them wholly on screen at 0.375 and 0 at 1440×900, against the section's own "nothing rests below 0.60" (and meta/role are `--silver`, which may not be dimmed at all) | 5b | resolved by 5b — every scroll-out fade (incl. the name's 0.06) is bound to the element's own exit: full opacity while wholly on screen, fading only while the viewport's top edge cuts through it |
 | E27 | §9.1 teardown | "`ScrollTrigger.saveStyles()` on every animated selector", but ScrollTrigger restores every saved style on *any* media-query change (`matchMediaRevert`, incl. its own `(orientation: portrait)` query), even when no context toggled — after a 900 px crossing into a portrait viewport it wiped the rebuilt hero (hairline invisible). The hero registers no selectors; its context revert and cleanup restore everything | 11b (§9.1 text, registry comment, cross-cutting audit) | open |
 | E28 | §12.7 CLS vs §5.4 / §9.4 | CLS budget 0, but a per-character `wdth` morph changes glyph advances, so following characters really move and Layout Instability counts it: the hero entrance measures **0.002** in Chrome 154 (all sources `DIV.char`); breathing registers 0; 7a's heading morphs will add their own | 11b (§12.7 audit) | open |
+| E29 | §7.3 | `UP` in the orientation code is undefined; the guard's "fall back to `(0,0,1)` … at the top of the loop" implies `UP = (1,0,0)`, which is parallel to the tangent along the whole WORKS horizontal run, while world-up is parallel at every bow apex of the vertical spine | 6a | resolved by 6a — `UP = (0,0,1)` (camera axis; never parallel for xy-plane curves), fallback `(1,0,0)` |
+| E30 | §7.4 | The env-tint snippet picks meshes by `color.l > 0.5`, but RoomEnvironment's light panels have black `color` (their light is `emissive`), so it turns the room walls blue and leaves every light white — no left/right specular split | 6a | resolved by 6a — the two far-left panels' `emissive` → `0x6C9BFF`, the rest white, walls neutral |
+| E31 | §7.2 | The ripple is written into the 9 control points (`ripple(i)`), but its constants are per link (6-link wavelength, 0.9×/link, 48 links/s); control points ≈ 6.3 links apart alias it into a whole-chain 8 Hz wobble | 6a | resolved by 6a — applied per link after sampling, `k = u·N` from the top end |
+| E32 | §7.3 × §7.7 | §7.7 cuts links to 36 (MED) / 18 (LOW), but §7.3 fixes the spacing (0.72 × diameter) and the 1.6·H span, which need 51: at LOW the links hang ~2.5 diameters apart as loose rings | 6a | resolved by 6a — 51 links at every tier; the tier cuts torus tessellation (12×48 / 10×32 / 8×24) |
 
 ## Log
 
@@ -1025,3 +1029,130 @@ in §12.2's layout; both are named by this checkpoint's scope.
   `pointerOffset('background')`.
 - **Left alone, owned elsewhere:** E3 (9a, 6a), E15 (6b, the same scrub-ease question for the chain
   migration, which E4's "no exception" wording now informs), E21 (§4.2's "§9.4" sheen reference).
+
+### Checkpoint 6a — Chain core (WebGL)
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 6a — chain core (WebGL)`
+
+The chain renders. The new files are:
+- `gl/stage.js`: renderer, camera, clock, fade-in, motion handling.
+- `gl/chain.js`: catenary, spring, ripples, links, material, env, lights, guard.
+- `core/tiers.js`: forced rules, the 30-frame probe, §7.7 params.
+- `util/rect.js`: the document-space `[data-copy]` cache.
+
+`main.js` imports `gl/stage.js` at idle after `load`, next to the late plugins. That chunk pulls
+`three` in behind it, and `tiers.js` rides in it too, so the entry doesn't grow. Movement states
+are still 6b's: the spine sits at IDENTITY's `X = +0.26` on every section.
+
+**Errata decisions (user, this session):**
+- **E1:** §10.1 wins. Under reduced motion the chain is drawn and never animated: no ticker
+  callback, spring, sag response or ripples, and the phase is frozen where it was. The frame is
+  redrawn only on `scroll` and `resize`, coalesced to one `gsap.ticker.add(fn, true)` per frame.
+  That was the catch in the literal "one frame" reading: `#stage` is fixed, so a single frame's
+  `aDim` would go stale as copy scrolled past. The tier keeps its probed value, and the motion
+  toggle only adds or removes the ticker callback.
+- **E3, 6a's part:** the ripple envelope is `(1 − τ/1.2)²`, i.e. 1 − power2.out, computed per
+  frame. E3 stays open for 9a.
+- **E22:** `catenary` is struck from §9.2, the Appendix and `easings.js`.
+- **New E29:** `UP = (0,0,1)` with fallback `(1,0,0)`. Even links read edge-on and odd face-on.
+  The guard never fires for an xy-plane curve. §7.3's loop-top placement stays 6b's.
+- **New E30:** the spec's tint snippet turned the room *walls* blue. RoomEnvironment's panels
+  carry their light in `emissive`, and their `color` is black. Now the two far-left panels (x ≈ −16)
+  get emissive `0x6C9BFF` at their own intensity.
+- **New E31:** the ripple is applied per link after sampling the curve, with `k = u·N` counted
+  from the top end. Nine control points can't carry a 6-link wave.
+- **New E32:** every tier keeps 51 links, and the tier cuts tessellation instead: 12×48 / 10×32 /
+  8×24, i.e. 1152 / 640 / 384 tris per link. Checked in a screenshot: with 18 links, LOW hung as
+  loose rings ~2.5 diameters apart. Now it's an interlocked chain.
+
+**My decisions where the spec is silent (all logged, none in design.md except the renderer note in
+§10.2):**
+- **Renderer vs antialias.** A forced tier builds the right renderer the first time. Forced NONE
+  builds nothing and removes the canvas. Otherwise:
+  - The renderer is built for HIGH (`antialias: false`) on the real `#stage`.
+  - The probe renders the real chain there at `opacity: 0`.
+  - A MED/LOW result disposes the renderer (`forceContextLoss`), swaps in a `cloneNode` canvas,
+    re-bakes PMREM and rebuilds with `antialias: true`.
+
+  Verified in Chrome at 6× CPU: the probe gives LOW, there's one `#stage`, `stage.canvas` is the
+  live one, and antialias is on. **Note for 10:** until the composer lands, HIGH renders with no AA
+  at all. `TIERS[t].msaa` (4/0/0) is already there for the composer target.
+- **The guard measures from the link's nearest edge, not its centre** (each rect grown by the
+  on-screen outer radius, 0.022·vh). This is a deviation from §7.6 step 4's literal reading. Measured:
+  - At 1440×900 the link centres run x = 1013–1025. That's inside the 24 px gutter between
+    DOSSIER's copy (≤ 1008) and the plate (≥ 1032).
+  - So the centre test gave `aDim = 0` everywhere, while the 40 px rings covered the ends of the
+    copy lines.
+  - Edge-based, the links over the copy dim to 0.35–0.64.
+
+  At `aDim = 1` (checked with a forced full-width `[data-copy]` band) links go visibly matte and
+  flat with no highlight. At the spec's 0.42/0.62 values they stay mid-grey rather than dark,
+  because the env is bright. The spec's numbers are kept.
+- **Sag direction:** `state.bow = −1` bows toward screen centre. At IDENTITY that puts the on-screen
+  bow in the tagline–portrait gutter (§7.5 "runs the gutter"). `+1` would cross the portrait.
+  **6b:** `state.x` and `state.bow` are the plain-object knobs for the migrations.
+- **Lights are `DirectionalLight`s.** A point light at §7.4's positions and intensities would
+  leave almost nothing after inverse-square falloff.
+- **Reversal detection:** `Δv` = the peak speed in the old direction + the speed in the new one
+  (the signal is EMA-smoothed and crosses zero slowly). A chain at rest (`v === 0`) forgets its
+  direction. This is written into §7.2 along with E31.
+- **Phase target** is `window.scrollY` (§7.2's code). The guard uses `getSmoother().scrollTop()`,
+  the rendered position (§7.6).
+- **Fade-in:** `gsap.to(canvas, { opacity: 1, duration: 8*T, ease: 'metal' })` after the first
+  frame, since it's a crossfade. Under reduced motion it's a `gsap.set`. `#stage { opacity: 0 }` is
+  in `motion.css` under `scripting: enabled`.
+- `mesh.computeBoundingSphere()` runs every frame after the matrices, because `frustumCulled` would
+  otherwise use a stale sphere. The dev build warns if `renderer.info.render.calls > 3`.
+- `?debug` shows `stage mode · tris · calls · ripples` and exposes `__rig.stage`
+  (`chain.dims()`, `chain.phase`, `renderer`, `camera`).
+
+**Verified** in headless Firefox (desktop pointer prefs) and chrome-headless-shell 154
+(SwiftShader), against `vite preview`:
+- **Build:**
+  - `three` chunk **135.68 kB** gz against a ≤ 180 budget.
+  - Stage chunk 3.49 kB.
+  - The entry is now two files, because `easings.js` became a shared chunk once the stage imported
+    it: `index` 5.70 + `easings` 58.91 = **64.61 kB** against ≤ 66.
+  - Late 14.55 kB, CSS 5.53 kB.
+  - **Total JS 218.3 kB against ≤ 220.**
+- **At rest,** the on-screen bow spread (instances within ±0.8·H) is **74.5 px**, against 81 px =
+  0.09·H at 900 px. The endmost links don't sit at the apex.
+- **Fast wheel burst:** velocity reaches 0.96 and the spread falls to **3.1 px** (taut). It returns
+  to 74.5 at rest. A reversal spawns a ripple that lives 1.2 s.
+- **Draw calls: 1** at every tier.
+- **Tiers:**
+  - HIGH at DPR 2: pixel ratio 2, clearcoat 0.3, no AA.
+  - Forced LOW (`hardwareConcurrency = 4`) at DPR 2: pixel ratio 1, 384 tris, clearcoat 0, AA on,
+    and the colophon reads **LOW**.
+  - `webgl.disabled`: `#stage` removed, colophon **NONE**, no errors.
+- **Reduced motion:**
+  - OS pref: mode `reduced`, 0 renders over 1 s idle, one render per scroll, `aDim` updated at
+    DOSSIER, phase frozen.
+  - Motion toggle ×3: **6 triggers / 23 children ON, 1 / 1 OFF** every cycle, the same as 5b's
+    baselines. 0 renders while OFF, ~60 fps ON.
+  - The 2nd child under the OS pref is ScrollTrigger's own delayed refresh call. It's identical at
+    HEAD.
+- **Resize** 1440 → 1000 → 700 → 390 → 1440: the drawing buffer and aspect follow every time, and
+  triggers stay 6.
+- **LCP** 36 ms (244 ms at 6× CPU), still `.hero__text`. The canvas becomes visible at 2.7 s
+  (5.7 s throttled), well after LCP.
+- **CLS** in SwiftShader Chrome is 0.010–0.016, every source `DIV.char`. That's E28's width morph
+  sampled at coarser frame times, not the stage: the canvas is fixed and only its opacity changes.
+- **No JS:** 5 sections, no overflow, canvas inert (the transparent, empty element).
+
+**Carried forward:**
+- **The total JS budget is nearly spent:** 1.7 KB headroom. 6b's `lattice.js` and **10's
+  EffectComposer + RenderPass + OutputPass + metal pass will exceed 220 KB.** 10 (or 6b, if lattice
+  alone tips it) needs an owner decision on §12.7's total.
+- **6b:** `chain.state.{x, bow}`; the stage's `H`, `camera` and `chain` via `getStage()`. The
+  instance loop is in `chain.update()`. The horizontal mode and loop need their own curve and the
+  E29 fallback only if a curve leaves the xy-plane. Chain parallax from `pointerOffset()` isn't
+  wired yet. Under reduced motion the chain is static at the phase it had. The migrations there
+  should `gsap.set` `state.x` per section and call `getStage().redraw()`.
+- **8a/8b:** `rect.js` measures `offsetLeft` only, so cards inside the horizontally-scrolled/pinned
+  track are placed at their unscrolled x. The pin owner must feed the track offset in.
+- **10:** `TIERS[t].msaa`, `.antialias`; `renderer` is replaced on a probe downgrade, so read it
+  from `getStage().renderer` at composer build time, not at import.
+- **11a:** the NONE path removes the canvas and nothing replaces it yet (E19).
+- **Left alone, owned elsewhere:** E3 (9a's `power3.out`), E15/E9 (6b), E16/E17/E18 (10), E19
+  (11a), E28 (11b).
