@@ -363,7 +363,7 @@ function still() {
 
 register({
   name: 'projects',
-  // No saveStyles selectors (errata E27). Nothing is hidden, so reduced motion
+  // Nothing is hidden, so reduced motion
   // is the authored page: its §9.7 vertical stack is CSS (components.css,
   // html[data-motion="reduced"]); staticStates only keeps focus in view.
   desktopFull: pinned,

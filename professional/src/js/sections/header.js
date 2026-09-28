@@ -72,7 +72,6 @@ function depth() {
 
 register({
   name: 'headers',
-  // No saveStyles selectors (errata E27, as the hero).
   desktopFull: depth,
   mobileFull: depth,
 });

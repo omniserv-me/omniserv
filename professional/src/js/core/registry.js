@@ -5,7 +5,6 @@
 
      register({
        name: 'hero',
-       selectors: ['.hero__name', …],    // everything it animates → saveStyles
        desktopFull() {…},                // (prefers full) and (min-width: 901px)
        mobileFull() {…},                 // (prefers full) and (max-width: 900px)
        staticStates() {…},               // reduced: gsap.set to final states only
@@ -13,8 +12,12 @@
 
    Each branch runs inside its own gsap.context(), held here. Toggling motion
    reverts every context, flips the stored preference and rebuilds in the other
-   mode — no reload — and saveStyles guarantees the DOM is back in its authored
-   state before the rebuild.
+   mode — no reload. Each branch restores what it wrote: its context's revert
+   plus the cleanup it returns put the DOM back in its authored state before
+   the rebuild. There is no ScrollTrigger.saveStyles(): ScrollTrigger restores
+   every saved record on *any* media-query change, its own (orientation:
+   portrait) query included, even when no context toggled — after a 900 px
+   crossing into a portrait viewport it wiped the rebuilt hero.
 
    Why one conditions handler instead of §9.1's three literal mm.add() queries:
    §10.1 lets a stored toggle override the OS preference in both directions, and
@@ -42,10 +45,18 @@ const CONDITIONS = {
    px, pin spacer included — and resolved again against the rebuilt page. */
 const PLACES = 'main section, #colophon';   // not main > section: the pin-spacer wraps #works
 
+/* Measured from layout, never with smoother.offset(): that creates a throwaway
+   ScrollTrigger, whose refresh reverts the WORKS pin — moving #works out of
+   its pin-spacer and back, which drops keyboard focus from a card (11b; it
+   ran 300 ms after every scroll, the focus glide's included). The pin-spacer
+   stands in for a pinned section, and under the smoother both rects share the
+   content's transform, so their difference is the layout offset. */
 function startOf(el) {
-  const smoother = getSmoother();
-  const y = smoother ? smoother.offset(el, 'top top')
-    : el.getBoundingClientRect().top + window.scrollY;
+  const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
+  const top = box.getBoundingClientRect().top;
+  const y = getSmoother()
+    ? top - document.getElementById('smooth-content').getBoundingClientRect().top
+    : top + window.scrollY;
   return Math.min(y, ScrollTrigger.maxScroll(window));   // the colophon's top may never reach the top
 }
 
@@ -142,8 +153,6 @@ function build() {
 }
 
 export function boot() {
-  const selectors = movements.flatMap((m) => m.selectors ?? []);
-  if (selectors.length) ScrollTrigger.saveStyles(selectors.join(','));
   build();
   ScrollTrigger.addEventListener('refresh', onRefresh);
   window.addEventListener('scroll', onScroll, { passive: true });

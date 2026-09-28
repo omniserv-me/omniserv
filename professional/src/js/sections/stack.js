@@ -337,7 +337,6 @@ function build(full) {
 
 register({
   name: 'stack',
-  // No saveStyles selectors (errata E27); every branch restores what it wrote.
   desktopFull: () => build(true),
   mobileFull: () => build(true),
   staticStates: () => build(false),

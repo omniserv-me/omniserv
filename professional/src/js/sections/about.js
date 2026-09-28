@@ -113,7 +113,7 @@ function full() {
 
 register({
   name: 'about',
-  // No saveStyles selectors (errata E27); no staticStates — nothing is hidden,
+  // No staticStates — nothing is hidden,
   // so reduced motion is the authored page.
   desktopFull: full,
   mobileFull: full,

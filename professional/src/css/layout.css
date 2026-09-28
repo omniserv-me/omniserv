@@ -107,6 +107,9 @@
   top: var(--s-2);
   left: var(--s-2);
   z-index: calc(var(--z-rail) + 1);
+  display: inline-flex;
+  align-items: center;
+  min-height: calc(5.5 * var(--u));   /* §10.4 44 px target (was 43) */
   padding: var(--s-1) var(--s-2);
   background: var(--graphite);
   color: var(--silver-light);      /* 10.91:1 on --graphite (§4.3) */

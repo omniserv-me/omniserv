@@ -223,11 +223,8 @@ function staticStates() {
 
 register({
   name: 'hero',
-  // No saveStyles selectors (errata E27): ScrollTrigger restores every saved
-  // style on *any* media-query change — its own (orientation: portrait) query
-  // included — even when no context toggled, which wiped the rebuilt hero
-  // after a 900 px crossing. The context's revert plus full()'s cleanup
-  // already return every element to its authored state.
+  // The context's revert plus full()'s cleanup return every element to its
+  // authored state (§9.1 teardown).
   desktopFull: full,
   mobileFull: full,
   staticStates,

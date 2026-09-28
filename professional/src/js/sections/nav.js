@@ -191,7 +191,6 @@ function build(animate) {
 
 register({
   name: 'nav',
-  // No saveStyles selectors (errata E27, as the hero).
   desktopFull: () => build(true),
   mobileFull: () => build(true),
   staticStates: () => build(false),

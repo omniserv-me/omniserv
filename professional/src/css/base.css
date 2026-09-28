@@ -38,21 +38,26 @@
    computed with fontTools from each face's hhea metrics and English-weighted
    average advance, against Arial-metric sans (Arial ≡ Liberation Sans ≈
    Helvetica ≈ FreeSans) and 0.6em mono. Archivo is matched on capitals: every
-   Archivo role on the page is uppercase. */
+   Archivo role on the page is uppercase.
+   size-adjust was then refit (checkpoint 11b) to the page's own rendered copy:
+   the fontTools figures ignored Archivo's 700–800 weights (fallback 9.3 %
+   narrow) and Inter's optical sizing (fallback 2.4 % wide), and the swap
+   rewrapped copy at 87 of 401 widths. ascent/descent are rescaled with it, so
+   the vertical metrics are unchanged. */
 @font-face {
   font-family: "Archivo Fallback";
   src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Helvetica"), local("FreeSans");
-  size-adjust: 100.61%;
-  ascent-override: 87.27%;
-  descent-override: 20.87%;
+  size-adjust: 110.87%;
+  ascent-override: 79.20%;
+  descent-override: 18.94%;
   line-gap-override: 0%;
 }
 @font-face {
   font-family: "Inter Fallback";
   src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Helvetica"), local("FreeSans");
-  size-adjust: 110.61%;
-  ascent-override: 87.58%;
-  descent-override: 21.81%;
+  size-adjust: 108.07%;
+  ascent-override: 89.64%;
+  descent-override: 22.32%;
   line-gap-override: 0%;
 }
 @font-face {

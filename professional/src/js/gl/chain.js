@@ -68,6 +68,8 @@ const UP_FALLBACK = new Vector3(1, 0, 0);
 const Z_AXIS = new Vector3(0, 0, 1);
 
 const FEATHER = 24;                   // §7.6 px
+const DIM_COLOUR = 0.42;              // §7.6 diffuse factor at full dim
+const DIM_LIGHT = 0.06;               // errata E49: the whole lit colour at full dim
 const smoothstep = (e0, e1, x) => {
   const t = Math.min(Math.max((x - e0) / (e1 - e0), 0), 1);
   return t * t * (3 - 2 * t);
@@ -76,8 +78,11 @@ const lerp = (a, b, t) => a + (b - a) * t;
 
 /* §7.6 — one instance in px against every copy box, converted from document
    space with the one scroll value already in hand. Measured from the link's
-   nearest edge, not its centre (each box grown by the link's on-screen radius):
-   a link is behind copy as soon as any of it is. Shared with gl/lattice.js. */
+   nearest edge, not its centre (each box grown by the link's on-screen radius),
+   and the feather runs *outside* the box (errata E49): a link is fully dimmed
+   as soon as any of it touches copy, and fades over the 24 px before that. An
+   inside feather never fully dimmed a link over a one-line label. Shared with
+   gl/lattice.js. */
 const v3 = new Vector3();
 export function dimAt(p, o) {
   v3.copy(p).project(o.camera);
@@ -88,7 +93,7 @@ export function dimAt(p, o) {
   for (const r of o.rects) {
     const y = r.y - o.scrollTop;
     const inside = linkR + Math.min(sx - r.x, r.x + r.w - sx, sy - y, y + r.h - sy);
-    if (inside > 0) d = Math.max(d, smoothstep(0, FEATHER, inside));
+    if (inside > -FEATHER) d = Math.max(d, smoothstep(-FEATHER, 0, inside));
   }
   return d;
 }
@@ -123,7 +128,10 @@ export function createChain(scene, H) {
   });
 
   /* §7.6 — links behind copy go matte and dark. Roughness is what does the
-     work: a dimmed-but-glossy link still throws a highlight. */
+     work: a dimmed-but-glossy link still throws a highlight. The clearcoat
+     goes too, and the whole lit colour is scaled down (errata E49): neither the
+     clearcoat nor a metal's grazing-angle Fresnel rim is scaled by the diffuse
+     colour, and they left copy at ~1:1 over a "dimmed" link. */
   mat.customProgramCacheKey = () => 'chain-dim';
   mat.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
@@ -132,9 +140,13 @@ export function createChain(scene, H) {
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vDim;')
       .replace('#include <color_fragment>',
-               '#include <color_fragment>\n  diffuseColor.rgb *= mix(1.0, 0.42, vDim);')
+               `#include <color_fragment>\n  diffuseColor.rgb *= mix(1.0, ${DIM_COLOUR.toFixed(2)}, vDim);`)
       .replace('#include <roughnessmap_fragment>',
-               '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.62, vDim);');
+               '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.62, vDim);')
+      .replace('#include <opaque_fragment>',
+               `outgoingLight *= mix(1.0, ${DIM_LIGHT.toFixed(2)}, vDim);\n#include <opaque_fragment>`)
+      .replace('#include <lights_physical_fragment>',
+               '#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\n  material.clearcoat *= 1.0 - vDim;\n#endif');
   };
 
   const mesh = new InstancedMesh(geo, mat, POOL);

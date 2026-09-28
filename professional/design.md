@@ -48,8 +48,10 @@ Five ideas, in priority order. When two conflict, the earlier one wins.
 These override any aesthetic decision, always:
 
 - **I1 — Content exists before JavaScript.** Every word is in the served HTML. JavaScript adds
-  the veil, the motion and the canvas; it never supplies content. The only text JS writes is the
-  copyright year and the diagnostic tier readout. *(errata E6)*
+  the veil, the motion and the canvas; it never supplies content. The text it writes is state,
+  never content: the copyright year, the tier readout, the CAST counter, the WORKS index scramble
+  and progress label, and the lattice cluster readout. Each either ships its resting form in the
+  HTML or lives only in the JS-injected veil.
 - **I2 — No text animates below AA contrast.** Any element that is still on screen holds at
   least 4.5:1 against its background. Dim states have a hard floor (§4.3). Text may animate
   *from* invisible on entry; it may never *rest* below the floor.
@@ -58,7 +60,7 @@ These override any aesthetic decision, always:
 
 ### 1.4 Non-goals
 
-- **No scroll-jacked narrative beyond one section.** Exactly one pinned section (§6.5). *(errata E11)* The rest
+- **No scroll-jacked narrative beyond one section.** Exactly one pinned section (§6.6). The rest
   of the page scrolls natively.
 - **No bloom, no glassmorphism, no gradient-mesh blobs.** These are what the current page does
   and what everything else does. Silver's drama comes from hard specular clipping (§8.3).
@@ -169,7 +171,7 @@ steps multiply by √2. Sizes are declared in `rem`; px values shown for referen
 | `--t-2` | 16·2^(2/4) | 22.63 | card title (mobile), blockquote |
 | `--t-3` | 16·2^(3/4) | 26.91 | card title |
 | `--t-4` | 16·2 | 32.00 | section heading (mobile) |
-| `--t-5` | 16·2^(5/4) | 38.06 *(errata E12)* | — |
+| `--t-5` | 16·2^(5/4) | 38.05 | — |
 | `--t-6` | 16·2^(6/4) | 45.25 | section heading |
 | `--t-8` | 16·4 | 64.00 | hero name (mobile) |
 | `--t-10` | 16·2^(10/4) | 90.51 | hero name (tablet) |
@@ -205,7 +207,8 @@ Section vertical rhythm: `--s-21` desktop, `--s-13` tablet, `--s-8` mobile.
   pinned works track (§6.6).
 - Body measure `66ch`, hard cap `--s-8 * 11 = 704px`. Never full-bleed body copy.
 - Breakpoints: `s ≤ 640px`, `m 641–900px`, `l 901–1280px`, `xl > 1280px`. These three numbers
-  match the existing CSS breakpoints so nothing regresses silently. *(errata E14)*
+  replace the old sheet's 768 px and 900 px (it had no 640 px breakpoint); only 900 carries over,
+  so compare the old page's behaviour at 768 deliberately, not by assumption.
 - **Asymmetry rule:** section content sits on columns 2–8 or 5–12, alternating down the page.
   The unused side is where the chain runs (§7.5). The layout's asymmetry exists to make room for
   the chain, which is why it never looks arbitrary.
@@ -312,7 +315,7 @@ immediately adjacent to a dark one, which is the only thing that reads as metal 
 --silver-fill: linear-gradient(168deg,
   #B4BAC0 0%, #E8EBEE 46%, #C9CED4 62%, #9DA4AB 100%);
 
-/* Travelling highlight band. Animated via background-position (§9.4). (errata E21) */
+/* Travelling highlight band. Animated via background-position (§9.5, §9.7, §9.8). */
 --silver-sheen: linear-gradient(105deg,
   rgba(232,235,238,0) 42%, rgba(232,235,238,0.55) 50%, rgba(232,235,238,0) 58%);
 
@@ -347,7 +350,7 @@ prefixed one:
 ### 4.3 Contrast and the dim floor
 
 All ratios below are computed WCAG 2.1 values, not estimates. `--ink` has relative luminance
-0.0021; `--void` 0.0043; `--graphite` 0.0094. *(errata E12)*
+0.0021; `--void` 0.0040; `--graphite` 0.0108.
 
 **Against `--ink`** (the page ground):
 
@@ -422,7 +425,7 @@ register — indices, coordinates, tier readouts.
 
 **Verify at install time:** confirm the actual axis ranges in the downloaded `woff2` (Archivo's
 `wdth` range has differed between releases). If `wdth` is narrower than 62–125, scale the
-animation targets in §9.3 *(errata E11)* proportionally rather than clamping — the *relative* width travel is
+animation targets in §9.4 proportionally rather than clamping — the *relative* width travel is
 what reads, not the absolute values.
 
 ### 5.2 Self-hosting
@@ -523,7 +526,9 @@ the beat grid (§3.5) exists, and it gives the chain a reason to change state at
 | 05 | `#link` | LINK | ~100vh | coils into a closed loop |
 | — | `#colophon` | colophon | ~40vh | loop idles |
 
-Total document height ≈ 810vh desktop. Section indices are shown on the page — `01`…`05` in mono
+Total document height ≈ 810vh desktop (measured at checkpoint 11b: 840vh at 1440 × 900 — IDENTITY
+102, DOSSIER 101, LATTICE 124, WORKS 359, LINK 104, colophon 50 — 708vh at 1920 × 1080 and 955vh at
+1280 × 800; the figures follow the copy and the pin's `D`, so they are approximate by nature). Section indices are shown on the page — `01`…`05` in mono
 — because numbering the movements is both navigational aid and part of the register.
 
 Global DOM shell. ScrollSmoother requires the wrapper/content pair, and the canvas sits fixed
@@ -820,7 +825,7 @@ root, starting clear of the chain's half-width. The positions are applied to CP3
 the DOM, and so the tab order, is unchanged.
 
 **Node form.** A capsule — the chain-link stadium again, at small scale — 1 px `--hairline`
-border on `--void`, mono label in `--silver` *(errata E5)*. Focusable `<button>` elements, not `<span>`, so the
+border on `--void`, mono label in `--silver-light` (§5.3; dimmable, AA at the floor). Focusable `<button>` elements, not `<span>`, so the
 hover behaviour has a keyboard equivalent.
 
 **22 nodes in 4 clusters** — 8 backend, 8 infra/devops, 4 frontend, 2 tooling:
@@ -1249,23 +1254,39 @@ mat.onBeforeCompile = (shader) => {
     .replace('#include <color_fragment>',
              '#include <color_fragment>\n  diffuseColor.rgb *= mix(1.0, 0.42, vDim);')
     .replace('#include <roughnessmap_fragment>',
-             '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.62, vDim);');
+             '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.62, vDim);')
+    .replace('#include <lights_physical_fragment>',
+             '#include <lights_physical_fragment>\n#ifdef USE_CLEARCOAT\n  material.clearcoat *= 1.0 - vDim;\n#endif')
+    .replace('#include <opaque_fragment>',
+             'outgoingLight *= mix(1.0, 0.06, vDim);\n#include <opaque_fragment>');
 };
 ```
 
 Raising `roughnessFactor` is what does the work — a dimmed-but-glossy link still throws a
-distracting highlight, while a matte one recedes. Dimming alone is not enough.
+distracting highlight, while a matte one recedes. Dimming alone is not enough. Nor is roughness
+alone: the clearcoat is not scaled by the diffuse colour, and a metal's grazing-angle Fresnel rim
+is near-white whatever its colour, so a link dimmed only through diffuse and roughness still
+measured ~170 sRGB behind copy, leaving text at ~1:1 on those pixels (I2). The clearcoat goes to
+zero and the whole lit colour to 0.06× at full dim, which holds `--silver` text at ≥ 4.5:1 over
+the brightest dimmed rim (measured, checkpoint 11b).
 
 **Computing `aDim` without layout thrash.** Never call `getBoundingClientRect()` per frame; the
 smoothed scroller moves content every frame and the reads would force layout each time.
 
 1. On load and on `ScrollTrigger.refresh`, cache each `[data-copy]` element's rect in **document**
-   space (`offsetTop`/`offsetLeft` walked once).
+   space (`offsetTop`/`offsetLeft` walked once). `[data-copy]` marks every piece of text the chain
+   can pass behind: the copy blocks, the hero's meta, name, role, action row and cue, each section
+   index and title, the lattice cluster labels and readout, the WORKS count, and the colophon
+   columns. Opaque surfaces (cards, node capsules, metal buttons) need no mark.
 2. Each frame, convert to screen space with the single scroll value already in hand:
-   `screenY = docY − smoother.scrollTop()`.
+   `screenY = docY − smoother.scrollTop()`, plus the translation in the inline `translate` and
+   `transform` of the element and its ancestors (the depth module's parallax, GSAP's `y`, the WORKS
+   pin's transform). That is a string read, not a layout read, and without it the dim sat up to
+   94 px off the text it guards.
 3. Project each instance's world position to pixels (`v.project(camera)` → NDC → px).
-4. `aDim = smoothstep(0, 24, feather distance inside the rect)` — a 24 px feather so links fade
-   rather than switch.
+4. `aDim = smoothstep(−24, 0, signed distance of the link's nearest edge inside the rect)`: fully
+   dimmed as soon as any of the link touches copy, fading over the 24 px outside it, so links fade
+   rather than switch. A feather *inside* the rect never fully dimmed a link over a one-line label.
 5. Write the attribute once, set `needsUpdate = true`.
 
 ### 7.7 Performance
@@ -1481,8 +1502,12 @@ and a visibly reflowing headline:
 5. `ScrollTrigger.refresh()`.
 6. Dismiss the veil (§9.3).
 
-**Teardown.** *(errata E27)* `ScrollTrigger.saveStyles()` on every animated selector before any context is
-created, and all breakpoint- or preference-dependent work inside `gsap.matchMedia()`:
+**Teardown.** Every context restores what it wrote: its `revert()` plus the cleanup function its
+branch returns put the DOM back in its authored state. There is **no `ScrollTrigger.saveStyles()`**:
+ScrollTrigger restores every saved record on *any* media-query change, its own
+`(orientation: portrait)` query included, even when no context toggled, and after a 900 px crossing
+into a portrait viewport that wiped the freshly rebuilt hero. All breakpoint- or
+preference-dependent work runs inside `gsap.matchMedia()`:
 
 ```js
 const mm = gsap.matchMedia();
@@ -1803,7 +1828,7 @@ connected labels track out rather than stretch. A dimmed node keeps its `--void`
 dimming the whole capsule would let the branch chain behind it show through the label. Colour,
 tracking and the dim are CSS transitions on classes (the destination's duration wins: in 1τ, out
 2τ); the seat is the one tween, since `back.out` has no CSS form. The dim floor is the hard limit
-here — non-focused labels stay readable at 4.6:1 *(errata E21)*, which is why this interaction is permitted at all.
+here — non-focused labels stay readable at 4.96:1 (`--silver-light` at 0.60 on `--void`, §4.3), which is why this interaction is permitted at all.
 
 **Optional, HIGH value:** arrow-key traversal between graph-adjacent nodes (←/→ within a cluster,
 ↑/↓ between clusters). It costs about 30 lines and makes the lattice feel like an instrument rather
@@ -2091,16 +2116,18 @@ the row moves. Reduced motion changes the colour only.
 the interpolation is typed:
 
 ```css
-@property --sweep { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+/* A <number> 0–1, not a <percentage>: CSS math may only divide by a number, so
+   `var(--sweep) / 100%` would make the calc() invalid at computed-value time. */
+@property --sweep { syntax: '<number>'; inherits: false; initial-value: 0; }
 
 .rail__panel {
   /* horizontal run of a 15° lean over the panel's full height, scaled by how far open it is —
-     zero at rest (fully collapsed, matching the old static polygon), full run at --sweep: 100% */
-  --shear: calc(100vh * tan(15deg) * (var(--sweep) / 100%));   /* errata E13 */
+     zero at rest (fully collapsed, matching the old static polygon), full run at --sweep: 1 */
+  --shear: calc(100vh * tan(15deg) * var(--sweep));
   clip-path: polygon(
     100% 0,
-    calc(100% - var(--sweep)) 0,
-    calc(100% - var(--sweep) - var(--shear)) 100%,
+    calc(100% - var(--sweep) * 100%) 0,
+    calc(100% - var(--sweep) * 100% - var(--shear)) 100%,
     100% 100%
   );
 }
@@ -2140,7 +2167,7 @@ rule: CSS transitions use the `--ease-*` tokens, GSAP the named curves.
 Focus rings are **instant**. An animated focus ring lags keyboard navigation and feels broken.
 
 **Text links** are the inline links in running text: the plate's two values and the colophon's
-licence (`a.tlink`). At rest they are `--silver-light` over a static 1 px `--hairline-strong`
+licence (`a.tlink`). At rest they are `--silver-light` over a static 1 px `--silver-shadow`
 underline. The underline is what marks them as links, since `--silver-light` against the
 surrounding `--silver` is only 1.41:1 and colour alone can't (WCAG 1.4.1), and it spends none of
 §4.4's blue. Both lines are SVG in the HTML (`.tlink__u`: `.tlink__rest`, `.tlink__draw`,
@@ -2287,7 +2314,9 @@ Both resolve to the same static page, and both must look finished rather than br
   .card, .plate, .node, .tag { border-color: CanvasText; }
   .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
   .lattice__edges .is-lit { stroke: Highlight; }
-  .tlink__rest, .tlink__draw { stroke: LinkText; }
+  /* The native underline is whole-pixel LinkText; the 1 px SVG one can fall between pixels. */
+  .tlink { text-decoration: underline; }
+  .tlink__u { display: none; }
   /* Lines drawn as backgrounds, which forced colours would otherwise erase. */
   .head__rule, .works__bar-fill { background: CanvasText; }
   .works__bar { background: GrayText; }
@@ -2378,7 +2407,7 @@ CustomEase, Flip, DrawSVGPlugin, MorphSVGPlugin — in the one package, under th
 "no charge" license. No registry token, no separate Club install. Verified against the published
 tarball.
 
-Three addons *(errata E11)* are imported through the `three/addons/*` subpath, which the package's `exports` map
+Five addons are imported through the `three/addons/*` subpath, which the package's `exports` map
 resolves to `examples/jsm/*`:
 
 ```js
@@ -2429,7 +2458,12 @@ export default {
     assetsDir: '_',          // hashed bundles land in dist/_/ so they cannot collide
                              // with the verbatim public/assets/ tree
     target: 'es2022',
-    rollupOptions: { output: { manualChunks: { three: ['three'] } } },   // errata E13
+    // vite 8 is Rolldown-based and accepts only the function form of manualChunks.
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => (/node_modules[\\/]three[\\/]/.test(id) ? 'three' : undefined),
+      },
+    },
   },
 };
 ```
@@ -2503,7 +2537,10 @@ Keep the whole existing security block — every `respond ... 403` line and the 
 and add compression plus cache policy:
 
 ```
-encode zstd gzip
+encode {
+  zstd best
+  gzip 9
+}
 
 @hashed path /_/*
 header @hashed Cache-Control "public, max-age=31536000, immutable"
@@ -2519,8 +2556,12 @@ header {
 }
 ```
 
-`encode` matters more than usual here: the three.js chunk is roughly 1.2 MB raw and about 170 KB
-compressed, and the origin currently serves everything uncompressed.
+`encode` matters more than usual here: the three.js chunk is roughly 556 KB raw and about 140 KB
+compressed, and the origin currently serves everything uncompressed. **zstd runs at `best`**, not
+Caddy's default: §12.7's budgets are bytes on the wire, and at the default level the entry
+transferred 70.4 KB and the total JS 248.2 KB, over both (Caddy's default zstd is ~4 % *larger*
+than gzip −9 on these bundles). At `best` they transfer 66.0 / 226.3 KB (checkpoint 11b). Caddy
+does not cache encoded responses, so this costs CPU per request, which a personal site can afford.
 
 Also: **the `@notData` matcher at `Caddyfile:6` is declared and never used** (§2.2). Delete it. The
 `respond` directives below it already enforce the same policy, so it is dead configuration that
@@ -2551,9 +2592,20 @@ reads as if it were doing something.
 | CSS (compressed) | ≤ 14 KB |
 | Fonts (3 × variable woff2, subset) | ≤ 140 KB |
 | LCP (hero name, cable) | < 2.0 s |
-| CLS | 0 — fixed portrait box, explicit image dimensions, `font-display: swap` with metric-compatible fallbacks *(errata E28)* |
+| CLS from layout | 0 — fixed portrait box, explicit image dimensions, `font-display: swap` with metric-compatible fallbacks; no box ever moves |
+| CLS from the width morphs | < 0.05, measured in Chrome, every source a split `.char` — a per-character `wdth` morph really changes glyph advances, and Layout Instability counts it |
 | First WebGL frame | after LCP; the canvas fades in over 8τ on `requestIdleCallback` |
 | Draw calls | ≤ 3 |
+
+"Compressed" means bytes on the wire as Caddy serves them (§12.5: zstd at `best`), not a bundler's
+estimate. Measured at checkpoint 11b: entry 66.0 KB, late 14.5, `three` 130.5, total JS 226.7, CSS
+7.8, fonts 119.8 (woff2, not re-encoded); LCP 0.3–0.4 s (1.0 s behind CAST on a first visit) on a
+10 Mbps / 40 ms link; CLS from layout 0.0000 and from the morphs 0.005–0.008 at 1440 × 900 (≤ 0.009
+at 412 px under 4× CPU). **Known residual, accepted:** a scalar `size-adjust` cannot make word
+wrapping identical at every width, so on a cold first visit whose fonts arrive after first paint,
+the swap rewraps the hero tagline by one line at a few widths (560–564, 976–984 px of 320–1920),
+~0.009. The fallbacks are fitted to the page's own rendered copy (checkpoint 11b); fonts are
+immutable-cached after that visit.
 
 The entry budget was 40 KB until checkpoint 4 measured it: GSAP core + ScrollTrigger alone are
 ~46 KB gzipped, and everything else in the entry (ScrollSmoother, SplitText, CustomEase, DrawSVG)

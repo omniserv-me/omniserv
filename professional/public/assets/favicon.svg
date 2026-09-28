@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- design.md §11: the rail mark of §6.2, two interlocked links in silver (#A8AEB5) on transparent -->
+  <g fill="none" stroke="#A8AEB5" stroke-width="1.8">
+    <rect x="1.5" y="8" width="12" height="8" rx="4"/>
+    <rect x="10.5" y="8" width="12" height="8" rx="4"/>
+  </g>
+</svg>

@@ -217,10 +217,14 @@
   transition: color var(--beat-1) var(--ease-metal), font-weight var(--beat-1) var(--ease-glyph);
 }
 
+/* §5.3: every mono number is tabular — the rail's and the panel's indices. */
+.rail__nav a i,
+.rail__panel nav a i { font-variant-numeric: tabular-nums; }
+
 .rail__nav a i {
   font-size: var(--t--2);
   font-style: normal;
-  color: var(--silver-shadow);   /* index only, never a text role (§4.3) */
+  color: var(--silver);   /* §5.3's index colour: --silver-shadow may carry no small text (§4.3) */
 }
 
 /* §9.9 item hover. JetBrains Mono has only a wght axis, so the width morph is a
@@ -418,7 +422,12 @@ html[data-motion="reduced"] :is(.rail__cta, .btn--metal)::after { animation: non
 /* ── §6.3 Movement 01 — IDENTITY ──────────────────────────────────────────
    The LCP block. Text paints from HTML and CSS alone; nothing here waits on JS. */
 
-#identity { min-height: 100vh; align-content: center; }
+/* overflow-x: clip — the role tracks in from 0.6em holding nowrap (~452 px), so
+   at phone widths it ran past the viewport, and a phone widens its layout
+   viewport to fit: every fixed layer (CAST, the rail, the ground) re-laid out
+   mid-load — a 0.97 layout shift at 412 px (11b). clip makes no scroll
+   container and leaves y visible, so the name's scroll-out rise is untouched. */
+#identity { min-height: 100vh; align-content: center; overflow-x: clip; }
 
 .hero__text {
   display: grid;
@@ -458,7 +467,7 @@ html[data-motion="reduced"] :is(.rail__cta, .btn--metal)::after { animation: non
   text-decoration: none;
 }
 
-.hero__cue i { font-style: normal; color: var(--silver-shadow); }
+.hero__cue i { font-style: normal; color: var(--silver); }   /* §4.3: not --silver-shadow */
 .hero__cue:hover, .hero__cue:focus-visible { color: var(--chrome); }
 
 .hero__portrait { position: relative; justify-self: end; width: 240px; }
@@ -945,7 +954,7 @@ html[data-motion="reduced"] :is(.rail__cta, .btn--metal)::after { animation: non
   transition: color var(--beat-2) var(--ease-metal);
 }
 
-.row__index { color: var(--silver-shadow); }
+.row__index { color: var(--silver); }   /* §5.3 index; --silver-shadow failed AA (4.32:1) */
 
 /* §9.8 label: x 0→8px and a weight settle (errata E40: JetBrains Mono has only
    a wght axis, so §9.8's font-stretch did nothing). The rail's +160 step, from
@@ -1097,7 +1106,7 @@ html[data-motion="reduced"] .row__rule { transition: none; }
   stroke-width: 1;
   pointer-events: none;
 }
-.tlink__rest { stroke: var(--hairline-strong); }
+.tlink__rest { stroke: var(--silver-shadow); }   /* 1.4.11: ≥ 3:1 on every ground (--hairline-strong was 2.77:1) */
 .tlink__draw {
   stroke: var(--blue);
   stroke-dasharray: 100;
@@ -1185,7 +1194,10 @@ html[data-motion="reduced"] .tlink__draw { transition: none; }
   .principles::before, .principles::after,
   .row::after, .row:first-child::before, #colophon::before { border-color: CanvasText; }
   .rail__cta::after, .btn--metal::after { display: none; }
-  .tlink__rest, .tlink__draw { stroke: LinkText; }
+  /* The 1 px SVG underline can land between device pixels and vanish (11a:
+     the plate's omniserv.me link); the native underline is whole-pixel LinkText. */
+  .tlink { text-decoration: underline; }
+  .tlink__u { display: none; }
   .card, .plate, .node, .tag { border-color: CanvasText; }
   .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
   .lattice__edges .is-lit { stroke: Highlight; }

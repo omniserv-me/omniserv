@@ -14,10 +14,41 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <!-- §11. Canonical, OG, JSON-LD and the favicon are checkpoint 11. -->
+  <!-- §11 -->
   <title>Leonid Yesaulov — AI &amp; Infrastructure Engineer</title>
   <meta name="description" content="AI &amp; Infrastructure Engineer in Munich. Secure, scalable backend services and deployment pipelines — Python, Go, gRPC, Docker, CI/CD.">
+  <link rel="canonical" href="https://omniserv.me/">
   <meta name="theme-color" content="#05070A">
+
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://omniserv.me/">
+  <meta property="og:title"       content="Leonid Yesaulov — AI &amp; Infrastructure Engineer">
+  <meta property="og:description" content="Secure, scalable systems end to end.">
+  <!-- og:image: switch to assets/og.png once it exists (§14 item 1). Until then this points at
+       assets/me.jpg so the share card is never a broken image. -->
+  <meta property="og:image"       content="https://omniserv.me/assets/me.jpg">
+  <meta name="twitter:card"       content="summary_large_image">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/me.jpg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org", "@type": "Person",
+    "name": "Leonid Yesaulov",
+    "jobTitle": "AI & Infrastructure Engineer",
+    "url": "https://omniserv.me/",
+    "image": "https://omniserv.me/assets/me.jpg",
+    "email": "mailto:leo@omniserv.me",
+    "address": { "@type": "PostalAddress", "addressLocality": "Munich", "addressCountry": "DE" },
+    "alumniOf": { "@type": "CollegeOrUniversity", "name": "Technical University of Munich" },
+    "knowsLanguage": ["en", "de", "ru", "uk"],
+    "sameAs": [
+      "https://github.com/leoyesaulov",
+      "https://www.linkedin.com/in/leonid-yesaulov-836b98217/"
+    ]
+  }
+  </script>
 
   <!-- §5.2: Archivo only — it carries the LCP element. Preloading all three
        delays the hero. -->
@@ -121,25 +152,25 @@
         <!-- ══ 01 IDENTITY — §6.3 ══════════════════════════════════════════ -->
         <section id="identity" aria-labelledby="identity-h">
           <div class="hero__text col-left">
-            <p class="meta mono">Munich, DE <span aria-hidden="true">·</span> 48.1375° N 11.5755° E</p>
+            <p class="meta mono" data-copy>Munich, DE <span aria-hidden="true">·</span> 48.1375° N 11.5755° E</p>
 
-            <h1 id="identity-h" class="hero__name silver-type" data-split="name">Leonid Yesaulov</h1>
+            <h1 id="identity-h" class="hero__name silver-type" data-split="name" data-copy>Leonid Yesaulov</h1>
 
-            <p class="hero__role mono" data-role>AI &amp; Infrastructure Engineer<span class="hero__rule" aria-hidden="true"></span></p>
+            <p class="hero__role mono" data-role data-copy>AI &amp; Infrastructure Engineer<span class="hero__rule" aria-hidden="true"></span></p>
 
             <p class="hero__tagline lead measure" data-split="lines" data-copy>
               Secure, scalable systems end to end — backend services, deployment
               lifecycles, and the mathematics underneath.
             </p>
 
-            <div class="hero__actions">
+            <div class="hero__actions" data-copy>
               <a class="btn btn--metal" href="#works"><span class="btn__label">Selected work <span aria-hidden="true">→</span></span></a>
               <a class="btn btn--ghost" href="/files/Yesaulov_CV.pdf" target="_blank" rel="noopener">
                 <span class="btn__label">Dossier <span class="mono" aria-hidden="true">↓ PDF</span></span>
               </a>
             </div>
 
-            <a class="hero__cue mono" href="#dossier"><i>02</i> About <span aria-hidden="true">↓</span></a>
+            <a class="hero__cue mono" href="#dossier" data-copy><i>02</i> About <span aria-hidden="true">↓</span></a>
           </div>
 
           <figure class="hero__portrait col-aside" data-portrait>
@@ -156,9 +187,9 @@
         <!-- ══ 02 DOSSIER — §6.4 ═══════════════════════════════════════════ -->
         <section id="dossier" aria-labelledby="dossier-h">
           <header class="head col-right">
-            <p class="head__index mono">02</p>
+            <p class="head__index mono" data-copy>02</p>
             <span class="head__rule" aria-hidden="true"></span>
-            <h2 id="dossier-h" class="head__title" data-split="heading">About</h2>
+            <h2 id="dossier-h" class="head__title" data-copy data-split="heading">About</h2>
           </header>
 
           <div class="dossier__inner col-right">
@@ -242,14 +273,14 @@
              too. The edge SVG and the triangular placement arrive with §9.6. -->
         <section id="lattice" aria-labelledby="lattice-h">
           <header class="head col-full">
-            <p class="head__index mono">03</p>
+            <p class="head__index mono" data-copy>03</p>
             <span class="head__rule" aria-hidden="true"></span>
-            <h2 id="lattice-h" class="head__title" data-split="heading">Stack</h2>
+            <h2 id="lattice-h" class="head__title" data-copy data-split="heading">Stack</h2>
           </header>
 
           <div class="lattice col-full" data-lattice>
             <div class="cluster" data-cluster="backend">
-              <h3 class="cluster__label mono">Backend</h3>
+              <h3 class="cluster__label mono" data-copy>Backend</h3>
               <ul class="cluster__nodes">
                 <li><button class="node" type="button"><span class="node__label">Python</span></button></li>
                 <li><button class="node" type="button"><span class="node__label">FastAPI</span></button></li>
@@ -263,7 +294,7 @@
             </div>
 
             <div class="cluster" data-cluster="infra">
-              <h3 class="cluster__label mono">Infra &amp; DevOps</h3>
+              <h3 class="cluster__label mono" data-copy>Infra &amp; DevOps</h3>
               <ul class="cluster__nodes">
                 <li><button class="node" type="button"><span class="node__label">Docker</span></button></li>
                 <li><button class="node" type="button"><span class="node__label">CI/CD</span></button></li>
@@ -277,7 +308,7 @@
             </div>
 
             <div class="cluster" data-cluster="frontend">
-              <h3 class="cluster__label mono">Frontend</h3>
+              <h3 class="cluster__label mono" data-copy>Frontend</h3>
               <ul class="cluster__nodes">
                 <li><button class="node" type="button"><span class="node__label">Flutter/Dart</span></button></li>
                 <li><button class="node" type="button"><span class="node__label">HTML</span></button></li>
@@ -287,7 +318,7 @@
             </div>
 
             <div class="cluster" data-cluster="tooling">
-              <h3 class="cluster__label mono">Tooling</h3>
+              <h3 class="cluster__label mono" data-copy>Tooling</h3>
               <ul class="cluster__nodes">
                 <li><button class="node" type="button"><span class="node__label">Git</span></button></li>
                 <li><button class="node" type="button"><span class="node__label">Make</span></button></li>
@@ -297,7 +328,7 @@
 
           <p class="lattice__readout mono col-full">
             <span class="sr-only">Selected cluster:</span>
-            <span data-readout>22 nodes <span aria-hidden="true">·</span> 4 clusters</span>
+            <span data-readout data-copy>22 nodes <span aria-hidden="true">·</span> 4 clusters</span>
           </p>
         </section>
 
@@ -307,10 +338,10 @@
              and clips the viewport instead. ≤900px is a vertical stack (§9.7). -->
         <section id="works" aria-labelledby="works-h">
           <header class="head head--split col-full">
-            <p class="head__index mono">04</p>
+            <p class="head__index mono" data-copy>04</p>
             <span class="head__rule" aria-hidden="true"></span>
-            <h2 id="works-h" class="head__title" data-split="heading">Work</h2>
-            <p class="works__count mono" data-progress-label>01 / 04</p>
+            <h2 id="works-h" class="head__title" data-copy data-split="heading">Work</h2>
+            <p class="works__count mono" data-progress-label data-copy>01 / 04</p>
           </header>
 
           <div class="works__bar col-full" aria-hidden="true">
@@ -429,9 +460,9 @@
         <!-- ══ 05 LINK — §6.7 ══════════════════════════════════════════════ -->
         <section id="link" aria-labelledby="link-h">
           <header class="head col-left">
-            <p class="head__index mono">05</p>
+            <p class="head__index mono" data-copy>05</p>
             <span class="head__rule" aria-hidden="true"></span>
-            <h2 id="link-h" class="head__title" data-split="heading">Link</h2>
+            <h2 id="link-h" class="head__title" data-copy data-split="heading">Link</h2>
           </header>
 
           <p class="lead measure col-left" data-copy>Four ways in. The first three are read daily.</p>
@@ -521,12 +552,12 @@
 
       <!-- ══ Colophon — §6.8 ═══════════════════════════════════════════════ -->
       <footer id="colophon" class="shell">
-        <div class="colophon__col col-left">
+        <div class="colophon__col col-left" data-copy>
           <p>© <span id="year">2026</span> Leonid Yesaulov</p>
           <p>Text and design <a class="tlink" href="/LICENSE.txt">CC BY 3.0<svg class="tlink__u" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><line class="tlink__rest" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/><line class="tlink__draw" x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/></svg></a>.</p>
           <p class="mono">√2 grid <span aria-hidden="true">·</span> 0.12 s beat.</p>
         </div>
-        <div class="colophon__col col-aside">
+        <div class="colophon__col col-aside" data-copy>
           <p>Part of Omniserv.</p>
           <p>Built with GSAP and three.js.</p>
           <p class="colophon__controls mono">
