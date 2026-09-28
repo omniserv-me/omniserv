@@ -95,8 +95,8 @@ user-visible string in `index.html` and every file in `professional/`.
 | Omniserv project card | `index.html:104-121` | §6.6 card `01`. The `Docker` and `GitHub Actions` tags commented out at `index.html:113-115` are **restored** |
 | Portfolio Website card | `index.html:123-136` | §6.6 card `04`, rewritten to describe this build |
 | Secure Memory Unit card | `index.html:138-148` | §6.6 card `03`, unchanged in substance |
-| `reach out` mailto (`subject=New Offer`) | `index.html:100` | §6.7 — kept as a distinct intent chip on the email row |
-| Socials: GitHub / LinkedIn / Email (`subject=Personal Inquiry`) | `index.html:162-164` | §6.7 rows `01`–`03`; the second mailto is the row's other intent chip |
+| `reach out` mailto (`subject=New Offer`) | `index.html:100` | §6.7 — folded into row `03`'s single mailto; the intent subjects are retired |
+| Socials: GitHub / LinkedIn / Email (`subject=Personal Inquiry`) | `index.html:162-164` | §6.7 rows `01`–`03`; row `03` is one mailto with placeholder subject and first line |
 | `© <year> Leonid Yesaulov — Built with care.` | `index.html:172` | §6.8 colophon. Year still injected by JS; `Built with care` is replaced by the concrete build line |
 | `files/Yesaulov_CV.pdf` | — | `public/files/Yesaulov_CV.pdf` — **the URL path must not change**, it may already be shared externally |
 | `LICENSE.txt` (CC BY 3.0) | — | `public/LICENSE.txt`, linked from §6.8. Currently unreachable: `.dockerignore` excludes `*.txt` (§12.4) |
@@ -911,8 +911,11 @@ Tags: `GSAP` `three.js` `WebGL` `Vite`
 progress with no tween — a scrubbed value must never be smoothed twice (§9.7).
 
 **Linking.** The whole card is the link (`<a>` wrapping `<article>`), replacing the `a.mute`
-pattern at `index.html:104`. Cards without a URL are `<article>` with no anchor and no hover lift
-— an affordance that leads nowhere is worse than none.
+pattern at `index.html:104`. Cards without a URL are `<article>` with no anchor and no hover
+affordance (lift, border, sheen, tether) — an affordance that leads nowhere is worse than none.
+Each `<article>` carries an id after its index, `#work-01` … `#work-04`, so a card can be deep
+linked (§9.7). The ids are numbered rather than slugged, so renaming a project never breaks a
+shared URL.
 
 ---
 
@@ -929,8 +932,7 @@ word, and this is where the chain closes into a loop (§7.5).
 │  ────────────────────────────────────────────     │  O       O │  ←   │
 │  02  LINKEDIN    leonid-yesaulov          ↗       │   O─O─O   │  closed│
 │  ────────────────────────────────────────────      ╰───────────╯  loop │
-│  03  EMAIL       leo@omniserv.me                                       │
-│         [ NEW OFFER ]  [ PERSONAL INQUIRY ]                            │
+│  03  EMAIL       leo@omniserv.me          ↗                            │
 │  ────────────────────────────────────────────                          │
 │  04  WEB         omniserv.me              ↗                            │
 │  ────────────────────────────────────────────                          │
@@ -948,16 +950,14 @@ index, a label, the handle, and a chain-link glyph that closes on hover (§9.8).
 |---|---|---|---|
 | `01` | GITHUB | leoyesaulov | `https://github.com/leoyesaulov` |
 | `02` | LINKEDIN | leonid-yesaulov | `https://www.linkedin.com/in/leonid-yesaulov-836b98217/` |
-| `03` | EMAIL | leo@omniserv.me | two intent chips, below |
+| `03` | EMAIL | leo@omniserv.me | `mailto:leo@omniserv.me?subject=%5BTopic%5D&body=Hi%20Leo%2C%0A%0A` |
 | `04` | WEB | omniserv.me | `https://omniserv.me` |
 
-**The email row carries both existing mailto intents as separate chips**, preserving the
-distinction the current site makes between a business approach and a personal one:
-
-- `NEW OFFER` → `mailto:leo@omniserv.me?subject=New%20Offer&body=Hi,%20Leo!%0A%0A`
-  (from `index.html:100`)
-- `PERSONAL INQUIRY` → `mailto:leo@omniserv.me?subject=Personal%20Inquiry&body=Hi,%20Leo!%0A%0A`
-  (from `index.html:164`)
+**The email row is one link, like the other three**: the address itself is the `mailto:`, and it
+carries the same glyph and underline. It pre-fills placeholders for the sender to overwrite, a
+`[Topic]` subject and a `Hi Leo,` first line. The old site's two intents (`New Offer` from
+`index.html:100` and `Personal Inquiry` from `index.html:164`) were first kept as two chips below
+the row. The owner retired them on 2026-09-28, in checkpoint 8b's session.
 
 Section lead, replacing "Find me online — happy to connect.":
 > Four ways in. The first three are read daily.
@@ -1833,11 +1833,27 @@ mechanical readout settling. Driven by one `ease: 'none'` tween on a progress va
 
 | Target | Change | Dur | Ease | Stagger |
 |---|---|---|---|---|
-| card | `translate3d(0, −6px, 0)` | 1τ | chain | — |
+| card | `translate3d(0, −6px, 0)` | 1τ | glyph | — |
 | border | `--hairline → --hairline-blue` | 2τ | metal | — |
-| sheen (`::after`, `--silver-sheen`) | `background-position` follows pointer x, lerp 0.1 | continuous | — | — |
+| sheen (`::after`, `--silver-sheen`, opacity 0.22) | `background-position` follows pointer x, lerp 0.1 | continuous | — | — |
 | tags | `border-color → --hairline-blue` | 2τ | metal | — |
-| chain tether (HIGH only) | 3 links from spine to the card's left edge, instance `scale 0→1` | 1τ | chain | 0.5τ |
+| chain tether (HIGH only) | 3 links rising from the spine at the card's left edge, instance `scale 0→1` | 1τ | chain | 0.5τ |
+
+Hover applies to linked cards only (§6.6). The lift is a CSS transition, so it takes §9.2's CSS
+rule for lifts, `glyph`: `back.out` overshoots, which a cubic-bezier cannot express.
+
+The sheen crosses the card's text, so it runs at the plate sheen's cap (§9.5): at opacity 0.22 the
+band's peak adds 0.121 of `--chrome` to `--graphite`. Under the peak, the weakest text on a card, the
+`--blue-lift` "github ↗", holds 4.62:1, body copy holds 7.89:1, and I2 holds. At full strength
+they would drop to 1.23:1 and 2.10:1.
+
+The tether is a stub pointing at the card. It does not reach it: the horizontal spine runs about
+250 px below the cards at 1440×900, and three links at §7.3's pitch span about 85 px. Stretching
+them across the gap would hang them apart as loose rings (§7.3). It borrows the LATTICE branch's
+second `InstancedMesh`, idle during WORKS, so draw calls stay ≤ 3 (§7.7).
+
+**Keyboard twin** (§10.4). `:focus-visible` on a card link gives the lift, border and tags. It
+also parks the sheen band at the card's centre and seats the tether. Both retract on blur.
 
 **Cards are never scaled.** Scaling rasterised text to a non-integer factor blurs it, and a
 portfolio card is mostly text. The lift is a 6 px translate, which is enough.
@@ -1852,7 +1868,8 @@ onUpdate: (self) => {
 ```
 
 Tweening a value that is itself being scrubbed smooths it twice, and the readout visibly lags the
-cards.
+cards. Without the pin (≤ 900 px, reduced motion, no JS) nothing drives the readout, so it rests
+as authored (`01 / 04`, empty bar), and it returns to that state when the pin is torn down.
 
 **Keyboard focus — the mandatory handler.** Cards are moved by `transform`, so when focus lands on
 an off-screen card the browser cannot reveal it by scrolling. This is the failure mode that makes
@@ -1868,27 +1885,47 @@ scroll position. The plugin exposes the correct hook instead: **an `onFocusIn` c
 ScrollSmoother.create({
   /* …§9.1 config… */
   onFocusIn(self, e) {
-    const card = e.target.closest?.('[data-card]');
+    // The focusable element is the <a> *around* the <article>, so resolve up and back down.
+    const item = e.target.closest?.('.card__link, [data-card]');
+    const card = item && (item.matches('[data-card]') ? item : item.querySelector('[data-card]'));
     if (!card) return;                      // not our concern — let the smoother do its thing
 
-    const i = cards.indexOf(card);
-    const p = cardOffsetLeft(i) / D();      // 0..1 within the track
-    self.scrollTo(pin.start + p * (pin.end - pin.start), false);
+    if (e.target.matches(':focus-visible')) {
+      // 1:1 pin: travel = the card's offset from card 01, kept 1 px inside the pin.
+      const x = clamp(cardOffsetLeft(card) - cardOffsetLeft(cards[0]), 1, D() - 1);
+      self.scrollTo(pin.start + x, false);
+    }
     return false;                           // cancel the smoother's own scrollTo
   },
 });
 ```
 
-Two details that make this work:
+Four details that make this work:
 
 - `scrollTo` accepts a **number** as well as an element — verified: it branches on `isNaN(target)`
   and clamps a numeric argument to the scrollable range. So feeding it a computed pin position is
   supported, not a workaround.
 - `smooth` is `false`. Focus must never lag behind the keyboard; an eased scroll here means the
   user tabs and then waits to see where they landed.
+- The hook fires on every focus, pointer focus included. Only keyboard (`:focus-visible`) focus
+  moves the pin. A clicked card is already under the pointer, and jumping the track would slide
+  it away. The handler still returns `false`, so the smoother does not re-centre the card either.
+- The focused card rests where card 01 rests. It is held 1 px inside the pin at both ends,
+  because exactly on `start` or `end` the pin reads inactive, which would release the chain and
+  flip `signals.axis`. A card whose entrance has not played yet plays it at once, so focus never
+  sits on an invisible card waiting for its trigger.
 
-Also handle deep links: on load, if `location.hash` names a card, jump the pin to it before the
-first paint of that section.
+This is ScrollSmoother's `onFocusIn` option, set through `setFocusIn()` in `core/smoothscroll.js`.
+There is no `focusin` listener of our own. The one exception is a `focusout` listener on the
+viewport that retracts the keyboard tether, which never scrolls.
+
+Also handle deep links: if `location.hash` names a card (`#work-01` … `#work-04`, §6.6), jump the
+pin to that card's rest position before the first paint of that section. This covers the hash at
+load, a clicked in-page anchor and `hashchange`. `setHashTarget()` in `core/smoothscroll.js` maps
+the card to a scroll position, since the smoother's element form would measure the transformed
+track. Without the pin (≤ 900 px, reduced motion, no JS) the jump is the plain element jump.
+`.card`'s `scroll-margin-top` lands the card below the rail, and the stack under the smoother
+applies the same margin by hand.
 
 **Known trade-off, accepted.** Browser find-in-page can locate text in off-screen cards but cannot
 bring them into view, because the track is transformed rather than scrolled. All four cards remain
@@ -1916,7 +1953,6 @@ value `opacity 0→1` 2τ.
 | label | `x 0→8px`, `font-stretch 100%→108%` *(errata E40)* | 1τ | glyph | — |
 | underline | `drawSVG 0→100` in `--blue` | 3τ | mask | — |
 | value | `--silver → --blue-lift` | 2τ | metal | — |
-| email chips (row 03) *(errata E8)* | `scale 0.9→1`, `opacity 0→1` | 1τ | chain | 0.5τ |
 
 The glyph closing on hover is the page's thesis in one gesture: **pointing at a link closes the
 chain link.** Both morph targets are authored as two paths with identical point counts in the same
@@ -2099,7 +2135,7 @@ Both resolve to the same static page, and both must look finished rather than br
 | Re-split safety | `autoSplit: true` + `onSplit` returning the timeline; re-splits on font load and resize without leaking tweens |
 | Contrast | §4.3 table; dim floor 0.60 enforced as a token, never bypassed |
 | Focus visible | 2 px `--blue-lift` outline + 2 px offset + 1 px `--ink` inset ring, so it reads on both dark ground and silver fills |
-| Focus order | DOM order throughout; the WORKS pin's `focusin` handler (§9.7) *(errata E7)* keeps view and focus in agreement |
+| Focus order | DOM order throughout; while the WORKS pin exists, the smoother's `onFocusIn` hook (§9.7) keeps view and focus in agreement. It is not a second `focusin` listener, which would race the smoother's own |
 | Targets | ≥ 44 × 44 px for every interactive element, including lattice nodes and contact rows |
 | Keyboard parity | every hover state has a `:focus-visible` equivalent; lattice nodes are `<button>`, not `<span>` |
 | Motion control | persisted toggle in the colophon, reachable by keyboard |
@@ -2236,6 +2272,7 @@ professional/
                  index.js     ← the sections chunk: about.js onward, fetched alongside the fonts
                                 and awaited before boot, so the entry does not grow (§12.7)
       gl/        stage.js  chain.js  lattice.js  movements.js
+                 tether.js    ← the §9.7 hover tether, drawn in the lattice branch's idle mesh
       gl/passes/ metal.js
       util/      scramble.js  rect.js  lerp.js  prefers.js
 ```
@@ -2419,7 +2456,7 @@ Seven phases. Each ends in a state that could ship.
 | 2 | **GSAP rig** | `easings.js`, `signals.js`, `smoothscroll.js`, `matchMedia` scaffolding, `saveStyles`, context registry, motion toggle | Smooth scroll works; velocity and pointer signals read correctly in a debug overlay; the toggle reverts everything cleanly |
 | 3 | **Kinetic type** | `split.js` with the fonts gate; hero, section headings, card titles; the 102° wipe utility | Headlines animate; no reflow on load; re-split on resize leaks no tweens |
 | 4 | **Chain stage** | `stage.js`, `chain.js`, catenary curve, phase spring, ripples, the `aDim` guard, tier probe | The chain bows at rest, snaps taut on fast scroll, and visibly dims behind copy |
-| 5 | **Choreography** | Per-section timelines; the lattice; the WORKS pin including the `focusin` handler; the LINK morphs and loop snap | Every movement animates per §9; keyboard tabbing through the pinned track never strands focus |
+| 5 | **Choreography** | Per-section timelines; the lattice; the WORKS pin including its `onFocusIn` hook; the LINK morphs and loop snap | Every movement animates per §9; keyboard tabbing through the pinned track never strands focus |
 | 6 | **Post-processing** | `metal.js` pass, composer wiring, `OutputPass`, exposure flash, the CSS grain sheet | Silver reads as brushed metal; no banding; `uAxis` flips during the pin |
 | 7 | **Degradation pass** | Reduced motion, `NONE` tier fallback, forced colours, focus rings, SEO and JSON-LD, `og.png` | Every row of §10.4 verified; all four degradation modes look deliberate |
 

@@ -21,6 +21,9 @@
    ticker callback; the frame is redrawn only on scroll and resize, so the
    readability guard (§7.6) keeps dimming links as copy scrolls past them.
 
+   The WORKS hover tether (§9.7) is gl/tether.js, drawn in the lattice
+   branch's idle mesh at HIGH only.
+
    The movement states (§7.5) are gl/movements.js, installed into the chain's
    registered context (sections/chain.js) once the stage exists. */
 
@@ -34,6 +37,7 @@ import { measureCopy, copyRects } from '../util/rect.js';
 import { setChainBuilder } from '../sections/chain.js';
 import { createChain } from './chain.js';
 import { createLattice } from './lattice.js';
+import { createTether } from './tether.js';
 import { movements } from './movements.js';
 
 const FOV = 32;
@@ -74,6 +78,7 @@ export async function initStage() {
   camera.position.z = CAM_Z;
   const chain = createChain(scene, H);
   const lattice = createLattice(scene, H, chain.mat);
+  const tether = createTether(lattice, chain, H);
 
   let tier = forced ?? 'HIGH';
   let renderer;
@@ -123,6 +128,7 @@ export async function initStage() {
     toWorld('chainMid', o.mid, still);
     chain.update(o);
     lattice.update(o, chain.state.branch);
+    tether.update(o, !still && tier === 'HIGH');   // §7.7: tethers HIGH only
     renderer.render(scene, camera);
     if (import.meta.env.DEV && renderer.info.render.calls > 3) {
       console.warn(`stage: ${renderer.info.render.calls} draw calls (§7.7 budget ≤ 3)`);
@@ -200,7 +206,7 @@ export async function initStage() {
     get canvas() { return canvas; },
     get tier() { return tier; },
     get mode() { return mode; },
-    scene, camera, chain, lattice, H,
+    scene, camera, chain, lattice, tether, H,
     /* Redraw once under reduced motion (after a gsap.set on chain.state).
        Under full motion the ticker already redraws every frame. */
     redraw() { if (mode !== 'full') requestStill(); },
@@ -214,7 +220,7 @@ export async function initStage() {
 
   /* §7.5 — the movement states, before the first visible frame, so the
      IDENTITY entrance starts from its offset rather than from rest. */
-  setChainBuilder(movements(stage), chain.drive);
+  setChainBuilder(movements(stage), chain.drive, tether.to);
 
   /* §12.7 — the first frame is rendered before the canvas is shown, then it
      fades in over 8τ (a crossfade: metal). Reduced motion shows it at once. */

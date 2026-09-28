@@ -17,6 +17,20 @@ let smoother = null;
 let focusHandler = () => undefined;
 export function setFocusIn(fn) { focusHandler = fn ?? (() => undefined); }
 
+/* §9.7 deep links: an element inside the pinned WORKS track has no scroll
+   position of its own (the track moves by transform), so its owner can map a
+   hash target to one. fn(el) returns a scroll position, or null for "not
+   mine" — then the element form runs as usual. */
+let hashTarget = () => null;
+export function setHashTarget(fn) { hashTarget = fn ?? (() => null); }
+
+function jump(target, smooth, position) {
+  const y = hashTarget(target);
+  smoother.wrapper().scrollTop = 0;
+  if (typeof y === 'number') smoother.scrollTo(y, smooth);
+  else smoother.scrollTo(target, smooth, position);
+}
+
 // The element an anchor jump is about to focus: its scroll is already in hand,
 // so the smoother's own "centre the focused element" must not override it.
 let jumpTarget = null;
@@ -53,8 +67,7 @@ export function scrollToHash(hash = location.hash) {
   const target = targetOf(hash);
   if (!target) return;
   if (smoother) {
-    smoother.wrapper().scrollTop = 0;
-    smoother.scrollTo(target, false);
+    jump(target, false);
   } else {
     target.scrollIntoView();
   }
@@ -88,8 +101,7 @@ function onAnchorClick(e) {
   if (!target) return;
   e.preventDefault();
   if (location.hash !== a.hash) history.pushState(null, '', a.hash);
-  smoother.wrapper().scrollTop = 0;
-  smoother.scrollTo(target, true, 'top top');
+  jump(target, true, 'top top');
   focusTarget(target);
 }
 

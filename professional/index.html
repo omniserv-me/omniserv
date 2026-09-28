@@ -301,7 +301,7 @@
 
               <a class="card__link" href="https://github.com/omniserv-me/omniserv"
                  target="_blank" rel="noopener">
-                <article class="card" data-card>
+                <article class="card" id="work-01" data-card>
                   <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M0 0 L24 24" pathLength="100"/>
                   </svg>
@@ -329,7 +329,7 @@
               </a>
 
               <!-- No public link (§14 item 3), so no anchor and no hover lift. -->
-              <article class="card" data-card>
+              <article class="card" id="work-02" data-card>
                 <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M0 0 L24 24" pathLength="100"/>
                 </svg>
@@ -352,7 +352,7 @@
               </article>
 
               <!-- No link (§14 item 2). -->
-              <article class="card" data-card>
+              <article class="card" id="work-03" data-card>
                 <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M0 0 L24 24" pathLength="100"/>
                 </svg>
@@ -373,7 +373,7 @@
 
               <a class="card__link" href="https://github.com/leoyesaulov/professional"
                  target="_blank" rel="noopener">
-                <article class="card" data-card>
+                <article class="card" id="work-04" data-card>
                   <svg class="chamfer" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M0 0 L24 24" pathLength="100"/>
                   </svg>
@@ -448,17 +448,22 @@
               </a>
             </li>
 
-            <li class="row row--email">
-              <div class="row__link row__link--static">
+            <li class="row">
+              <!-- One mailto, pre-filled with placeholders the sender overwrites. -->
+              <a class="row__link" href="mailto:leo@omniserv.me?subject=%5BTopic%5D&amp;body=Hi%20Leo%2C%0A%0A">
                 <span class="row__index mono">03</span>
                 <span class="row__label mono">Email</span>
                 <span class="row__value">leo@omniserv.me</span>
-              </div>
-              <!-- Both mailto intents the old page distinguished, kept distinct. -->
-              <p class="row__chips">
-                <a class="chip mono" href="mailto:leo@omniserv.me?subject=New%20Offer&amp;body=Hi,%20Leo!%0A%0A">New offer</a>
-                <a class="chip mono" href="mailto:leo@omniserv.me?subject=Personal%20Inquiry&amp;body=Hi,%20Leo!%0A%0A">Personal inquiry</a>
-              </p>
+                <svg class="row__glyph" viewBox="0 0 24 18" aria-hidden="true">
+                  <path class="row__glyph-open"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C16.5 15 20.3 13.5 21.5 11.4 C22 10.6 22 9.6 21.6 8.8"/>
+                  <path class="row__glyph-closed"
+                        d="M12 3 C6.5 3 2 5.2 2 9 C2 12.8 6.5 15 12 15 C17.5 15 22 12.8 22 9 C22 5.2 17.5 3 12 3"/>
+                </svg>
+                <svg class="row__rule" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="0" y1="0.5" x2="100" y2="0.5" pathLength="100"/>
+                </svg>
+              </a>
             </li>
 
             <li class="row">

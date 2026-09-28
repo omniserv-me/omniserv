@@ -744,6 +744,9 @@
   gap: var(--s-2);
   padding: var(--s-3);
   scroll-snap-align: center;
+  /* A #work-0N jump (errata E44) without the pin — native, reduced or the
+     ≤ 900 px stack — lands below the rail, not under it (72 px at rest). */
+  scroll-margin-top: calc(9 * var(--u) + var(--s-3));
   background: var(--graphite);
   border: 1px solid var(--hairline);
   clip-path: polygon(
@@ -753,13 +756,37 @@
     100% 100%,
     0 100%
   );
-  transition: transform var(--beat-1) ease, border-color var(--beat-2) ease;
+  /* §9.7 hover: the lift in 1τ glyph (§9.2's CSS rule — lifts are glyph,
+     seating stays in GSAP), the border a 2τ metal colour crossfade. */
+  transition: transform var(--beat-1) var(--ease-glyph), border-color var(--beat-2) var(--ease-metal);
 }
 
 /* Cards are never scaled — a 6px lift only, because scaling rasterised text to
    a non-integer factor blurs it (§9.7). Link-free cards get no lift at all. */
 .card__link:hover .card,
 .card__link:focus-visible .card { transform: translate3d(0, -6px, 0); border-color: var(--hairline-blue); }
+
+/* §9.7's hover sheen — the band follows the pointer's x (--sheen-x, written by
+   sections/projects.js). It crosses the card's text, so it runs at E35's cap
+   (errata E42): at opacity 0.22 the weakest text under the peak, the
+   --blue-lift "github ↗", holds 4.62:1 on --graphite; body copy 7.89:1.
+   Linked cards only; .works--sheen is absent at LOW / NONE and without JS.
+   Keyboard twin: parked at the card's centre while it has visible focus. */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--silver-sheen);
+  background-repeat: no-repeat;
+  background-size: 180% 100%;
+  background-position: var(--sheen-x, 50%) 0;
+  opacity: 0;
+  transition: opacity var(--beat-2) var(--ease-metal);
+  pointer-events: none;
+}
+
+.works--sheen .card.is-sheen::after,
+.works--sheen .card__link:focus-visible .card::after { opacity: 0.22; }
 
 /* The machined bevel itself: a hairline lying on the clip-path's 45° cut. */
 .chamfer {
@@ -788,8 +815,13 @@
   transition: border-color var(--beat-1) ease;
 }
 
+/* §9.7: tags take the card's hover in 2τ metal. The tag's own §9.10 micro-state
+   (the base rule above) is 9b's. */
 .card__link:hover .tag,
-.card__link:focus-visible .tag { border-color: var(--hairline-blue); }
+.card__link:focus-visible .tag {
+  border-color: var(--hairline-blue);
+  transition: border-color var(--beat-2) var(--ease-metal);
+}
 
 .card__go { align-self: end; color: var(--silver); }
 .card__link:hover .card__go { color: var(--blue-lift); }
@@ -806,6 +838,21 @@
   .card { width: 100%; }
   .card__link { width: 100%; }
 }
+
+/* Reduced motion (§9.7, §10.1): no pin at any width, so the same vertical
+   stack, and hover is colour and border only — no lift. Keyed off the
+   attribute JS sets, so with JS off the viewport stays the native scroller. */
+[data-motion="reduced"] .works__viewport { overflow: visible; margin-inline: 0; }
+[data-motion="reduced"] .works__track {
+  flex-direction: column;
+  width: auto;
+  gap: var(--s-5);
+  padding-inline: 0;
+}
+[data-motion="reduced"] .card,
+[data-motion="reduced"] .card__link { width: 100%; }
+[data-motion="reduced"] .card__link:hover .card,
+[data-motion="reduced"] .card__link:focus-visible .card { transform: none; }
 
 /* ── §6.7 Movement 05 — LINK ──────────────────────────────────────────────
    Full-width rows, hairline-separated, 64px tall — comfortably past the 44px
@@ -878,26 +925,6 @@
 .row__link:hover .row__rule,
 .row__link:focus-visible .row__rule { opacity: 1; transform: scaleX(1); }
 
-.row__link--static { cursor: default; }
-
-.row__chips { display: flex; flex-wrap: wrap; gap: var(--s-1); padding-bottom: var(--s-2); }
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: calc(5.5 * var(--u));
-  padding-inline: var(--s-2);
-  border: 1px solid var(--hairline);
-  font-size: var(--t--2);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--silver-light);
-  text-decoration: none;
-  transition: border-color var(--beat-1) ease, color var(--beat-1) ease;
-}
-
-.chip:hover, .chip:focus-visible { border-color: var(--hairline-blue); color: var(--chrome); }
-
 /* The dossier's third and final placement. The sub-label states the page's own
    organising ratio at the moment the document is offered (§6.7). */
 .link__cta {
@@ -949,9 +976,9 @@
 }
 
 @media (forced-colors: active) {
-  #stage, .grain, .plate::before { display: none; }
+  #stage, .grain, .plate::before, .card::after { display: none; }
   .principles::before, .principles::after { border-color: CanvasText; }
-  .card, .plate, .node, .chip, .tag { border-color: CanvasText; }
+  .card, .plate, .node, .tag { border-color: CanvasText; }
   .plate__frame, .chamfer, .rail__glyph, .row__glyph, .lattice__edges { stroke: CanvasText; }
   .lattice__edges .is-lit { stroke: Highlight; }
   .rail__indicator { background: Highlight; }

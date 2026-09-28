@@ -28,17 +28,32 @@
    inside the pin would drift a card ±22.6 px vertically while it travels
    horizontally.
 
-   Focus (E7), hover, readout, deep links and the reduced / LOW branches are
-   checkpoint 8b's; the pin's onUpdate is where the readout goes. */
+   Interaction (8b):
+     focus       the smoother's onFocusIn hook (errata E7), never a second
+                 focusin listener: keyboard focus on a card jumps the pin so
+                 the card rests where card 01 does, unsmoothed, and cancels
+                 the smoother's own scrollTo. Pointer focus (a click) moves
+                 nothing — the card is already under the pointer.
+     deep links  #work-01…04 (errata E44) resolve to the same pin position,
+                 through the smoother's hash hook.
+     readout     written in the pin's onUpdate, never tweened.
+     hover       lift, border and tag borders are CSS (components.css); the
+                 pointer-following sheen is --sheen-x, lerped at 0.1 on the
+                 ticker, at E35's 0.22 cap (errata E42), not at LOW or NONE;
+                 the chain tether (errata E43) is gl/tether.js, HIGH only.
+                 Linked cards only (§6.6).
+   Reduced motion binds none of it: the vertical stack is CSS keyed off
+   <html data-motion="reduced">, and the authored readout stays. */
 
 import { gsap, ScrollTrigger, T, ease } from '../core/easings.js';
 import { register } from '../core/registry.js';
 import { onSplit, widthTween } from '../core/split.js';
-import { axis } from '../core/signals.js';
+import { axis, tier } from '../core/signals.js';
+import { setFocusIn, setHashTarget, getSmoother } from '../core/smoothscroll.js';
 import { pointerParallax, scrollParallax } from '../core/depth.js';
 import { shiftCopy } from '../util/rect.js';
 import { scramble } from '../util/scramble.js';
-import { driveChain } from './chain.js';
+import { driveChain, tetherChain } from './chain.js';
 import { sectionHeader } from './header.js';
 import { wipe } from './about.js';
 
@@ -46,6 +61,17 @@ const section = document.querySelector('#works');
 const viewport = section.querySelector('[data-works-viewport]');
 const track = section.querySelector('[data-track]');
 const cards = [...track.querySelectorAll('[data-card]')];
+const bar = section.querySelector('[data-progress-bar]');
+const label = section.querySelector('[data-progress-label]');
+const LABEL = label.textContent;
+const linked = [...track.querySelectorAll('.card__link')];
+
+const cardOf = (el) => {
+  const item = el?.closest?.('.card__link, [data-card]');
+  const card = item && (item.matches('[data-card]') ? item : item.querySelector('[data-card]'));
+  return card && track.contains(card) ? card : null;
+};
+const itemOf = (card) => card.closest('.card__link') ?? card;
 
 sectionHeader(section.querySelector('.head'), { scroll: false });
 
@@ -120,6 +146,69 @@ function vertical(card, tl, inView = () => true) {
   });
 }
 
+/* §9.7 readout — straight from the pin's progress, never tweened (a scrubbed
+   value smoothed twice visibly lags the cards). */
+let shown = '';
+function readout(p) {
+  bar.style.transform = `scaleX(${p})`;
+  const text = `${String(Math.round(p * 3) + 1).padStart(2, '0')} / 04`;
+  if (text !== shown) label.textContent = shown = text;
+}
+
+/* §9.7 hover on the linked cards: the sheen follows the pointer's x, lerp 0.1
+   per frame, on the ticker only while a card is hovered. The band is 180 % of
+   the card wide, so its centre sits at fraction f for background-position
+   (0.9 − f) / 0.8. .works--sheen gates it off at LOW and NONE (§9.7's LOW
+   row). `tether(card)` starts the pinned branch's chain tether, or null. */
+function hover(tether = () => {}) {
+  let active = null;
+  let target = 0.5;
+  let x = 0.5;
+  const tick = () => {
+    x += (target - x) * 0.1;
+    active.style.setProperty('--sheen-x', `${(((0.9 - x) / 0.8) * 100).toFixed(2)}%`);
+  };
+  const enter = (e) => {
+    const card = cardOf(e.currentTarget);
+    if (active) active.classList.remove('is-sheen');
+    const r = card.getBoundingClientRect();
+    x = target = (e.clientX - r.left) / r.width;
+    active = card;
+    card.classList.add('is-sheen');
+    gsap.ticker.add(tick);
+    tether(card);
+  };
+  const move = (e) => {
+    if (!active) return;
+    const r = active.getBoundingClientRect();
+    target = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1);
+  };
+  const leave = () => {
+    if (!active) return;
+    gsap.ticker.remove(tick);
+    active.classList.remove('is-sheen');
+    active.style.removeProperty('--sheen-x');
+    active = null;
+    tether(null);
+  };
+  linked.forEach((a) => {
+    a.addEventListener('pointerenter', enter);
+    a.addEventListener('pointermove', move);
+    a.addEventListener('pointerleave', leave);
+  });
+  const offTier = tier.subscribe((t) => section.classList.toggle('works--sheen', t !== 'LOW' && t !== 'NONE'));
+  return () => {
+    leave();
+    offTier();
+    section.classList.remove('works--sheen');
+    linked.forEach((a) => {
+      a.removeEventListener('pointerenter', enter);
+      a.removeEventListener('pointermove', move);
+      a.removeEventListener('pointerleave', leave);
+    });
+  };
+}
+
 function cleanup(off) {
   off.forEach((f) => f());
   for (const el of section.querySelectorAll('.wipe')) { el.classList.remove('wipe'); el.style.willChange = ''; }
@@ -135,7 +224,10 @@ function pinned() {
 
   const D = () => Math.max(0, track.scrollWidth - viewport.clientWidth);
   const travel = gsap.to(track, { x: () => -D(), ease: 'none' });   // ease MUST be none
-  const drive = (self) => driveChain(self.isActive ? self.progress * D() : null);
+  const drive = (self) => {
+    driveChain(self.isActive ? self.progress * D() : null);
+    readout(self.progress);
+  };
   const pin = ScrollTrigger.create({
     trigger: section, pin: section, start: 'top top',
     end: () => '+=' + D(), scrub: true, anticipatePin: 1,
@@ -149,9 +241,13 @@ function pinned() {
     onUpdate: drive,
   });
 
+  readout(pin.progress);
+
+  const entrances = new Map();
   cards.forEach((card) => {
     const tl = entrance(card);
     if (!tl) return;
+    entrances.set(card, tl);
     ScrollTrigger.create({
       trigger: card, containerAnimation: travel,
       start: `left ${LINE * 100}%`, end: `right ${100 - LINE * 100}%`, once: true,
@@ -159,6 +255,53 @@ function pinned() {
     });
     vertical(card, tl, () => card.getBoundingClientRect().left < LINE * viewport.clientWidth);
   });
+
+  /* The travel that rests a card where card 01 rests, and its pin position
+     (1:1). Offsets are layout values, so the track's transform is ignored. Kept
+     1 px inside the pin at both ends: exactly on pin.start or pin.end it reads
+     inactive (reached from below / above), which would release the chain and
+     flip signals.axis back to vertical. */
+  const restX = (card) => Math.min(Math.max(itemOf(card).offsetLeft - itemOf(cards[0]).offsetLeft, 1), D() - 1);
+  const at = (card) => pin.start + restX(card);
+
+  /* The chain tether rides the card's left edge: measured once, then moved by
+     the track's own x (GSAP's cache, no layout read per frame). */
+  const tetherTo = (card) => {
+    if (!card) { tetherChain(null); return; }
+    const left = card.getBoundingClientRect().left;
+    const x0 = gsap.getProperty(track, 'x');
+    tetherChain(() => left + gsap.getProperty(track, 'x') - x0);
+  };
+
+  /* §9.7 keyboard focus (errata E7). Keyboard focus jumps, unsmoothed, and
+     starts an entrance that has not played, so focus never sits on a card at
+     opacity 0 waiting for its trigger. Returning false cancels the smoother's
+     own "centre the element" for every card focus, pointer ones included. */
+  let focused = null;
+  setFocusIn((self, e) => {
+    const card = cardOf(e.target);
+    if (!card) return undefined;
+    if (e.target.matches(':focus-visible')) {
+      self.scrollTo(at(card), false);
+      entrances.get(card)?.play();
+      if (focused !== card && e.target.classList.contains('card__link')) {
+        focused = card;
+        tetherTo(card);
+      }
+    }
+    return false;
+  });
+  // The tether's keyboard twin retracts on blur — not a scroll concern, so it
+  // cannot race the smoother.
+  const blur = (e) => {
+    if (!focused || cardOf(e.relatedTarget) === focused) return;
+    focused = null;
+    tetherChain(null);
+  };
+  viewport.addEventListener('focusout', blur);
+
+  // §9.7 deep links (errata E44): #work-0N names a card.
+  setHashTarget((el) => (el.matches('[data-card]') && track.contains(el) ? at(el) : null));
 
   // The guard (§7.6): 1:1, so the track has travelled exactly as far as the
   // pin has held the section still.
@@ -168,10 +311,17 @@ function pinned() {
       return [-d, d];
     }),
     ...cards.map((c) => pointerParallax(c, 'card')),
+    hover(tetherTo),
   ];
 
   return () => {
     cleanup(off);
+    setFocusIn(null);
+    setHashTarget(null);
+    viewport.removeEventListener('focusout', blur);
+    tetherChain(null);
+    bar.style.transform = '';
+    label.textContent = shown = LABEL;
     ScrollTrigger.removeEventListener('refreshInit', setBleed);
     section.classList.remove('is-pinned');
     section.style.removeProperty('--bleed');
@@ -181,18 +331,27 @@ function pinned() {
 }
 
 function stacked() {
+  // #work-0N under the smoother: its element jump ignores scroll-margin-top,
+  // so the stack applies the card's own margin (below the rail).
+  setHashTarget((el) => (el.matches('[data-card]') && track.contains(el)
+    ? getSmoother().offset(el, 'top top') - parseFloat(getComputedStyle(el).scrollMarginTop)
+    : null));
   cards.forEach((card) => {
     const tl = entrance(card);
     if (tl) vertical(card, tl);
   });
-  const off = cards.flatMap((c) => [pointerParallax(c, 'card'), scrollParallax(c, 'card')]);
-  return () => cleanup(off);
+  const off = [
+    ...cards.flatMap((c) => [pointerParallax(c, 'card'), scrollParallax(c, 'card')]),
+    hover(),
+  ];
+  return () => { cleanup(off); setHashTarget(null); };
 }
 
 register({
   name: 'projects',
   // No saveStyles selectors (errata E27); no staticStates — nothing is hidden,
-  // so reduced motion is the authored page (its §9.7 vertical stack is 8b's).
+  // so reduced motion is the authored page, and its §9.7 vertical stack is CSS
+  // (components.css, html[data-motion="reduced"]).
   desktopFull: pinned,
   mobileFull: stacked,
 });

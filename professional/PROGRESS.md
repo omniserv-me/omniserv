@@ -128,7 +128,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Done when: pin travels 1:1 with scroll and survives resize; each card fires on its own
       horizontal position; chain and cards travel locked; vertical stack works at ≤ 900 px.
 
-- [ ] 8b. WORKS interaction — design.md §9.7 (focus, hover, readout, deep links)
+- [x] 8b. WORKS interaction — design.md §9.7 (focus, hover, readout, deep links)
       Scope: **the `onFocusIn` handler** via `setFocusIn()` (resolve **E7**); card deep links (hash naming a card
       jumps the pin); hover lift, border, pointer-following sheen, tag borders; the chain tether
       (HIGH only); progress readout written in `onUpdate`; reduced-motion and LOW-tier branches.
@@ -152,7 +152,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
 - [ ] 9b. LINK + colophon + micro-states — design.md §9.8, §9.10
       Scope: `sections/contact.js`. LINK header + row entrances; row hover/focus (MorphSVG glyph
       via `late()?.MorphSVGPlugin` — matched point counts, static until loaded; label, underline,
-      value, email chips — resolve **E8**); the loop snap once per visit, calling 6b's `snapFinalLink()` and a
+      value — **E8** is moot, the email chips were removed in 8b's session); the loop snap once per visit, calling 6b's `snapFinalLink()` and a
       stage `flash()` hook (the `uExposure` uniform it drives arrives in 10); the LINK section's
       Dossier CTA sheen (§9.8). Colophon reveal (in CP4's `sections/footer.js`). **Every §9.10
       global micro-state** (text-link underline — CP3 authored an SVG rule only for LINK rows, so
@@ -244,7 +244,7 @@ level.**
 | §6.3 IDENTITY | 3 (markup, copy, aperture CSS, done) · 5b (animation) |
 | §6.4 DOSSIER | 3 — done |
 | §6.5 LATTICE | 3 (columns markup, fallback, done) · 7b (geometry, coordinates, edges, incl. E38, E39 — done); node-label colour → E5 |
-| §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry, incl. E41 — done) · 8b (readout, linking behaviour) |
+| §6.6 WORKS | 3 (markup, copy, native-scroll no-JS, done) · 8a (pinned geometry, incl. E41 — done) · 8b (readout, linking behaviour, card ids incl. E44 — done) |
 | §6.7 LINK · §6.8 Colophon | 3 (markup, copy, done) · 4 (year, toggle, tier readout, done) |
 | §7.1 Stage · §7.2 Catenary · §7.3 Links · §7.4 Material · §7.6 Guard | 6a (§7.3's degenerate-tangent guard → 6b, it fires only at the loop top) |
 | §7.5 Per-movement choreography | 6b (IDENTITY → colophon rows, incl. E9, E15, E33, E34; branch-roots setter) · 7b (feeds lattice-resolved roots) · 8a (bind WORKS row to pin, ≤ 900 px return to vertical) · 9b (trigger loop snap) · 10 (CAST row) |
@@ -257,17 +257,17 @@ level.**
 | §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
 | §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest, incl. E35, E36, E37's plate part; header helper reused by 7b/8a/9b) |
 | §9.6 LATTICE | 7b (done, incl. E25's edges, E40's part; arrow keys deferred, not built); "4.6:1" → E21 |
-| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch, incl. E37's card part, E41 — done) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
-| §9.8 LINK | 9b (incl. E8, E40's row-label part; exposure uniform → 10) |
+| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch, incl. E37's card part, E41 — done) · 8b (focus incl. E7, deep links incl. E44, hover incl. E42, tether incl. E43, readout, reduced/LOW branches — done) |
+| §9.8 LINK | 9b (E40's row-label part; exposure uniform → 10; E8 moot — chips removed in 8b's session) |
 | §9.9 Navigation rail | 9a (incl. E3's `power3.out`, E40's item-hover part; `--sweep` spec text → E13) |
 | §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
 | §10.1 Motion preference | 4 (resolution, done) · each checkpoint's reduced branch (cross-cutting; nav indicator row → 9a) · chain row → 6a via E1 · 11a audit |
 | §10.2 Quality tiers | 6a (incl. E1) · 11a verification |
 | §10.3 No-JS / no-WebGL | 3 (baseline, done) · 5a (`motion.css` rule) · 11a (NONE fallback, incl. E19) |
-| §10.4 Accessibility | 2/3 (focus ring, targets, done) · 5a (split text, re-split safety rows) · 11b audit; `focusin` wording → E7 |
+| §10.4 Accessibility | 2/3 (focus ring, targets, done) · 5a (split text, re-split safety rows) · 8b (focus order row, E7 — done) · 11b audit |
 | §10.5 Forced colours / transparency | 3 (partial, done) · 11a (incl. E10) |
 | §11 SEO and metadata | 3 (title, description, theme-color, done) · 1 (`robots.txt`, done) · 11b (canonical, OG/Twitter, JSON-LD, favicon, apple-touch-icon) |
-| §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
+| §12.1 Dependencies · §12.2 Source layout · §12.3 Dockerfile · §12.4 .dockerignore · §12.5 Caddyfile · §12.6 Housekeeping | 1 — done; §12.2's files are created by the checkpoint whose scope names them — `motion.css`, `split.js` 5a · `hero.js` 5b · `tiers.js`, `stage.js`, `chain.js`, `rect.js` 6a · `lattice.js` 6b · `tether.js` 8b · `about.js` 7a · `stack.js` 7b · `projects.js`, `scramble.js` 8a · `nav.js` 9a · `contact.js` 9b · `preloader.js`, `metal.js` 10 · `favicon.svg`, `og.png` 11b · fonts 5a · the rest 1–4 (done). Spec-text slips → E11, E13 |
 | §12.7 Performance budget | cross-cutting · 5a (fonts, CLS via fallback metrics) · 5b (LCP; entry raised to 66 KB) · CLS vs width morphs → E28 (11b) · 6a (three chunk, canvas fade-in, draw calls) · 6b (total raised to 224 KB) · 7b (total raised to 228 KB) · 11b full audit (zstd transfer) |
 | §13 Implementation order | superseded by this checklist (see note in design.md §13) |
 | §14 Open items | 11b (items 1–3; item 4 closed by 3) |
@@ -291,8 +291,8 @@ resolved.
 | E4 | §9.2 vs §9.4 scroll-out | "Scrubbed animations always use `ease: 'none'`", but the scroll-out is scrubbed and gives the aperture ease `shut` | 5b | resolved by 5b — scrubs are `none` with no exception; the aperture closes linearly |
 | E5 | §6.5 vs §5.3 / §4.3 | Node label "mono label in `--silver`" vs `--silver-light` (dimmable, AA at the floor). Code already follows §5.3 (`components.css`, `.node__label`) | 11b (text) | resolved in code by 3 |
 | E6 | §1.3 I1 | "The only text JS writes is the copyright year and the diagnostic tier readout", but the CAST counter, card index scramble, WORKS progress label and lattice cluster readout also write text. Reword to what I1 means: JS never supplies *content* | 11b (text) | open |
-| E7 | §10.4 vs §9.7 | "the WORKS pin's `focusin` handler" vs "Do not add a `focusin` listener", i.e. use the smoother's `onFocusIn` | 8b | open |
-| E8 | §9.8 | Email chips `scale 0.9→1, opacity 0→1` on row hover imply hidden chips at rest: unreachable on touch and invisible without hover, against I1/I3 and CP3's "nothing hides content" | 9b | open |
+| E7 | §10.4 vs §9.7 | "the WORKS pin's `focusin` handler" vs "Do not add a `focusin` listener", i.e. use the smoother's `onFocusIn` | 8b | resolved by 8b — §9.7 wins: the smoother's `onFocusIn` via `setFocusIn()`, no `focusin` listener; §10.4 and §13 reworded |
+| E8 | §9.8 | Email chips `scale 0.9→1, opacity 0→1` on row hover imply hidden chips at rest: unreachable on touch and invisible without hover, against I1/I3 and CP3's "nothing hides content" | 9b | resolved by owner decision (8b session) — the chips are removed; row 03 is one `mailto:` row like the others, so there is nothing left to hide |
 | E9 | §7.5 × §6.5 | The LATTICE chain branch terminates at cluster root nodes, but at `s` the lattice is four plain columns with no edges; the chain's behaviour there is unspecified | 6b | resolved by 6b — no branch at `s` (≤ 640 px): the spine keeps its DOSSIER state through LATTICE |
 | E10 | §10.5 | Block targets a `.hairline` class that does not exist, and `.card { backdrop-filter: none }` although cards have none | 11a | open |
 | E11 | §1.4, §5.1, §12.1 | Wrong references: §1.4 "one pinned section (§6.5)" → §6.6; §5.1 "animation targets in §9.3" → §9.4; §12.1 "Three addons" lists five | 11b (text) | open |
@@ -326,6 +326,9 @@ resolved.
 | E39 | §6.5 | The wireframe draws horizontal edges, but the text allows only 30°/150°/90°, and claims integer basis combinations give those axes "therefore" (`b₁ − b₂` is horizontal); a one-step 30° neighbour is narrower than most capsules | 7b | resolved by 7b — edges are `k·b₁`, `k·b₂`, `k·(b₁+b₂)` only; the wireframe is topology; rows and same-row nodes two units apart; three wireframe edges replaced by the nearest legal ones |
 | E40 | §9.6, §9.8, §9.9 vs §5.1 | `font-stretch` animations on mono text (§9.6 connected-node labels, §9.8 row label, §9.9 rail item hover) are no-ops: JetBrains Mono has only a `wght` axis (5a's `fvar` check) | 7b · 9b · 9a respectively | 7b's part resolved by 7b — connected-node labels tween `letter-spacing 0.08em → 0.12em` (1τ glyph); 9b, 9a open |
 | E41 | §9.7 vs §6.6 / §3.4 | `D = track.scrollWidth − window.innerWidth`, but `#works` is capped at `--container-wide` (1568 px): above that the clipped viewport is narrower than the window, so the cards cut off at an invisible line up to ~176 px in from each screen edge (over a chain that runs full width, §7.5), and the track travels `innerWidth − 1568` px too far | 8a | resolved by 8a — full-bleed while pinned: the viewport spans the window's layout width (`clientWidth`), the leading pad grows so card 01 stays on the header's edge, `D = scrollWidth − viewport.clientWidth` |
+| E42 | §9.7 vs §1.3 I2 / §4.3 | The card hover sheen sweeps `--silver-sheen` (0.55 `--chrome` peak) over the card's text: under the band the `--blue-lift` "github ↗" drops to 1.23:1 and body copy to 2.10:1 on `--graphite`, against I2 (E35's problem, on the cards) | 8b | resolved by 8b — E35's cap: the sheen layer runs at opacity 0.22, `--blue-lift` 4.62:1, body 7.89:1 at the peak |
+| E43 | §9.7 × §7.3 / §7.5 | "3 links from spine to the card's left edge", but the horizontal spine runs ≈ 250 px below the cards at 1440×900 and 3 links at §7.3's pitch span ≈ 85 px; stretched to reach, they hang as loose rings (E32) | 8b | resolved by 8b — a 3-link stub rising from the spine at the card's left edge, at §7.3's pitch, drawn in the LATTICE branch's idle mesh (draw calls ≤ 3) |
+| E44 | §9.7 × §6.6 | "If `location.hash` names a card, jump the pin to it", but no card has an id in §6.6 or `index.html`, so no hash can name one | 8b | resolved by 8b — `#work-01` … `#work-04` on each `<article data-card>`; the jump rests the card where card 01 rests |
 
 ## Log
 
@@ -1645,3 +1648,77 @@ Above 900 px `#works` pins and scroll drives the track's `x` 1:1. At ≤ 900 px 
   - The cards' CSS transitions still use the plain `ease` keyword (E-ease's conversion is the owner's; 8b owns hover).
 - **8b / 11a:** toggling motion OFF mid-pin removes the spacer, and the registry holds the reader's px position, so they land ~D px further down the page (in LINK at 1440). Same class as 7a's "crossing 900 px resets scroll" note.
 - **Left alone, owned elsewhere:** E7 (8b), E28 (11b; the title morph adds to it), E3/E40 (9a, 9b), E16–E18 (10), E19 (11a), E27 (11b).
+
+### Checkpoint 8b — WORKS interaction
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 8b — WORKS interaction`
+
+The §9.7 interaction layer on 8a's pin is built: keyboard focus, card deep links, the hover set (lift, border, sheen, tags, chain tether), the progress readout, and the reduced / LOW branches. New file `gl/tether.js`, added to §12.2. `index.html` gained the four card ids.
+
+**Errata decisions (user, this session):**
+- **E7:** §9.7 wins. The card handler is ScrollSmoother's `onFocusIn`, plugged in through CP4's `setFocusIn()`, with no `focusin` listener of our own. §10.4's Focus-order row and §13's row 5 are reworded.
+- **New E42 (card sheen vs I2):** reuse E35's cap. `.card::after` runs at opacity 0.22, so under the band's peak `--blue-lift` holds 4.62:1 and body copy 7.89:1 (1.23 and 2.10 at full strength).
+- **New E43 (tether geometry):** a 3-link stub rising from the spine at the card's left edge, at §7.3's pitch. It points at the card and does not reach it (≈ 250 px gap at 1440×900 against ≈ 85 px of links). It's drawn in the LATTICE branch's `InstancedMesh`, which is idle during WORKS, so draw calls stay ≤ 3.
+- **New E44 (card ids):** `#work-01` … `#work-04` on each `<article data-card>`, numbered so a project rename never breaks a shared URL.
+
+**A bug in §9.7's own snippet, fixed in code and text:** `e.target.closest('[data-card]')` never matches. The focusable element is the `<a class="card__link">` *around* the article, so the lookup resolves up to `.card__link, [data-card]` and back down.
+
+**My decisions where the spec is silent (written into §9.7 / §6.6):**
+- **Pointer focus doesn't move the pin.** `onFocusIn` fires for every focus, clicks included. Only `:focus-visible` focus jumps, since a clicked card is already under the pointer. Every card focus returns `false`, so the smoother never re-centres one either. Measured: a mousedown on half-visible card 04 left `scrollTop` unchanged.
+- **Where a focused card lands:** where card 01 rests, i.e. travel = its offset from card 01. The travel is clamped to `[1, D − 1]`: exactly on `pin.start` / `pin.end` the pin reads inactive (Shift+Tab back to card 01; card 04 at 1920, where its offset exceeds `D`), which released the chain and flipped `axis`.
+- **An unplayed entrance plays on focus,** so focus never sits on a card at opacity 0 waiting for its trigger.
+- **Deep links** go through a new `setHashTarget()` in `core/smoothscroll.js`, the same settable-hook pattern as `setFocusIn`. It covers the load hash, clicked in-page anchors and `hashchange`. The pinned branch maps a card to `pin.start + travel`. The ≤ 900 px stack under the smoother applies the card's `scroll-margin-top` (rail + gap), because the smoother's element form ignores it. Native jumps (reduced motion, no JS) use it directly.
+- **Readout:** written in the pin's `onUpdate` / `onToggle` (8a's `drive`) and at build. Unpinned it rests as authored (`01 / 04`, empty bar), and teardown restores that.
+- **Hover is for linked cards only** (01, 04), per §6.6's "no hover lift" for cards without a URL, extended to the sheen and tether.
+- **Lift ease:** §9.7's table said `chain`, but the lift is a CSS transition, and §9.2's CSS rule (E-ease, 5b) says lifts are `glyph` and `back.out` stays in GSAP. So it's 1τ `--ease-glyph`, and the §9.7 cell now says so. Border 2τ metal.
+- **Tags:** §9.7's 2τ metal applies only in the card-hover state (`.card__link:hover .tag`). The base `.tag` rule and its `ease` keyword are §9.10's tag micro-state, which is 9b's.
+- **Keyboard twin:** `:focus-visible` parks the sheen at the card's centre and seats the tether. A `focusout` listener on the viewport retracts the tether. It never scrolls, so it can't race the smoother. It's the one listener §9.7 now names as allowed.
+- **Sheen gating:** `.works--sheen` on `#works` is set from `signals.tier` (absent at LOW and NONE, per §9.7's LOW row). The pointer lerp runs on the ticker only while a card is hovered.
+- **Reduced motion on desktop:** the vertical stack is CSS keyed off `html[data-motion="reduced"]` (8a's carried item), so no-JS keeps CP3's native scroller. Hover is border and colour only there (§10.1), with no lift.
+
+**Verified** in headless Firefox (desktop pointer prefs) and chrome-headless-shell 154, against `vite preview`:
+- **Focus never strands.**
+  - Real Tab / Shift+Tab key presses: last lattice node → card 01 → card 04 → LINK row → back again.
+  - Run at 1440×900, 1920×1080 and 1280×700 in Firefox, and at 1440 / 1920 in Chrome.
+  - Every focused element is wholly in the viewport **150 ms after the key press** and again at 1.5 s. The card's opacity is 1, and card 01 / 04 rest at x = 39–40 (1440) and 209–241 (1920).
+  - Screenshots checked by eye.
+  - At 800 px the stack tabs natively, all in view.
+  - Only cards 01 and 04 are focusable. 02 and 03 have no link (§6.6) and are reached by scrolling.
+- **Readout never lags:** at 9 positions across the pin, the label equals §9.7's formula and the bar equals `scaleX(progress)`, and progress equals the track's `−x / D`, all read in the same frame.
+- **Cards never scaled:** on hover the transform is `matrix(1, 0, 0, 1, 0, −6)`.
+- **Hover:**
+  - border and tags go `--hairline-blue`, and the sheen class is on at 0.22;
+  - `--sheen-x` follows the pointer (20.48 % for a pointer at 0.74 of the width, matching (0.9 − f) / 0.8);
+  - the tether draws 3 instances, with 2 draw calls;
+  - unlinked card 02 gets nothing, and leaving retracts the tether.
+- **LOW** (`hardwareConcurrency` = 4): pin kept, lift kept, no `.works--sheen`, sheen opacity 0, tether 0, 1 draw call.
+- **Deep links:**
+  - fresh loads of `#work-01…04` land at x = 39/40, top 257, pin active, label `0N / 04`, in Firefox and Chrome;
+  - `hashchange` and a clicked `#work-02` anchor behave the same, and focus moves to the article;
+  - 800 px and reduced motion land the card at top 91 / 96, below the rail;
+  - no JS at 1440 / 900 / 640: 96.
+- **Reduced motion (OS pref):** `flex-direction: column`, no lift, no sheen, no tether.
+- **Leaks:** motion toggle ×3 mid-pin gives 27–28 children / 15–16 triggers ON and 1 / 5 OFF every cycle, the same as 8a. Focus still works after the toggles and after 1000 → 800 → 1920 → 1440 resizes.
+- **No JS** at 1440 / 900 / 640: 5 sections, no hidden text, no overflow, the viewport is `overflow-x: auto` at 1440, and the sheen stays at 0.
+- **Build:**
+  - entry 4.31 + 2.30 + 58.91 = **65.52 kB** (≤ 66);
+  - sections **5.58** (was 4.81), stage 6.08 (was 5.64), rect 0.37, late 14.55, `three` 135.68;
+  - **total 227.73 kB against ≤ 228**: 0.27 kB of headroom left;
+  - CSS 6.06 kB.
+
+**Carried forward:**
+- **Budget:** the ≤ 228 KB total has 0.27 kB left. 9a/9b's JS will need a decision (raise it, as 6b and 7b did, or trim).
+- **9b:**
+  - The base `.tag` transition still uses the plain `ease` keyword. It's §9.10's tag micro-state and yours to convert.
+  - The card `.card__go` colour change is still an untransitioned CSS hover (CP3).
+- **11a:**
+  - 8a's "toggle OFF mid-pin lands ~D px further down" is unchanged. It lives in the registry's `setMotion`, not in WORKS.
+  - `.card::after` is hidden in forced colours. Reduced transparency needs nothing more for it.
+- **10:** the tether shares the chain's material, so it picks up the metal pass with no extra work.
+- **Owner request, outside 8b's scope (same commit):** the LINK email row's two intent chips (`New offer`, `Personal inquiry`) are removed.
+  - The row is now a plain `row__link` like rows 01, 02 and 04 (glyph and underline included), so 9b's row hover covers it.
+  - Its href is `mailto:leo@omniserv.me?subject=%5BTopic%5D&body=Hi%20Leo%2C%0A%0A`: a `[Topic]` subject and a "Hi Leo," first line for the sender to overwrite.
+  - Removed `.row__chips`, `.chip`, `.row__link--static` and the forced-colours `.chip` selector.
+  - §2.1, §6.7 and §9.8 are updated, and **E8 is closed as moot** by the owner's decision. 9b has no chip entrance to build.
+  - The DOSSIER plate's plain `mailto:` is unchanged.
+- **Left alone, owned elsewhere:** E28 (11b), E3/E40 (9a, 9b), E16–E18 (10), E19 (11a), E27 (11b).

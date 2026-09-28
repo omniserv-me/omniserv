@@ -433,6 +433,17 @@ export function createChain(scene, H) {
     rest() { Object.assign(state, REST); snapIndex = -1; },
     /** §7.5 WORKS, for 8a: the track's travel in px (null releases it). */
     drive(px) { drivePx = px; },
+    /** The open curve's y at world x, from this frame's control points — for
+     *  the §9.7 tether (8b), on the horizontal run. */
+    spineY(x) {
+      for (let i = 0; i < 8; i++) {
+        const a = pts[i];
+        const b = pts[i + 1];
+        const t = (x - a.x) / (b.x - a.x);
+        if (t >= 0 && t <= 1) return lerp(a.y, b.y, t);
+      }
+      return pts[4].y;
+    },
     get phase() { return phase + spin; },
     get ripples() { return ripples.length; },
     get count() { return visible; },
