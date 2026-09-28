@@ -1624,7 +1624,10 @@ edge. Nothing wholly on screen rests below 0.60.
 
 ### 9.5 Movement 02 — DOSSIER
 
-**Section header**, trigger `top 72%`:
+**Section header**, trigger `top 72%` on the header. The table has no t column: all three rows start
+together on the trigger. The same reveal serves all four section headers (`sections/header.js`),
+and it also carries the headings' §3.7 depth (n = 0) on the whole header, so index, rule and
+heading move as one:
 
 | Target | Change | Dur | Ease | Stagger |
 |---|---|---|---|---|
@@ -1655,22 +1658,42 @@ property instead of eight:
 
 **Body.** Three paragraphs, 102° wipe, 8τ each, 1τ stagger. **Principles strip:** bracketing
 hairlines `scaleX 0→1` 3τ, then the mono items `opacity 0→1` 2τ at 0.5τ stagger, left to right.
+The body, the strip and the plate each reveal on their own `top 72%` trigger, the header's line, so
+each block arrives as it reaches the same height whether the plate sits beside the copy or, at
+≤ 900 px, below it.
 
 **Fact plate:**
 
 | t | Target | Change | Dur | Ease |
 |---|---|---|---|---|
 | 0 | border | 4 DrawSVG segments, clockwise from top-left, sequential | 2τ each = 8τ | mask |
+| ≈ 0.9τ | chamfer hairline | `stroke-dasharray '0 100' → '100 0'`, starting the moment the top edge's eased draw reaches the bevel | 1τ | mask |
 | 8τ | row label | `opacity 0→1` | 1τ | — |
 | 8τ | row leader | `scaleX 0→1`, origin left | 3τ | mask |
 | 9τ | row value | 102° wipe | 3τ | mask |
 | — | rows | stagger | 1τ | — |
-| 8τ | plate | one sheen sweep, `background-position −120% → 220%` | 8τ | metal |
+| 8τ | plate | one sheen sweep, `background-position −120% → 220%`, at opacity 0.22 | 8τ | metal |
+
+**The chamfer turns the corner.** The top edge is clipped where the 45° bevel starts, so the bevel
+is drawn as the top edge reaches it, handing over to the right edge, and the stroke reads as one
+line going round the cut. Its path is `M0 0 L24 24` with `pathLength="100"`, but its real length
+is 24√2 ≈ 33.94, which DrawSVG measures and the browser does not, so its draw would stop at 34 %.
+It tweens its dash in `pathLength` units instead, as the hero ring does (§6.3). The four frame
+paths are exactly 100 long in their viewBox, so DrawSVG is right for them.
+
+**The sheen passes behind text, so it is capped.** At the band's full 0.55 `--chrome` over
+`--graphite`, the plate's text would drop to about 2:1 (I2). The sweep layer (`.plate::before`,
+under the rows) runs at opacity 0.22, so the band peaks at 0.121 `--chrome`. There the weakest text
+on the plate, the `--blue-lift` links, still measures 4.61:1, and the `--silver` labels 5.55:1. The
+image is 180 % of the plate wide. A larger-than-box image makes the percentage sweep run right to
+left, and it keeps the whole band, which leans 15° across the plate's full height, off the plate
+at both ends.
 
 Drawing the border as four separate segments rather than one path is what makes it read as
 *machined* — each edge arrives, turns a corner, and continues.
 
-**Scroll parallax.** Plate `y ±22.6 px` (depth 1 × 4, §3.7), scrubbed. Body copy never parallaxes.
+**Parallax.** Plate `y ±22.6 px` scrubbed (depth 1 × 4, §3.7) and 5.66 px pointer (depth 1).
+Body copy never parallaxes.
 
 ### 9.6 Movement 03 — LATTICE
 
@@ -1754,7 +1777,7 @@ ScrollTrigger.create({
 | 3τ | kicker | `opacity 0→1`, `letter-spacing 0.3em→0.14em` | 5τ | glyph | — |
 | 4τ | body | 102° wipe | 5τ | mask | — |
 | 5τ | tags | `scale 0.6→1`, `opacity 0→1` | 1τ | chain | 0.5τ |
-| 6τ | chamfer hairline | `drawSVG 0→100` | 3τ | mask | — |
+| 6τ | chamfer hairline | `drawSVG 0→100` *(errata E37)* | 3τ | mask | — |
 
 **Index scramble** (`js/util/scramble.js`): charset `0123456789/\|—`, duration 3τ, **quantised to
 12 fps** rather than updated per frame. Per-frame scrambling reads as noise; 12 fps reads as a
@@ -2164,6 +2187,9 @@ professional/
                  registry.js  late.js  lazy.js
       sections/  preloader.js nav.js hero.js about.js stack.js projects.js contact.js footer.js
                  chain.js     ← registers the chain's movement states (built by gl/movements.js)
+                 header.js    ← the §9.5 section-header reveal + heading depth, shared by 02–05
+                 index.js     ← the sections chunk: about.js onward, fetched alongside the fonts
+                                and awaited before boot, so the entry does not grow (§12.7)
       gl/        stage.js  chain.js  lattice.js  movements.js
       gl/passes/ metal.js
       util/      scramble.js  rect.js  lerp.js  prefers.js
@@ -2310,8 +2336,11 @@ is needed by the first frame of motion. Raised to 64 KB by owner decision (2026-
 measured, with ~3 KB of headroom for the project's own code — with Flip and MorphSVG moved to the
 late chunk (§9.1). Raised again to 66 KB by owner decision (2026-09-28), when checkpoint 5b's hero
 and depth modules brought the entry to 64.0 KB: that headroom was the hero's. Section modules below
-the fold (DOSSIER onward) should load as their own chunk right after boot rather than grow the
-entry further; the total JS budget still governs. The entry is a deferred module, so its size
+the fold (DOSSIER onward) load as their own chunk rather than grow the entry further; the total
+JS budget still governs. That chunk (`sections/index.js`, §12.2) is fetched in parallel with the
+fonts and awaited with them before boot, because its movements and heading builders must be
+registered before the registry builds and the headings split (owner decision, checkpoint 7a). A
+failed chunk costs only its choreography, since nothing it animates is hidden in CSS. The entry is a deferred module, so its size
 moves when motion starts, not when the hero paints.
 
 The total was 220 KB until checkpoint 6b: `three` alone is ~136 KB, and the chain's movement

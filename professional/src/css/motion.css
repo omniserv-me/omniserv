@@ -83,6 +83,13 @@
     background-clip: text;
   }
 
+  /* ── §9.5 DOSSIER (sections/about.js, sections/header.js) ────────────────
+     Nothing here, deliberately: like the hero, every section header and
+     DOSSIER block sets its own from-states when its timeline is built, so a
+     sections chunk that fails to load leaves them readable. The only CSS it
+     drives is .wipe above and the --rule / --sheen-x factors in
+     components.css, which default to their drawn/at-rest values. */
+
   /* ── §12.7 The stage ──────────────────────────────────────────────────────
      Invisible until gl/stage.js has rendered its first frame (and run the
      tier probe on it), then faded in over 8τ. WebGL can never delay or shift

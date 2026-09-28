@@ -466,6 +466,12 @@
 
 .head--split .works__count { margin-left: auto; }
 
+/* The heading takes the rest of the header's line, so its box is the same
+   width whatever its glyphs are doing: §9.5's wdth 125 → 100 morph would
+   otherwise resize a shrink-to-fit flex item and make autoSplit re-split it
+   mid-reveal. Text sits left either way — no visual change. */
+.head__title { flex: 1 1 auto; }
+
 /* ── §6.4 Movement 02 — DOSSIER ───────────────────────────────────────────
    Copy on columns 5–9, fact plate nested at 10–12, both inside the alternated
    content block; the chain runs the vacated 2–4. */
@@ -482,12 +488,11 @@
 /* Two mono rows in --silver — not --silver-shadow, which may carry no small
    text (§4.3) — bracketed by hairlines. */
 .principles {
+  position: relative;
   display: grid;
   gap: var(--s-1);
   margin-top: var(--s-2);
   padding-block: var(--s-2);
-  border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
   /* The plate-label size (§5.3): at --t--1 the first row cannot hold its three
      items on one line inside the 5–9 column, and the spec prints two rows. */
   font-size: var(--t--2);
@@ -495,6 +500,20 @@
   text-transform: uppercase;
   color: var(--silver);
 }
+
+/* The bracketing hairlines as elements rather than borders, so §9.5 can draw
+   them (scaleX 0→1) without scaling the text. --rule defaults to 1: drawn. */
+.principles::before,
+.principles::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  border-top: 1px solid var(--hairline);
+  transform: scaleX(var(--rule, 1));
+  transform-origin: left center;
+}
+.principles::before { top: 0; }
+.principles::after { bottom: 0; }
 
 .principles__row { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-2); }
 /* Trailing separator, so a wrap never starts a line with a lone "·". */
@@ -532,7 +551,28 @@
   pointer-events: none;
 }
 
-.plate__rows { display: grid; gap: var(--s-2); }
+/* §9.5's one sheen sweep, driven by --sheen-x (−120% → 220%); off the plate at
+   rest. The image is 180 % of the plate wide: with a larger-than-box image a
+   percentage position runs it right → left, and 180 % is what puts the whole
+   105° band — which leans 15° across the plate's full height — off-plate at
+   both ends for any plate up to 4.6 times taller than wide. A narrower image
+   would clip the leaning band at its own edges. It passes under text, so its opacity is capped
+   (errata E35): 0.22 × the band's 0.55 peak = 0.121 of --chrome over
+   --graphite, where the plate's weakest text, the --blue-lift links, still
+   measures 4.61:1 (--silver labels 5.55:1). */
+.plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--silver-sheen);
+  background-repeat: no-repeat;
+  background-size: 180% 100%;
+  background-position: var(--sheen-x, -120%) 0;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.plate__rows { position: relative; display: grid; gap: var(--s-2); }
 
 .plate__row {
   display: grid;
@@ -859,7 +899,8 @@
 }
 
 @media (forced-colors: active) {
-  #stage, .grain { display: none; }
+  #stage, .grain, .plate::before { display: none; }
+  .principles::before, .principles::after { border-color: CanvasText; }
   .card, .plate, .node, .chip, .tag { border-color: CanvasText; }
   .plate__frame, .chamfer, .rail__glyph, .row__glyph { stroke: CanvasText; }
   .rail__indicator { background: Highlight; }

@@ -76,5 +76,10 @@ export function scrollParallax(el, layer, vars = {}) {
     onUpdate: () => write(el),
     scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true, ...vars },
   });
+  // A scrubbed .to() renders nothing until its trigger first updates, so an
+  // element built below the viewport would sit at 0 and jump by the full
+  // amplitude as it entered. Start it at its from-value; a refresh that finds
+  // it mid-range overwrites this through onUpdate.
+  write(el);
   return () => { tween.scrollTrigger?.kill(); tween.kill(); release(); };
 }

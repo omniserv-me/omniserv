@@ -33,12 +33,17 @@ async function main() {
   //    the stage's own renderer (core/tiers.js, loaded with gl/stage.js below).
   motion.set(resolveMotion());
 
-  // 2. Fonts gate.
-  await document.fonts.ready;
+  // 2. Fonts gate. The sections chunk (DOSSIER onward, §12.7) is fetched
+  //    alongside: its movements and heading builders must be registered before
+  //    boot() builds and splits. A failed chunk costs only their choreography —
+  //    none of them hides anything in CSS.
+  const sections = import('./sections/index.js').catch(() => {});
+  await Promise.all([document.fonts.ready, sections]);
 
   // 3–4. Signals, colophon, then every registered context: the splits first
   //      (core/split.js registers at import), then each movement's timelines —
-  //      sections/hero.js (§9.4) so far. Its entrance plays here until CAST
+  //      sections/hero.js (§9.4) and the sections chunk (§9.5 onward). The
+  //      hero entrance plays here until CAST
   //      (checkpoint 10) holds it and starts it at CAST t = 5τ.
   startSignals();
   initFooter();

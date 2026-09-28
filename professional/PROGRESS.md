@@ -97,7 +97,7 @@ full checkpoint: own session, own commit, own box. Code comments written before 
       Done when: the chain migrates (never cuts) at every boundary; branch terminates at the four
       cluster roots; loop closes and idles; horizontal mode can be driven from a debug slider.
 
-- [ ] 7a. Choreography — DOSSIER — design.md §9.5
+- [x] 7a. Choreography — DOSSIER — design.md §9.5
       Scope: `sections/about.js`. The section-header reveal (index, rule, heading chars) as a
       reusable helper that 7b, 8a and 9b call. The helper also applies the headings' §3.7 depth
       (n=0: 4 px pointer, 16 px scroll) through 5b's module, so all four sections get it. The three
@@ -255,9 +255,9 @@ level.**
 | §9.2 Named easings | 4 — done; usage cross-cutting; off-list eases elsewhere → E3, E4, E15, E-ease; unused `catenary` → E22 (6a) |
 | §9.3 CAST | 10 (incl. E17) |
 | §9.4 IDENTITY | 5a (split config, width-morph mechanism) · 5b (everything else, incl. E3/E4/E-ease/E20; pointer parallax for chain → 6b, background → 10) · 10 (start at CAST 5τ) |
-| §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest; header helper reused by 7b/8a/9b) |
+| §9.5 DOSSIER | 5a (`.wipe` CSS) · 7a (rest, incl. E35, E36, E37's plate part; header helper reused by 7b/8a/9b) |
 | §9.6 LATTICE | 7b (arrow keys optional/deferred; edge draws → E25); "4.6:1" → E21 |
-| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
+| §9.7 WORKS | 8a (pin, entrances, scramble, ≤ 900 px branch; chamfer draw → E37) · 8b (focus incl. E7, deep links, hover, tether, readout, reduced/LOW branches) |
 | §9.8 LINK | 9b (incl. E8; exposure uniform → 10) |
 | §9.9 Navigation rail | 9a (incl. E3's `power3.out`; `--sweep` spec text → E13) |
 | §9.10 Colophon + micro-states | 9b (incl. inline text-link underline elements; its missing Ease column → E-ease, 5b) · 4 (motion-toggle mechanics, done) · 2 (focus ring, done) |
@@ -319,6 +319,9 @@ resolved.
 | E32 | §7.3 × §7.7 | §7.7 cuts links to 36 (MED) / 18 (LOW), but §7.3 fixes the spacing (0.72 × diameter) and the 1.6·H span, which need 51: at LOW the links hang ~2.5 diameters apart as loose rings | 6a | resolved by 6a — 51 links at every tier; the tier cuts torus tessellation (12×48 / 10×32 / 8×24) |
 | E33 | §7.5 vs §7.3 | The LINK loop is "24-link, radius 0.17·H", but a 0.17·H circle is 1.068·H round, 34 links at §7.3's 0.72-diameter pitch: 24 links hang ≈ 1.01 diameters apart, as touching rings (E32's failure) | 6b | resolved by 6b — keep the radius, 34 links: R = 34·spacing/2π ≈ 0.171·H, so the seam closes exactly |
 | E34 | §7.5 vs §7.3 | WORKS runs "the full track width", but §7.3 fixes N = 51 from the vertical 1.6·H span: the visible width is aspect·H, so 51 interlocked links (1.616·H) only just span 16:10, and wider screens show the ends or stretch the links apart | 6b | resolved by 6b — N = ceil(length / spacing) for every curve, from a 96-instance pool; the run spans the visible width + a diameter past each edge |
+| E35 | §9.5 vs §1.3 I2 / §4.3 | The fact plate's sheen sweeps `--silver-sheen` (a 0.55 `--chrome` peak) behind the plate's text, which drops to ~2:1 at the band (the `--blue-lift` links 1.23:1), while I2 forbids any on-screen text animating below 4.5:1 | 7a | resolved by 7a — the sweep layer runs at opacity 0.22 (peak 0.121 `--chrome`): links 4.61:1, labels 5.55:1 at the peak |
+| E36 | §9.5 × §6.4 | The plate's 45° `.chamfer` hairline sits on the bevel, but §9.5 draws the border as "4 DrawSVG segments" and never mentions it, so it would hang fully drawn while the frame draws in around it | 7a | resolved by 7a — the chamfer draws (1τ, mask) as the top edge's eased draw reaches the bevel, handing over to the right edge; 4 segments, 8τ |
+| E37 | §9.5, §9.7 (E25's mechanism) | `.chamfer`'s path `M0 0 L24 24` carries `pathLength="100"` but is 24√2 ≈ 33.94 long: DrawSVG writes its dash in real units, the browser reads them in `pathLength` units, so the draw stops at 34 %. The plate's frame paths are exactly 100 long, so DrawSVG is right there | 7a (plate) · 8a (§9.7 card chamfers) | 7a's part resolved by 7a — the plate's chamfer tweens `stroke-dasharray '0 100' → '100 0'`, as the hero ring does; §9.7's card row open for 8a |
 
 ## Log
 
@@ -1294,3 +1297,151 @@ against `vite preview`:
 - **No JS** at 1440/900/640: 5 sections, no hidden text, no overflow.
 
 **Left alone, owned elsewhere:** E3 (9a), E16/E17/E18 (10), E19 (11a), E25 (7b), E27/E28 (11b).
+
+### Checkpoint 7a — Choreography — DOSSIER
+
+**2026-09-28** · commit `refactor(webpage): checkpoint 7a — DOSSIER choreography`
+
+§9.5 is built. The new files are:
+- `sections/about.js`: the body wipes, the principles strip, the fact plate and the plate's depth.
+- `sections/header.js`: the section-header reveal, plus the heading depth, for all four headers.
+- `sections/index.js`: the sections chunk root.
+
+§12.2 lists all three.
+
+**Errata:** no open row was owned by 7a. Three new rows, each opened and resolved with the user:
+- **E35 (user decision: cap the sheen).**
+  - At §9.5's full 0.55 band, the plate's text dropped to ~2:1, and the `--blue-lift` links to
+    1.23:1, against I2.
+  - `.plate::before` now runs at opacity **0.22**, so the band peaks at 0.121 `--chrome` over
+    `--graphite`.
+  - At that peak the weakest text still clears AA: links **4.61:1**, labels 5.55:1,
+    `--silver-light` values 7.9:1.
+  - The value was computed with a WCAG script, as the highest cap that keeps every plate colour at
+    ≥ 4.5:1.
+- **E36 (user decision: draw it at the corner).**
+  - The chamfer draws over 1τ (`mask`), starting the moment the top edge's *eased* progress
+    reaches the bevel. That's solved numerically from the `mask` curve: ≈ 0.45 of segment 1, ≈ 0.9τ.
+  - The top edge is clipped there, so the stroke visibly turns the corner. Checked in slowed
+    screenshots.
+- **E37 (found by measuring).** DrawSVG wrote the chamfer's dash as `33.94px`, its real length,
+  which the browser reads in `pathLength="100"` units. It drew 34 % and stopped.
+  - The plate chamfer now tweens `stroke-dasharray` directly.
+  - The four frame paths are exactly 100 long in their viewBox, so DrawSVG draws them correctly
+    (measured `100px, 0.1px` at rest).
+  - **8a:** §9.7's card chamfer row has the same bug. It's marked E37 and is yours.
+
+**Owner decision: the sections chunk loads in parallel with the fonts.**
+- `main()` starts `import('./sections/index.js')` first and awaits it together with
+  `document.fonts.ready`, before `boot()`.
+- So `register()` and `onSplit()` in the chunk run before the registry builds and the headings
+  split, and the registry and split rig are unchanged.
+- **7b, 8a, 9b: import your section from `sections/index.js`,** not from `main.js`.
+- Measured in Chrome, the chunk lands at 48 ms, against 18 ms for the last font (254 vs 175 ms at
+  6× CPU). Boot therefore waits ~30–80 ms longer than before. LCP is unaffected (the hero paints
+  before JS).
+- If the chunk fails (blocked in a test), boot goes on. The headings split but get no builder, and
+  DOSSIER is fully readable.
+- Rolldown split a shared chunk out (`depth-*.js`: registry, split, depth, signals), which the
+  entry `modulepreload`s. The entry is therefore three files.
+
+**My decisions where the spec is silent (written into §9.5 where they're choreography):**
+- **Nothing is hidden in CSS, following 5b's hero.**
+  - Every block sets its own from-states when its timeline is built, and adds `.wipe` itself.
+  - `motion.css` gains a comment and no rules, so a dead chunk or dead JS leaves DOSSIER complete.
+    This deviates from 5a's "initial states in motion.css" plan, for the same reason 5b gave.
+- **Triggers.** The header, body, principles and plate each reveal on their own `top 72%` (the
+  header's line). So each block reveals as it reaches that line, in both the side-by-side
+  (> 900 px) and stacked layouts.
+- **Timing.** §9.5's header table has no t column, so index, rule and chars all start together.
+- **Reveals are once per page.**
+  - The body, principles and plate record `played` on start. The header records the SplitText
+    instance that played.
+  - A branch rebuild (motion toggle, 900 px crossing) builds nothing for a played block, which
+    rests authored (5b's `entered` pattern).
+  - An autoSplit re-split of the *same* instance rebuilds, and SplitText restores its progress.
+- **`.head__title { flex: 1 1 auto }`.**
+  - The heading is a shrink-to-fit flex item, so the `wdth 125` from-state widened its box.
+  - autoSplit then re-split it ~200 ms into the reveal, which, with the played guard, cut the
+    reveal short: the chars rested at once.
+  - Taking the rest of the header's line makes the box independent of the glyphs. There's no
+    visual change, since the text sits left either way.
+- **Principles hairlines.** They were CP3's `border-top/bottom`, which can't be scaled without
+  scaling the text. They're now `.principles::before/::after` at `scaleX(var(--rule, 1))`, drawn at
+  rest and hidden only while JS tweens `--rule`. Forced colours keep them as `CanvasText`.
+- **Sheen geometry.**
+  - The layer's image is 180 % of the plate wide.
+  - A 60 % first try left part of the band visible *at rest*: the 105° band leans 15° over the
+    plate's full height, and at a narrower size it clips at the image edges.
+  - At 180 % both of §9.5's ends (−120 %, 220 %) clear the band for plates up to 4.6:1 tall.
+  - A larger-than-box image makes the percentage sweep run right → left. Hidden in forced colours.
+- **Depth.**
+  - The heading depth (n=0) goes on the whole `.head`, so index, rule and heading move as one.
+  - The plate gets n=1 on pointer and scroll. `.dossier__copy` gets nothing.
+- **Fix in `core/depth.js` (5b's module; 7a is `scrollParallax`'s first consumer).** A scrubbed
+  `.to()` renders nothing until its trigger first updates. So a plate built below the viewport sat
+  at 0 and would jump 22.6 px as it entered, and after a 900 px crossing it read `0px` at
+  progress 0. `scrollParallax` now writes its from-value at bind time; a refresh mid-range
+  overwrites it.
+- **Guard vs parallax.** `rect.js` caches `offsetTop`, which ignores `translate`. So the plate's
+  `[data-copy]` rect is off by at most 22.6 + 5.7 px while it parallaxes, about one 24 px guard
+  feather. Left as is.
+
+**APIs for later checkpoints:**
+- **7b / 9b:** `sectionHeader(section.querySelector('.head'))` at module level in your section
+  module. That gives the §9.5 header reveal on `top 72%` plus heading depth, with nothing else to
+  call. `onSplit('heading')` is taken by `header.js`, so don't register another.
+- **8a:** `sectionHeader(head, { scroll: false })` drops the scroll parallax for the pinned header.
+  If the reveal needs another line, pass `start`.
+- **9b:** CP3's LINK header uses the same `.head` markup, so the same one-line call works there.
+
+**Verified** in headless Firefox (desktop pointer prefs) and chrome-headless-shell 154, against
+`vite preview`:
+- **Build:**
+  - entry `index` 4.24 + `depth` 2.23 + `easings` 58.91 = **65.38 kB** against ≤ 66;
+  - sections 1.21, stage 5.73, late 14.55, `three` 135.68;
+  - **total 222.55 kB against ≤ 224**;
+  - CSS 5.63 kB.
+- **§9.5 tables, sampled mid-flight and at rest (1440×900):**
+  - Header: at 60 ms, index 0.47, rule `scaleX .25`, char 0 at `yPercent 76` / `wdth 119`. At 250 ms,
+    `wdth 102.4`. At rest `wdth 100`, `translate(0)`, and `will-change` cleared.
+  - Body: `--wipe` 63 % → 15 % → 2 % → 0, then `.wipe` removed from all 8 elements (3 paragraphs +
+    5 values).
+  - Principles: `--rule` .73 → 1 by 200 ms, then the items fade left to right (0.94 / 0.78 / 0 … at
+    400 ms, all 1 by 1.5 s).
+  - Plate:
+    - frame segments sequential (100 / 41 / 0 / 0 at 250 ms, 100 / 100 / 100 / 56 at 500 ms);
+    - labels and leaders from 8τ;
+    - the sheen crosses −120 % → 220 % and is off-plate at both ends (screenshots at 0.2×
+      timescale).
+- **Parallax:**
+  - Pointer at a corner: heading −3.99 px, plate −5.65 px, the copy untouched.
+  - Scroll: plate +22.63 → −0.75 → −22.59 px across its trigger; heading up to ∓16 px.
+- **Dim floor.** 21 scroll steps through DOSSIER at 1440×900, 800×900 and 390×844, each settled.
+  - No text wholly on screen above the 72 % line is below 0.60, masked or unrisen.
+  - The only exception, one step at 390, is the heading sitting within its own parallax offset of
+    the trigger line.
+  - **Known and inherent to §9.5's trigger:** up to 6–8 not-yet-revealed elements wait at opacity
+    0 in the bottom 28 % of the viewport until they cross the line.
+- **Leaks** (Firefox, after every reveal has played):
+  - Motion toggle ×3: **24–25 children / 13 triggers ON, 1 / 5 OFF** every cycle, the same OFF
+    baseline as 6b.
+  - First load has 17 triggers because the 4 reveal triggers exist until played, and rebuilds skip
+    them.
+  - Resizes 1440 ↔ 1000 ×2, 800 and 600 round trips: 13/12/11 triggers stable; DOSSIER stays at rest
+    with no replay; no errors.
+- **Reduced motion (OS pref):** no splits, no `.wipe`, every text at opacity 1, hairlines and frame
+  drawn, sheen off-plate, no `translate`.
+- **CLS** (Chrome): 0.0031 at load (E28's hero morph, as before). The DOSSIER heading morph adds
+  **~0.002** (0.003 at 6× CPU), every source `DIV.char`. That's E28's, left to 11b.
+- **LCP** is `.hero__text` at 36 ms (316 ms at 6× CPU).
+- **No JS** at 1440/900/640: 5 sections, no hidden text, no overflow.
+
+**Carried forward:**
+- **Not caused by 7a (reproduced at HEAD before this change):** crossing 900 px resets the scroll
+  position to 0, because the registry rebuilds the smoother (checkpoint 4). It's worth fixing in
+  11a/11b's audit.
+- **9b / 8a:** §9.7's card sheen and §9.8's LINK CTA sheen may hit E35's contrast problem too,
+  wherever they pass behind text.
+- **Left alone, owned elsewhere:** E25 (7b's lattice edges), E27/E28 (11b), E3 (9a), E16–E18 (10),
+  E19 (11a).
