@@ -226,3 +226,6 @@ pyrightconfig.json
 
 # Node (professional/)
 professional/node_modules/
+
+# Xcode per-user state
+xcuserdata/
