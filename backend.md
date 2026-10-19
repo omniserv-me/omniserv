@@ -32,7 +32,7 @@ in each service. It's worth adding that as a `make proto` target that also copie
 | Audit | Client needs | Notes |
 |---|---|---|
 | §5 | `/query` `total` is euros for **all** stored documents. Stored `amount` is integer cents everywhere. | Includes a one-off migration of documents written as euro floats (detect: non-integer `amount`, or `id`/date before the cents switch). Without it the Overview donut and Summary show wrong totals; the client deliberately does not compensate. B2 depends on the same normalisation. |
-| §6 | Keep the **half-open `[start, stop)`** semantics and document them as the contract. Do **not** make `stop` inclusive. Set `TZ` on the `omniscient` container to the owner's zone (same zone as smartlife's `CITY`). | The client sends `stop` = the day after the last included day (client/design.md §4.5, §6.2). Changing the semantics would double-count boundaries. |
+| §6 | Keep the **half-open `[start, stop)`** semantics and document them as the contract. Do **not** make `stop` inclusive. Set `TZ` on the `omniscient` container to the owner's zone (same zone as smartlife's `CITY`). **In the same change**, store dates as UTC-aware (`datetime.now(timezone.utc)` instead of the naive `datetime.datetime.now()` in `omniscient/api.py:28`), and have `/query` build its day bounds in `TZ` and convert them to UTC before querying. | The client sends `stop` = the day after the last included day (client/design.md §4.5, §6.2). Changing the semantics would double-count boundaries. Setting `TZ` alone would make the naive `now()` return local time, which pymongo stores as if it were UTC, shifting every new payment by the UTC offset. Existing documents were written with the container clock at UTC, so they are already UTC and need no date migration. |
 | §7 | `"12.34"` (dot, two decimals, no suffix) is parsed **exactly**: `Decimal(amount) * 100` → `int`, rejecting more than 2 decimals with `422`. | The client always sends that canonical form. Keep the NBSP-euro / comma handling for the Shortcuts automation. |
 | §1 | No constraint on timing. | The client accepts both today's body `403` and a real `401`/`403` status. Fix whenever convenient. |
 
@@ -60,7 +60,7 @@ message Payment {
 }
 ```
 
-**omniscient** (`omniscient/api.py:27` `add_payment`): if `timestamp` is set, parse it with `datetime.fromisoformat` and convert to UTC. Otherwise use `datetime.now(timezone.utc)`. **Store dates as UTC** from now on. The `/query` filter must then build its day bounds in `TZ` and convert them to UTC before querying (this goes together with B0/§6).
+**omniscient** (`omniscient/api.py:27` `add_payment`): if `timestamp` is set, parse it with `datetime.fromisoformat` and convert to UTC. Otherwise keep `datetime.now(timezone.utc)`. Dates are already stored as UTC and `/query` already converts its day bounds, both per B0/§6.
 
 **Check:**
 ```sh
@@ -94,7 +94,7 @@ curl "https://api.omniserv.me/add_payment/$API_SECRET/Test/0.29?at=2026-10-18T21
 - Sorted by `date` **descending**.
 - Cap of **5 000** rows. If more match, return the newest 5 000 with `"truncated": true`. `total_cents` is always the sum over the **whole** range (computed with a Mongo `$group`, not from the returned rows).
 - `amount_cents` is an integer (requires the B0/§5 normalisation). `currency` is mapped from the stored ISO numeric `978` to `"EUR"`.
-- `date` is serialised in UTC with `Z`.
+- `date` is serialised as `strftime("%Y-%m-%dT%H:%M:%SZ")` on the UTC value: seconds precision, literal `Z`. Do **not** use `isoformat()`. Stored dates carry milliseconds, so it would emit `…:00.123000+00:00`, which Foundation's standard ISO 8601 decoding rejects. The client tolerates fractional seconds as a fallback (client/design.md §4.3), but the contract is the format above.
 - `id` per B3.
 
 **gRPC** (`omniscient.proto`, existing `Query` service):
@@ -210,7 +210,7 @@ curl "https://api.omniserv.me/devices/$API_SECRET" | jq
 { "detail": "smartlife unavailable" }
 ```
 with the B7 status mapping. That is `Content-Type: application/json` always. Keep FastAPI's own `422` shape; the client accepts both list and string `detail`. Don't include stack traces.
-The client uses `detail` only to choose between messages like "Lights are unreachable" and "Budget service is down" (client/design.md §4.4). It degrades gracefully without B8.
+The client uses `detail` only to choose between messages like "Lights are unreachable" and "Budget service is down" (client/design.md §4.4). It degrades gracefully without B8: the client classifies errors by HTTP status first (502/530, 504, other 5xx), so today's `text/plain` 500 still shows as a server error, just without the per-service wording.
 
 ---
 

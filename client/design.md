@@ -45,17 +45,19 @@ The Xcode project (`client/Omniserv.xcodeproj`) is the untouched multiplatform t
 | Setting | Now | Target | Why |
 |---|---|---|---|
 | `TARGETED_DEVICE_FAMILY` | `1,2,7` | `1` | iPhone only. |
-| `SDKROOT` | `auto` | `iphoneos` | Drops the macOS/visionOS destinations. |
+| `SUPPORTED_PLATFORMS` | `iphoneos iphonesimulator macosx xros xrsimulator` | `iphoneos iphonesimulator` | This is what drops the macOS/visionOS destinations; `SDKROOT` alone doesn't. |
+| `SDKROOT` | `auto` | `iphoneos` | Consistent with the above. |
 | `MACOSX_/XROS_/TVOS_/WATCHOS_/DRIVERKIT_DEPLOYMENT_TARGET` | set | removed | Unused platforms. |
 | `ENABLE_APP_SANDBOX`, `ENABLE_USER_SELECTED_FILES` | set | removed | macOS-only keys. |
-| `IPHONEOS_DEPLOYMENT_TARGET` | `27.0` | `27.0` | Keep. Allows Swift 6.2+ language features and iOS 27 SwiftUI/Charts APIs without availability checks. |
+| `IPHONEOS_DEPLOYMENT_TARGET` | `27.0` | `27.0` | Keep. iOS 27 SwiftUI/Charts APIs without availability checks. (Language features come from the compiler, not the deployment target.) |
 | `SWIFT_VERSION` | `5.0` | `6.0` | Strict concurrency checking as errors. |
 | `SWIFT_DEFAULT_ACTOR_ISOLATION` | `MainActor` | `MainActor` | Keep. UI code is main-actor by default; networking opts out explicitly (§3.3). |
 | `SWIFT_APPROACHABLE_CONCURRENCY` | `YES` | `YES` | Keep. `nonisolated async` functions run on the caller's actor unless marked `@concurrent`. |
 | `INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone` | portrait + landscape | `UIInterfaceOrientationPortrait` | Layouts are designed for portrait only. |
+| `INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad` | all four | removed | No iPad. |
 | `INFOPLIST_KEY_UIUserInterfaceStyle` | — | `Light` | White/light-blue theme (§8.1). |
 | `PRODUCT_BUNDLE_IDENTIFIER` | `devplaceholder.…` | `me.omniserv.client` | Stable id; the owner's domain. |
-| `INFOPLIST_FILE` | — | `Omniserv/Info.plist` | Partial plist for config keys (§2). Merged with the generated one (`GENERATE_INFOPLIST_FILE` stays `YES`). |
+| `INFOPLIST_FILE` | — | `Config/Info.plist` | Partial plist for config keys (§2). Merged with the generated one (`GENERATE_INFOPLIST_FILE` stays `YES`). Lives outside `Omniserv/` on purpose, see below. |
 | base configuration | — | `Config/Omniserv.xcconfig` (Debug and Release) | Config injection (§2). |
 
 Other housekeeping:
@@ -65,7 +67,7 @@ Other housekeeping:
 - **Signing:** automatic signing with the owner's team. With a free Apple ID the provisioning profile expires after 7 days and the app must be re-run from Xcode; with a paid membership it lasts a year. No code change either way, just an operational note.
 - **Dependencies:** none. SwiftUI, Observation, Swift Charts, Foundation/URLSession and Swift Testing cover everything below.
 
-The project uses file-system-synchronized groups (`objectVersion = 90`), so new folders and files under `client/Omniserv/` are picked up without editing `project.pbxproj`.
+The project uses file-system-synchronized groups (`objectVersion = 90`), so new folders and files under `client/Omniserv/` are picked up without editing `project.pbxproj`. The flip side: every file in that folder becomes a target member, so files that must not be bundled as resources live in `client/Config/` instead. An `Info.plist` inside `Omniserv/` would also land in Copy Bundle Resources and fail the build with "Multiple commands produce …/Info.plist".
 
 ---
 
@@ -83,7 +85,7 @@ client/Config/Secrets.xcconfig        (generated, gitignored)
    │  #include? from Omniserv.xcconfig (committed)
    ▼
 build settings $(API_SECRET) $(API_HOST)
-   │  substituted into client/Omniserv/Info.plist (committed, partial)
+   │  substituted into client/Config/Info.plist (committed, partial)
    ▼
 Bundle.main.infoDictionary            OmniservAPISecret / OmniservAPIHost
    │  AppConfig.load()
@@ -102,7 +104,7 @@ API_SECRET =
 ```
 The `#include?` is optional, so a fresh clone still builds; `AppConfig` then fails loudly (§2.3) instead of the build failing obscurely.
 
-`client/Omniserv/Info.plist` (committed, only the custom keys):
+`client/Config/Info.plist` (committed, only the custom keys; outside the synchronized `Omniserv/` group, §1):
 ```xml
 <dict>
   <key>OmniservAPIHost</key>   <string>$(API_HOST)</string>
@@ -185,9 +187,9 @@ Features/
   Lights/       LightsView.swift, DeviceTile.swift, LightsStore.swift, BrightnessSender.swift
   Settings/     SettingsView.swift
 DesignSystem/   Theme.swift, Card.swift, StatusBanner.swift
-Assets.xcassets AccentColor, Background, Surface, Ink, InkSecondary, Warning
-Info.plist
+Assets.xcassets AccentColor, AccentSoft, Background, Surface, Ink, InkSecondary, Warning
 ```
+(`Info.plist` and the xcconfigs live in `client/Config/`, §1–2.)
 
 ### 3.3 Concurrency under `MainActor`-by-default
 
@@ -197,8 +199,8 @@ With `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, every unannotated type is main
 - **`APIClient` and live services**: `nonisolated final class … : Sendable`, holding only `let` properties (`URLSession`, `AppConfig`, `JSONDecoder` created per call or held as `let`).
 - **Stores**: stay main-actor (the default), `@Observable final class`.
 - **Decoding** happens in the `nonisolated async` service method. Under approachable concurrency it runs on the caller's actor (main). Payloads here are tiny (largest is the B2 list, ~1 500 rows/year), so that's acceptable; if profiling ever shows a hitch, mark the decode helper `@concurrent`.
-- **`BrightnessSender`** is an `actor` (§7.2).
-- Cancellation: store loads run in `.task {}` / `.refreshable {}`, so SwiftUI cancels them when views disappear. `URLSession` honours task cancellation and throws `CancellationError`/`URLError.cancelled`, which stores swallow silently (§4.5).
+- **`BrightnessSender`** is a `@MainActor` class with a synchronous `submit` (§7.2), so slider values keep their order.
+- Cancellation: store loads run in `.task {}` / `.refreshable {}`, so SwiftUI cancels them when views disappear. `URLSession` honours task cancellation; `APIClient` maps `CancellationError`/`URLError.cancelled` to `APIError.cancelled`, which stores swallow silently (§4.4).
 
 ### 3.4 Dependency injection
 
@@ -226,7 +228,7 @@ enum Loadable<Value> {
     case failed(APIError, previous: Value?)
 
     var value: Value? { … }            // latest known value in any state
-    var isStale(after: Duration) -> Bool
+    func isStale(after: Duration) -> Bool
 }
 ```
 Views always render `value` when present — a refresh or a failure never blanks the screen (§8.3).
@@ -302,22 +304,24 @@ Callers never percent-encode themselves. Example: store `Rewe City` → `Rewe%20
 
 ### 4.3 Response decoding
 
-**JSON routes** (`/query`, `/payments`, `/devices`, `/health`): `JSONDecoder` with `.convertFromSnakeCase` and `.iso8601` dates (`/payments` dates are UTC `Z` instants, B2).
+**JSON routes** (`/query`, `/payments`, `/devices`, `/health`): `JSONDecoder` with `.convertFromSnakeCase` and a custom date strategy. It parses with `Date.ISO8601FormatStyle()` and falls back to `.iso8601.includingFractionalSeconds`. B2 pins seconds precision with `Z`, but the stored dates carry milliseconds, so one `isoformat()` slip on the server must not fail the whole list (Foundation's `.iso8601` strategy rejects fractional seconds).
 
 **Legacy status routes** (`/add_payment`, `/updBrightness`, `/updActive`): the body is the JSON integer `200` or `403` (audit §1). `send(_:)` handles both today's behaviour and the fixed one, so the client doesn't have to change in lock-step with B0:
 
 ```
 HTTP 2xx + body 200        → success
 HTTP 2xx + body 403        → .unauthorized
-HTTP 401 / 403             → .unauthorized          (after audit §1 is fixed)
-HTTP 2xx + other/empty body→ success if body is empty or {"status":"ok"}, else .unexpectedResponse
+HTTP 2xx + empty body      → success                (any Content-Type)
+HTTP 2xx + {"status":"ok"} → success
+HTTP 2xx + anything else   → .unexpectedResponse
 ```
 
-Response checks shared by all routes, in this order:
-1. `Content-Type` is not `application/json` → `.unexpectedResponse`. This catches a Cloudflare challenge or error page (HTML) or a tunnel outage page (`cloudflared` 502/530) instead of failing with an opaque decoding error.
-2. Status `422` → `.invalidInput(detail)`. The `detail` comes from the body: FastAPI's list form today; the string form once B8 is in.
-3. Status `5xx` → `.server(status, detail?)`.
-4. Decode `T` → `.decoding(…)` on failure (developer error, shown as "Unexpected response").
+Response checks shared by all routes, in this order. Status comes first: today every downstream failure is a `text/plain` `500` (API-CONTRACT §2.3), and Cloudflare's tunnel errors are HTML, so a Content-Type-first check would turn all of them into "Unexpected response".
+1. Status `502` / `530` → `.unreachableService(detail?)`; `504` → `.timeout`; any other `5xx` → `.server(status, detail?)`. `detail` is read only when the body is JSON (B8), otherwise `nil`.
+2. Status `401` / `403`: JSON body → `.unauthorized` (after audit §1 is fixed); non-JSON body → `.unexpectedResponse`. An HTML `403` is a Cloudflare challenge (B9), not a wrong secret.
+3. Status `400` / `422` → `.invalidInput(detail)`. The `detail` comes from the body: FastAPI's list form today; the string form once B8 is in.
+4. Status `2xx` with a `Content-Type` other than `application/json` → `.unexpectedResponse` (except the empty legacy body above).
+5. Decode `T`, or apply the legacy rules above. A decoding failure is a developer error, mapped to `.unexpectedResponse` ("Unexpected response").
 
 ### 4.4 `APIError`
 
@@ -328,14 +332,17 @@ nonisolated enum APIError: Error, Sendable, Equatable {
     case unauthorized                  // wrong secret (rebuild with the right .env)
     case invalidInput(String?)         // 422, 400
     case server(status: Int, detail: String?)
-    case unreachableService(String?)   // 502 from B7 (omniscient/smartlife down)
-    case unexpectedResponse            // non-JSON / Cloudflare page / unknown shape
+    case unreachableService(String?)   // 502 from B7 (omniscient/smartlife down), 502/530 from cloudflared
+    case unexpectedResponse            // non-JSON 2xx / Cloudflare challenge / unknown shape
     case cancelled                     // swallowed by stores, never shown
 
     var userMessage: LocalizedStringResource { … }
+    var isDefiniteRejection: Bool { … }  // true only for .unauthorized, .invalidInput
 }
 ```
 User-facing copy is short and actionable: "No connection", "The server didn't answer in time", "Wrong API secret — rebuild the app", "Lights are unreachable".
+
+`isDefiniteRejection` matters for non-idempotent writes. Only those two cases prove the server didn't apply the request. Every other error after the request left the device may hide a success: `.offline` includes `networkConnectionLost`, and a `500` can follow a completed insert. Write callers use it to choose between "not saved" and "may have been saved" (§8.6).
 
 ### 4.5 Dates on the wire
 
@@ -348,7 +355,7 @@ Two formats, each confined to the service layer:
 
 **UTC `Z` instead of a `+02:00` offset** because a literal `+` in a query string decodes to a space, so `?at=…+02:00` would arrive broken. `Z` sidesteps the encoding question in both path and query.
 
-`/query` treats each date as midnight in the server's time zone, with a half-open range (audit §6). The client's period `[start, endExclusive)` maps to `/query/…/start/endExclusive` (§6.2). This is correct only if the server zone equals the device zone, which B0 requires. This is the one place the client depends on server-side time-zone config. Everything else uses exact instants.
+`/query` treats each date as midnight in the server's time zone, with a half-open range (audit §6). The client's period `[start, endExclusive)` maps to `/query/…/start/endExclusive` (§6.2). This is correct only if the server zone equals the device zone, which B0 requires. This is the one place the client depends on server-side time-zone config. Everything else uses exact instants. B0 also moves omniscient to UTC-aware storage in the same change. Setting `TZ` alone would make today's naive `datetime.now()` store local time as if it were UTC, shifting every new payment by the UTC offset.
 
 ### 4.6 Moving auth to a header later
 
@@ -361,7 +368,7 @@ All auth goes through `url(for:)` (the `if e.authorized` line). When the backend
 ### 5.1 `Money`
 
 ```swift
-nonisolated struct Money: Sendable, Hashable, Comparable, Codable {
+nonisolated struct Money: Sendable, Hashable, Comparable {
     var cents: Int                         // EUR only; Int is 64-bit — no overflow concerns
     static let zero = Money(cents: 0)
     var decimal: Decimal { Decimal(cents) / 100 }
@@ -370,10 +377,10 @@ nonisolated struct Money: Sendable, Hashable, Comparable, Codable {
 ```
 - All arithmetic is in integer cents. Ratios (proration, pie fractions) go through `Decimal` and round only at the end (§6.1).
 - **Display:** `money.decimal.formatted(.currency(code: "EUR"))` uses the device locale (`12,34 €` on a German-region phone).
-- **On the wire:**
+- **On the wire:** `Money` is deliberately not `Codable`. Each route has its own representation, so the owning DTO or `init(from:)` converts explicitly. A synthesized conformance would expect `{"cents": …}`, which no route sends.
   - `/query` returns `{"total": <float euros>}`, converted with `Money(cents: Int((total * 100).rounded()))`. Correct only once audit §5 is fixed (B0); the client does **not** compensate, so the bug stays visible rather than masked.
   - `/payments` returns `amount_cents` / `total_cents` integers (B2). No floats.
-  - `/add_payment` is sent as a canonical string: `String(format: "%d.%02d", cents / 100, cents % 100)` → `12.34`. Always a dot, always two decimals, no currency sign, no grouping. That makes the request independent of the NBSP-suffix handling, and exact once audit §7 is fixed (B0).
+  - `/add_payment` is sent as a canonical string: `String(format: "%ld.%02ld", cents / 100, cents % 100)` → `12.34`. Always a dot, always two decimals, no currency sign, no grouping. That makes the request independent of the NBSP-suffix handling, and exact once audit §7 is fixed (B0).
 
 ### 5.2 Parsing user input (`MoneyParser`)
 
@@ -391,7 +398,8 @@ Errors are inline under the field ("Use up to 2 decimals", "Amount must be above
 
 - Trim, collapse inner whitespace, 1…64 characters.
 - Reject `/` with an inline message ("Store name can't contain /"). Even percent-encoded as `%2F`, Starlette decodes it before routing and the request 404s (API-CONTRACT §2.7). Silently substituting another character would make the stored name differ from what was typed.
-- Everything else (spaces, umlauts, `&`, `#`, `?`) is fine; `encodeSegment` handles it.
+- Reject names made only of dots (`.`, `..`, …) with "Store name can't be just dots". Cloudflare's URL normalization decodes `%2E` and resolves dot segments, so `/add_payment/{secret}/../12.34` would reach a different route.
+- Everything else (spaces, umlauts, `&`, `#`, `?`, dots inside a name like `Dr. Oetker`) is fine; `encodeSegment` handles it.
 
 ### 5.4 Payments
 
@@ -401,6 +409,8 @@ nonisolated struct Payment: Sendable, Identifiable, Hashable, Decodable {
     let store: String
     let amount: Money     // from amount_cents
     let date: Date        // UTC instant
+
+    init(from decoder: Decoder) throws   // maps amount_cents → amount; ignores currency (EUR only)
 }
 
 nonisolated struct PaymentPage: Sendable { let payments: [Payment]; let total: Money; let truncated: Bool }
@@ -451,7 +461,8 @@ Examples with `G = 600,00 €`:
 |---|---|---|
 | October (full) | 600 × 31/31 | 600,00 € |
 | 1–15 Oct | 600 × 15/31 | 290,32 € |
-| Week 27 Oct – 2 Nov | 600 × 5/31 + 600 × 2/30 | 136,77 € |
+| Week 26 Oct – 1 Nov (Mon–Sun) | 600 × 6/31 + 600 × 1/30 | 136,13 € |
+| Custom 27 Oct – 2 Nov | 600 × 5/31 + 600 × 2/30 | 136,77 € |
 | Year 2026 | 12 × 600 | 7 200,00 € |
 
 Day counts come from `Calendar.current.dateComponents([.day], from:to:)` on start-of-day dates. Never divide seconds by 86 400: DST days are 23 or 25 hours long.
@@ -460,7 +471,7 @@ Derived figures:
 - **Pace (expected by today):** `plan(monthStart, startOfTomorrow)`.
 - **Remaining:** `G − spent` (may be negative).
 - **Per-day allowance left:** `max(0, remaining) / daysLeft`, where `daysLeft` includes today.
-- **Usage %:** `spent / plan`, uncapped (shows 130 % when over).
+- **Usage %:** `spent / plan`, uncapped (shows 130 % when over). Undefined when `plan == 0` (`G == 0`): shown as "—", and Summary shows the same "Set a monthly goal" prompt as the Overview card (§8.4).
 
 ### 6.2 Periods
 
@@ -483,7 +494,7 @@ nonisolated struct Period: Sendable, Hashable {
 
 ### 6.3 Spending series (Trend)
 
-Input: the `[Payment]` from `/payments` for the visible range. Output: `[Bucket(start: Date, total: Money)]`.
+Input: the `[Payment]` from `/payments` for the visible range. Output: `[Bucket(start: Date, total: Money?)]` (`nil` = future, see below).
 
 | Granularity | Visible range | Buckets |
 |---|---|---|
@@ -527,27 +538,39 @@ An unreachable device comes back as `reachable: false` (B4), not as an HTTP erro
 `client.md` asks for every slider change to be sent. A naive `.onChange` → request would fire ~60 requests/s while dragging. They would run concurrently against a strip with no locking (B6), arrive out of order, and could leave the strip at a stale value. Design:
 
 ```swift
-actor BrightnessSender {
+@MainActor
+final class BrightnessSender {
     private var pending: Int?
-    private var inFlight = false
-    private var lastSent: Int?
+    private var lastSent: Int?                   // dedupe within one burst only
+    private var loop: Task<Void, Never>?
     private let send: @Sendable (Int) async throws(APIError) -> Void
-    private let onSettled: @Sendable (Result<Int, APIError>) async -> Void
+    private let onSettled: (Result<Int, APIError>) -> Void
 
-    /// Called for every slider change. Never more than one request in flight; latest value wins.
-    func submit(_ value: Int) async {
+    /// Called synchronously for every slider change. Never more than one request in flight; latest value wins.
+    /// `force` bypasses the duplicate check (power button, §7.3).
+    func submit(_ value: Int, force: Bool = false) {
+        if force { lastSent = nil }
         pending = value
-        guard !inFlight else { return }          // the running loop will pick it up
-        inFlight = true
-        var lastResult: Result<Int, APIError> = .success(value)
+        guard loop == nil else { return }        // the running loop will pick it up
+        loop = Task { await drain() }
+    }
+
+    private func drain() async {
+        var lastResult: Result<Int, APIError>?
         while let next = pending {
             pending = nil
             guard next != lastSent else { continue }
-            do { try await send(next); lastSent = next; lastResult = .success(next) }
-            catch { lastResult = .failure(error) }
+            do throws(APIError) {
+                try await send(next)
+                lastSent = next
+                lastResult = .success(next)
+            } catch {
+                lastResult = .failure(error)
+            }
         }
-        inFlight = false
-        await onSettled(lastResult)
+        loop = nil
+        lastSent = nil                           // burst over: the strip may change outside the app
+        if let lastResult { onSettled(lastResult) }
     }
 }
 ```
@@ -555,7 +578,10 @@ actor BrightnessSender {
 Properties:
 - **"On any change" is kept.** Every change is submitted. While a request is in flight, intermediate values collapse to the newest. The round-trip time (phone → Cloudflare → tunnel → gRPC → strip, ~100–300 ms) is the natural throttle. No timer is needed.
 - **Ordering:** strictly sequential, so the strip ends at the last value the user chose.
-- **Release:** `Slider(onEditingChanged:)` with `false` submits the final value. That is a no-op if it was already sent.
+- **Why main actor, not an `actor`:** `submit` is synchronous and called directly from `.onChange` / `onEditingChanged`, so values are recorded in the order the slider produced them. With an `actor`, every call would need `Task { await sender.submit(v) }`, and unstructured tasks hopping onto an actor aren't guaranteed to run in creation order. A stale value could then overtake the final one. The state is a few scalars. The network wait is an `await`, so the main thread is never blocked.
+- **Duplicates:** a value equal to the last one sent in the *same burst* is skipped (e.g. the release event after the last drag value). `lastSent` is cleared when the burst ends, because the automation can change the strip between bursts. `force: true` always sends.
+- **Typed throws:** `do throws(APIError)` is needed. Without the `FullTypedThrows` feature, a plain `do`/`catch` binds `error` as `any Error`.
+- **Release:** `Slider(onEditingChanged:)` with `false` submits the final value. That is a no-op while the burst is still running. If the burst has already ended, it costs one redundant set, which is idempotent and harmless.
 - **Reconcile:** `onSettled(.success)` schedules one `/devices` refresh after 1 s, cancelled if a new submit arrives. The tile then reflects what the strip actually reports.
 - **Failure:** `onSettled(.failure)` rolls the slider back to the last confirmed brightness and shows an inline error on the tile.
 - The slider's displayed value is local UI state (`@State`). It is only overwritten by store state when the user isn't dragging, so a refresh never yanks the thumb.
@@ -564,7 +590,7 @@ Slider spec: `0…100`, step 1, sent as `Int`. `0` means off (`/updBrightness/0`
 
 ### 7.3 Power and automation
 
-- **Power button** on the tile: if on → send `0`; if off → send `lastNonZeroBrightness`. That is persisted in `UserDefaults` per device id, default `25`, matching the automation's default in `ColoStrip.on`. It goes through the same `BrightnessSender`.
+- **Power button** on the tile: if on → send `0`; if off → send `lastNonZeroBrightness`. That is persisted in `UserDefaults` per device id, default `25`, matching the automation's default in `ColoStrip.on`. It goes through the same `BrightnessSender` with `force: true`. The automation may have changed the strip since the app last sent a value, so "restore 40" must be sent even if 40 was the last value sent.
 - **Automation switch** (Lights screen, below the tiles): `GET /updActive/{true|false}`. Optimistic toggle with rollback on error. Shown with the read-only line "Owner at home: yes/no" from `automation.ownerPresent`.
 - **Override hint** (footer text): "Automation checks every 10 minutes and may switch the lights off at bedtime or when you leave." Without it, a manual change being reverted would look like a bug.
 - The client never calls `/updStatus`.
@@ -685,7 +711,9 @@ toolbar: Cancel · Save
 - Focus starts on Store; Return moves to Amount (`@FocusState`).
 - **Save** is enabled only when store and amount are valid (§5.2, §5.3) and no request is in flight. While saving, the button shows a `ProgressView` and the form is disabled. This guards against a double submit, which would create two payments because the route isn't idempotent.
 - Success: success haptic, dismiss, `BudgetStore.invalidateAll()` and refetch of what is visible.
-- Failure: the sheet stays open with values intact and a `StatusBanner` at the top. On `.timeout`, the message warns: "The server didn't confirm. Check the list before retrying, it may have been saved." A timeout on a non-idempotent write is ambiguous.
+- Failure: the sheet stays open with values intact and a `StatusBanner` at the top. The copy depends on `APIError.isDefiniteRejection` (§4.4):
+  - `.unauthorized` / `.invalidInput`: the normal error message. Nothing was saved, and retrying is safe once the cause is fixed.
+  - Any other error (`.timeout`, `.offline`, `.server`, …): "The server didn't confirm — it may have been saved. Check today's bar in Budget › Trend before retrying." A failed non-idempotent write is ambiguous. There is no payment list yet (§10, step 11), so the Trend bar for the payment's day is where to check.
 - Sent as `/add_payment/{secret}/{store}/{12.34}?at={UTC ISO}` (B1).
 
 ### 8.7 Lights
@@ -732,9 +760,10 @@ toolbar: Cancel · Save
 | `BudgetMathTests` | the table in §6.1; leap February; a period across a year boundary; `G = 0`; pace on the 1st and last day. |
 | `PeriodTests` | week start honours `firstWeekday`; `shifted` across years; `endExclusive` correct on DST-change days (Europe/Berlin, 2026-03-29 and 2026-10-25) with a fixed calendar injected. |
 | `SpendingSeriesTests` | zero-fill; a 23:30 local payment lands on that local day; future buckets are `nil`; monthly buckets over 12 months. |
+| `StoreNameTests` | trim/collapse; 64-char limit; `/` rejected; `.` and `..` rejected; `Dr. Oetker` accepted. |
 | `EndpointTests` | segment encoding (space, `&`, `?`, `#`, `ü`, `%`); the secret appears exactly once and only for authorized routes; `?at=` contains no `+`. |
-| `ResponseDecodingTests` | legacy `200`, `403`, HTTP 401, 422 list detail, 422 string detail, HTML 403 from Cloudflare → `.unexpectedResponse`, 504 → `.timeout`. |
-| `BrightnessSenderTests` | with a fake `send` that suspends: at most one in flight; 100 rapid submits → ≤ 3 sends, last = final value; failure → `onSettled(.failure)`; duplicate of `lastSent` not resent. |
+| `ResponseDecodingTests` | legacy `200`, `403`, empty 2xx body; HTTP 401 JSON → `.unauthorized`; HTML 403 from Cloudflare → `.unexpectedResponse`; 422 list detail, 422 string detail; `text/plain` 500 → `.server`; HTML 502/530 → `.unreachableService`; 504 → `.timeout`; `/payments` dates with and without fractional seconds; `isDefiniteRejection` per case. |
+| `BrightnessSenderTests` | with a fake `send` that suspends: at most one in flight; 100 synchronous submits → ≤ 3 sends, last = final value, order preserved; failure → `onSettled(.failure)`; duplicate of `lastSent` not resent within a burst; same value resent after the burst ends; `force: true` always sends. |
 
 ### 9.2 `APIClient` tests
 
@@ -765,7 +794,7 @@ Each step ends in a buildable app that does something verifiable. Backend depend
 | # | Step | Deliverable | Verify | Backend |
 |---|---|---|---|---|
 | 1 | **Project hygiene** | §1 build settings, folder skeleton (§3.2), test target, `Theme` tokens in the asset catalog, `RootView` with four empty tabs. | Builds in Swift 6 mode with no warnings; runs on iPhone 15. | — |
-| 2 | **Config** | `Makefile` target, xcconfigs, partial `Info.plist`, `.gitignore` line, `AppConfig` (§2). | Settings shows the host; launching without `Secrets.xcconfig` fails with the explicit message. | — |
+| 2 | **Config** | `Makefile` target, xcconfigs and partial `Info.plist` in `client/Config/`, `.gitignore` line, `AppConfig` (§2). | Settings shows the host; launching without `Secrets.xcconfig` fails with the explicit message. | — |
 | 3 | **Networking core** | `APIClient`, `Endpoint`, `APIError`, decoding rules (§4); `GatewayService`; Settings › Test connection. Tests §9.1 `EndpointTests` and `ResponseDecodingTests`, plus §9.2. | Checklist items 1–3. | — |
 | 4 | **Settings: goal** | `MoneyParser` (§5.2), `SettingsStore`, goal field. | Value survives relaunch; parser tests pass. | — |
 | 5 | **Overview budget card** | `Money`, `Period`, `BudgetMath`, `BudgetService.total`, `BudgetStore`, donut card, empty/over/no-goal states. | Matches a manual `curl /query` for the month. | **B0** for correct numbers (the card works without it, but shows the audit §5 values). |
