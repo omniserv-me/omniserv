@@ -13,9 +13,19 @@ Goal: allow for convenient query/control of the /smartlife and /omniscient proje
 Design steps:
 
 Design decisions:
-    Auth: The app is distributed by hand, so the secret may be injected from local .env on build and packaged together with the application to the end-device
-        No further auth framework is required for the initial implementation - but will be integrated both with client and server later.
-    Endpoints: Currently available endpoints are to be utilized wherever possible. The amount of endpoints is to be kept slim.
+    Auth: The app is distributed by hand, so the secrets may be injected from local .env on build and packaged together with the application to the end-device.
+        Bundling the secrets is an accepted risk: single user, single device, rotation is just a rebuild.
+        No auth framework (accounts, OAuth, per-user tokens) is required for the initial implementation. A minimal "phase 0" is required though, together with the server:
+            1. The API secret travels in a header (Authorization: Bearer <secret>), never in the URL. URLs end up in access logs and Cloudflare logs.
+            2. Cloudflare Access with a service token in front of api.omniserv.me, so unauthenticated traffic is rejected at the edge.
+               The app sends the two CF-Access-* headers, injected from .env the same way as the API secret.
+            3. The backend publishes no host ports except what cloudflared needs, so the edge can't be bypassed from the LAN (gRPC and Mongo have no auth).
+        Revisit (per-client tokens, scopes, a real auth framework) when a second user, a second client besides the app and the Shortcuts, or exposure outside Cloudflare appears.
+    Endpoints: The amount of endpoints is to be kept slim. The client uses a new, versioned API (/v1) that follows HTTP conventions:
+            GET reads and never changes state; POST creates; PATCH partially updates; DELETE removes.
+            Inputs go in the path (resource ids), the query string (filters) or a JSON body (writes) - never secrets.
+            Statuses mean what they say: 200/201/204 on success, 401 wrong secret, 404 unknown resource, 422 invalid input, 5xx server side; errors have a JSON body.
+        Existing (legacy) endpoints stay untouched until the Shortcuts automations are moved to /v1, then they are removed.
         Addition of new endpoints is possible: they first are to be designed and documented in the design doc and only then implemented.
         Every endpoint is to have clearly defined scope and goal.
     UI: UI is designed to be responsive and feel light-weight.
