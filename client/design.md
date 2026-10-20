@@ -69,6 +69,8 @@ Other housekeeping:
 
 The project uses file-system-synchronized groups (`objectVersion = 90`), so new folders and files under `client/Omniserv/` are picked up without editing `project.pbxproj`. The flip side: every file in that folder becomes a target member, so files that must not be bundled as resources live in `client/Config/` instead. An `Info.plist` inside `Omniserv/` would also land in Copy Bundle Resources and fail the build with "Multiple commands produce …/Info.plist".
 
+Because `client/Config/` is outside the synchronized group, `Omniserv.xcconfig` needs a plain file reference in the project (no target membership) before it can be chosen as the base configuration. That is the one `project.pbxproj` change beyond build settings; make it through Xcode's Info › Configurations. `INFOPLIST_FILE` is just a path and needs no reference.
+
 ---
 
 ## 2. Configuration & secret injection
@@ -144,7 +146,7 @@ nonisolated struct AppConfig: Sendable {
 }
 ```
 - Reads both keys from `bundle.infoDictionary`.
-- If a key is missing, empty, or still the literal `$(…)`: `preconditionFailure("Run `make client-config` …")` in Debug. A side-loaded personal app has no Release audience to protect, so the same check applies in Release.
+- If a key is missing, empty, or still the literal `$(…)`: `preconditionFailure("Run make client-config …")`, in every configuration. A side-loaded personal app has no Release audience to protect.
 - Loaded once in `OmniservApp.init` and passed into `APIClient` — never read from `Bundle` anywhere else.
 
 **Accepted risk** (per `client.md`): the secret is plaintext inside the `.app` bundle on the device and in Xcode's build products. Moving it to the Keychain would not help while it is bundled anyway. It is revisited together with server-side auth (step 11).
@@ -325,14 +327,19 @@ Response checks shared by all routes, in this order. Status comes first: today e
 2. Status `401` / `403`: JSON body → `.unauthorized` (after audit §1 is fixed); non-JSON body → `.unexpectedResponse`. An HTML `403` is a Cloudflare challenge (B9), not a wrong secret.
 3. Status `400` / `422` → `.invalidInput(detail)`. The `detail` comes from the body: FastAPI's list form today; the string form once B8 is in.
 4. Status `2xx` with a `Content-Type` other than `application/json` → `.unexpectedResponse` (except the empty legacy body above).
+4a. Status `404` → `.notFound`. A route the deployed backend doesn't have yet (e.g. `/payments` before B2, `/devices` before B4), since client and backend steps proceed in parallel (§10). Any other `4xx` (e.g. a Cloudflare `429`) → `.server(status, detail?)`.
 5. Body exactly `403` → `.unauthorized` (both `get` and `send`). Otherwise decode `T`, or apply the legacy rules above. A decoding failure is a developer error, mapped to `.unexpectedResponse` ("Unexpected response").
+
+**Snake-case keys.** With `.convertFromSnakeCase` the decoder converts keys *before* matching `CodingKeys`, so custom keys must be the camelCase form (`case amountCents`, `ownerPresent`, `totalCents`). A raw value `"amount_cents"` never matches.
 
 ### 4.4 `APIError`
 
 ```swift
 nonisolated enum APIError: Error, Sendable, Equatable {
-    case offline                       // URLError.notConnectedToInternet, .networkConnectionLost
+    case offline                       // URLError.notConnectedToInternet, .networkConnectionLost, .dataNotAllowed
+    case cannotConnect                 // URLError.cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .secureConnectionFailed, any other URLError
     case timeout                       // URLError.timedOut, or a 504 from B7
+    case notFound                      // 404: route not deployed yet (§4.3 rule 4a)
     case unauthorized                  // wrong secret (rebuild with the right .env)
     case invalidInput(String?)         // 422, 400
     case server(status: Int, detail: String?)
@@ -344,9 +351,9 @@ nonisolated enum APIError: Error, Sendable, Equatable {
     var isDefiniteRejection: Bool { … }  // true only for .unauthorized, .invalidInput
 }
 ```
-User-facing copy is short and actionable: "No connection", "The server didn't answer in time", "Wrong API secret — rebuild the app", "Lights are unreachable".
+User-facing copy is short and actionable: "No connection", "Can't reach the server", "The server didn't answer in time", "Wrong API secret — rebuild the app", "Lights are unreachable", "The server doesn't support this yet — update the backend".
 
-`isDefiniteRejection` matters for non-idempotent writes. Only those two cases prove the server didn't apply the request. Every other error after the request left the device may hide a success: `.offline` includes `networkConnectionLost`, and a `500` can follow a completed insert. Write callers use it to choose between "not saved" and "may have been saved" (§8.6).
+`isDefiniteRejection` matters for non-idempotent writes. `.notFound` is also safe in practice (no handler ran), but it is kept out because it never happens on the legacy write routes. Only those two cases prove the server didn't apply the request. Every other error after the request left the device may hide a success: `.offline` includes `networkConnectionLost`, and a `500` can follow a completed insert. Write callers use it to choose between "not saved" and "may have been saved" (§8.6).
 
 ### 4.5 Dates on the wire
 
@@ -426,7 +433,7 @@ nonisolated struct PaymentDraft: Sendable { var store: String; var amount: Money
 
 ```swift
 nonisolated struct SmartlifeState: Sendable, Decodable {
-    struct Automation: Sendable, Decodable { let active: Bool; let ownerPresent: Bool? }  // nil = unknown since smartlife restarted (B4)
+    nonisolated struct Automation: Sendable, Decodable { let active: Bool; let ownerPresent: Bool? }  // nil = unknown since smartlife restarted (B4)
     let automation: Automation
     let devices: [Device]
 }
@@ -441,6 +448,8 @@ nonisolated struct Device: Sendable, Identifiable, Decodable {
     let brightness: Int?  // 0…100; nil when unreachable, may be nil when off (B4)
 }
 ```
+Nested types are marked `nonisolated` explicitly. Under `MainActor` default isolation, don't rely on them inheriting it from the enclosing type.
+
 `Kind.unknown` (via a custom `init(from:)` fallback) lets a newer backend add device kinds without breaking an older app build: the tile then shows name and reachability only.
 
 ---
@@ -545,6 +554,7 @@ An unreachable device comes back as `reachable: false` (B4), not as an HTTP erro
 @MainActor
 final class BrightnessSender {
     private var pending: Int?
+    private var pendingForced = false            // `pending` must be sent even if it equals `lastSent`
     private var lastSent: Int?                   // dedupe within one burst only
     private var loop: Task<Void, Never>?
     private let send: @Sendable (Int) async throws(APIError) -> Void
@@ -553,8 +563,8 @@ final class BrightnessSender {
     /// Called synchronously for every slider change. Never more than one request in flight; latest value wins.
     /// `force` bypasses the duplicate check (power button, §7.3).
     func submit(_ value: Int, force: Bool = false) {
-        if force { lastSent = nil }
         pending = value
+        pendingForced = force                    // a newer non-forced value supersedes an older forced one
         guard loop == nil else { return }        // the running loop will pick it up
         loop = Task { await drain() }
     }
@@ -562,8 +572,10 @@ final class BrightnessSender {
     private func drain() async {
         var lastResult: Result<Int, APIError>?
         while let next = pending {
+            let forced = pendingForced
             pending = nil
-            guard next != lastSent else { continue }
+            pendingForced = false
+            guard forced || next != lastSent else { continue }
             do throws(APIError) {
                 try await send(next)
                 lastSent = next
@@ -584,7 +596,7 @@ Properties:
 - **Ordering:** strictly sequential, so the strip ends at the last value the user chose.
 - **Only user input submits.** `submit` is called from the slider's `Binding` setter, the power button and the accessibility adjustable action, never from `.onChange(of:)`. The displayed value is also written by code: a store refresh while the user isn't dragging, or a rollback after a failure. An `.onChange` hook would fire on those writes too and send them back to the strip; a rollback would actively re-send the old value. The tile therefore binds the slider to `Binding(get: { displayed }, set: { displayed = $0; sender.submit(Int($0)) })` and assigns `displayed` directly for refreshes and rollbacks.
 - **Why main actor, not an `actor`:** `submit` is synchronous and called directly from the binding setter / `onEditingChanged`, so values are recorded in the order the slider produced them. With an `actor`, every call would need `Task { await sender.submit(v) }`, and unstructured tasks hopping onto an actor aren't guaranteed to run in creation order. A stale value could then overtake the final one. The state is a few scalars. The network wait is an `await`, so the main thread is never blocked.
-- **Duplicates:** a value equal to the last one sent in the *same burst* is skipped (e.g. the release event after the last drag value). `lastSent` is cleared when the burst ends, because the automation can change the strip between bursts. `force: true` always sends.
+- **Duplicates:** a value equal to the last one sent in the *same burst* is skipped (e.g. the release event after the last drag value). `lastSent` is cleared when the burst ends, because the automation can change the strip between bursts. `force: true` always sends, even when the same value is in flight at that moment. The flag travels with the pending value, so the in-flight completion setting `lastSent` can't swallow it.
 - **Typed throws:** `do throws(APIError)` is needed. Without the `FullTypedThrows` feature, a plain `do`/`catch` binds `error` as `any Error`.
 - **Release:** `Slider(onEditingChanged:)` with `false` submits the final value. That is a no-op while the burst is still running. If the burst has already ended, it costs one redundant set, which is idempotent and harmless.
 - **Reconcile:** `onSettled` schedules one `/devices` refresh after 1 s, cancelled if a new submit arrives. It does so on success *and* failure. The tile then reflects what the strip actually reports.
@@ -595,8 +607,9 @@ Slider spec: `0…100`, step 1, sent as `Int`. `0` means off (`/updBrightness/0`
 
 ### 7.3 Power and automation
 
-- **Power button** on the tile: if on → send `0`; if off → send `lastNonZeroBrightness`. That is persisted in `UserDefaults` per device id, default `25`, matching the automation's default in `ColoStrip.on`. It goes through the same `BrightnessSender` with `force: true`. The automation may have changed the strip since the app last sent a value, so "restore 40" must be sent even if 40 was the last value sent.
+- **Power button** on the tile: if on → send `0`; if off → send `lastNonZeroBrightness`. That is persisted in `UserDefaults` per device id, default `25`, matching the automation's default in `ColoStrip.on`. It is updated from two sources: every non-zero value the app sends successfully, and every non-zero `brightness` that `/devices` reports with `on: true`. A level set by the automation or another caller is therefore restored as well. It goes through the same `BrightnessSender` with `force: true`. The automation may have changed the strip since the app last sent a value, so "restore 40" must be sent even if 40 was the last value sent.
 - **Automation switch** (Lights screen, below the tiles): `GET /updActive/{true|false}`. The toggle flips optimistically. On a definite rejection it rolls back; on any other error it refetches `/devices`. `updActive(true)` sets the flag on the server *before* it runs `check()`, so a `502` from an unreachable strip (B7) still leaves automation on. Shown with the read-only line "Owner at home: yes / no / unknown" from `automation.ownerPresent` (`nil` = unknown until the presence Shortcut reports after a smartlife restart, B4).
+- **Pausing means pausing.** "Automation off" must also stop presence reports (`/updStatus`) from switching the strip. Today they still run `check()` (audit §8). backend.md B4 fixes that; until it ships, the toggle only pauses the 10-minute loop.
 - **Override hint** (footer text): "Automation checks every 10 minutes and may switch the lights off at bedtime or when you leave." Without it, a manual change being reverted would look like a bug.
 - The client never calls `/updStatus`.
 
@@ -739,7 +752,7 @@ toolbar: Cancel · Save
 | Section | Content |
 |---|---|
 | Budget | "Monthly goal" text field (§5.2). It is saved on submit or when the field loses focus, and persisted in `UserDefaults` under `settings.monthlyGoalCents`. A change recomputes plans immediately and needs no fetch. |
-| About | Server host (read-only, from `AppConfig`), app version and build, "Test connection" button → `GET /health` with latency in ms, then `GET /devices` to check the secret (`/health` is unauthenticated, so on its own it passes with a wrong secret). Shows `OK · NN ms` or the first error. |
+| About | Server host (read-only, from `AppConfig`), app version and build, "Test connection" button → `GET /health` with latency in ms, then `GET /query` for today → tomorrow to check the secret (`/health` is unauthenticated, so on its own it passes with a wrong secret). `/query` exists today, is read-only, and covers both the legacy body `403` and the post-B0 `401`, so the test works from step 3 on, without B4. Shows `OK · NN ms` or the first error. |
 
 `SettingsStore` is `@Observable` and backed by `UserDefaults.standard`. It isn't `@AppStorage`, because non-view code (stores) reads the goal too.
 
@@ -767,8 +780,8 @@ toolbar: Cancel · Save
 | `SpendingSeriesTests` | zero-fill; a 23:30 local payment lands on that local day; future buckets are `nil`; monthly buckets over 12 months. |
 | `StoreNameTests` | trim/collapse; 64-char limit; `/` rejected; `.` and `..` rejected; `Dr. Oetker` accepted. |
 | `EndpointTests` | segment encoding (space, `&`, `?`, `#`, `ü`, `%`); the secret appears exactly once and only for authorized routes; `?at=` contains no `+`. |
-| `ResponseDecodingTests` | legacy `200`, `403`, empty 2xx body; HTTP 200 + body `403` on a JSON route (`get`) → `.unauthorized`; HTTP 401 JSON → `.unauthorized`; `/devices` with `owner_present: null`; HTML 403 from Cloudflare → `.unexpectedResponse`; 422 list detail, 422 string detail; `text/plain` 500 → `.server`; HTML 502/530 → `.unreachableService`; 504 → `.timeout`; `/payments` dates with and without fractional seconds; `isDefiniteRejection` per case. |
-| `BrightnessSenderTests` | with a fake `send` that suspends: at most one in flight; 100 synchronous submits → ≤ 3 sends, last = final value, order preserved; failure → `onSettled(.failure)`; duplicate of `lastSent` not resent within a burst; same value resent after the burst ends; `force: true` always sends. |
+| `ResponseDecodingTests` | legacy `200`, `403`, empty 2xx body; HTTP 200 + body `403` on a JSON route (`get`) → `.unauthorized`; HTTP 401 JSON → `.unauthorized`; `/devices` with `owner_present: null`; HTML 403 from Cloudflare → `.unexpectedResponse`; 422 list detail, 422 string detail; JSON 404 → `.notFound`; 429 → `.server`; `URLError.cannotFindHost` → `.cannotConnect`; `text/plain` 500 → `.server`; HTML 502/530 → `.unreachableService`; 504 → `.timeout`; `/payments` dates with and without fractional seconds; `isDefiniteRejection` per case. |
+| `BrightnessSenderTests` | with a fake `send` that suspends: at most one in flight; 100 synchronous submits → ≤ 3 sends, last = final value, order preserved; failure → `onSettled(.failure)`; duplicate of `lastSent` not resent within a burst; same value resent after the burst ends; `force: true` always sends, including while the same value is in flight. |
 
 ### 9.2 `APIClient` tests
 
@@ -781,7 +794,7 @@ Every feature view has `#Preview`s on `AppEnvironment.preview()` covering these 
 ### 9.4 Manual end-to-end checklist (on device, against production)
 
 1. Fresh clone → `make client-config` → build & run → Settings › Test connection shows `OK · NN ms`.
-2. Build with a wrong secret → any screen and Settings › Test connection show "Wrong API secret".
+2. Build with a wrong secret → Settings › Test connection shows "Wrong API secret" (from step 5 on, every data screen does too).
 3. Airplane mode → screens keep the last values and show "No connection"; pull-to-refresh recovers.
 4. Add a check `Test 0,29 €` dated yesterday 23:30 (not on the 1st: yesterday would be in the previous month) → the Overview total rises by exactly 0,29 €. Trend daily shows it on yesterday's bar. Mongo has `amount: 29` and the right UTC date.
 5. Drag the slider quickly from 0 to 100 and back to 37 → the strip ends at 37; the server log shows a short sequential series of `/updBrightness` calls, not dozens. Then change the brightness with `curl` and pull to refresh → the slider moves to the new value and **no** `/updBrightness` call follows.
@@ -800,7 +813,7 @@ Each step ends in a buildable app that does something verifiable. Backend depend
 |---|---|---|---|---|
 | 1 | **Project hygiene** | §1 build settings, folder skeleton (§3.2), test target, `Theme` tokens in the asset catalog, `RootView` with four empty tabs. | Builds in Swift 6 mode with no warnings; runs on iPhone 15. | — |
 | 2 | **Config** | `Makefile` target, xcconfigs and partial `Info.plist` in `client/Config/`, `.gitignore` line, `AppConfig` (§2). | Settings shows the host; launching without `Secrets.xcconfig` fails with the explicit message. | — |
-| 3 | **Networking core** | `APIClient`, `Endpoint`, `APIError`, decoding rules (§4); `GatewayService`; Settings › Test connection. Tests §9.1 `EndpointTests` and `ResponseDecodingTests`, plus §9.2. | Checklist items 1–3. | — |
+| 3 | **Networking core** | `APIClient`, `Endpoint`, `APIError`, decoding rules (§4); `GatewayService`; Settings › Test connection (`/health` + `/query` probe, §8.8). Tests §9.1 `EndpointTests` and `ResponseDecodingTests`, plus §9.2. | Checklist items 1–3. | — |
 | 4 | **Settings: goal** | `MoneyParser` (§5.2), `SettingsStore`, goal field. | Value survives relaunch; parser tests pass. | — |
 | 5 | **Overview budget card** | `Money`, `Period`, `BudgetMath`, `BudgetService.total`, `BudgetStore`, donut card, empty/over/no-goal states. | Matches a manual `curl /query` for the month. | **B0** for correct numbers (the card works without it, but shows the audit §5 values). |
 | 6 | **Budget › Summary** | Period selector, history navigation, plan vs actual, pace. | Hand-computed plan for three periods matches the UI. | B0 |
@@ -836,3 +849,4 @@ Steps 1–6 need no backend work beyond B0, so client and backend work can proce
 3. **Cloudflare Access.** Is a Zero Trust Access policy in front of `api.omniserv.me`? If yes, the app needs `CF-Access-Client-Id` / `CF-Access-Client-Secret` service-token headers. That is the same injection path as §2 and a one-line addition in `APIClient`.
 4. **Shortcuts automation and `/payments`.** Older documents may hold euro floats (audit §5). B0's inventory query shows whether any exist; its migration decides whether historic months are shown.
 5. **Shortcuts and a real `401`.** B0/§1 changes a wrong secret from `200` to `401`. Confirm that the payment and presence Shortcuts don't depend on always getting `200`.
+6. **Strip read timeout.** B4 and B6 budget a ~2 s single `state()` read plus a 2.5 s lock wait, inside B7's 5 s deadline. Confirm that `pycololighto` 2.1.1 lets the socket timeout be set (or wraps it). If it doesn't, B4 needs its own bounded read.
