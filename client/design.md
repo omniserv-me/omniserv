@@ -28,7 +28,7 @@
 iPhone ──HTTPS──▶ api.omniserv.me (Cloudflare edge)
                     │  Cloudflare Zero Trust tunnel (encrypted)
                     ▼
-               cloudflared (private network, no open ports)
+               cloudflared (private network; host ports: see B9.6)
                     │  plain HTTP
                     ▼
                api:5006 ──gRPC──▶ omniscient / smartlife
@@ -116,6 +116,7 @@ The `#include?` is optional, so a fresh clone still builds; `AppConfig` then fai
 
 Root `Makefile`, new target:
 ```make
+.PHONY: client-config
 client-config:
 	@test -n "$(API_SECRET)" || { echo "API_SECRET is not set in .env"; exit 1; }
 	@mkdir -p client/Config
@@ -197,6 +198,7 @@ With `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, every unannotated type is main
 
 - **Domain models** (`Money`, `Payment`, `Device`, DTOs): declare `nonisolated struct … : Sendable, Codable`. Otherwise their `Decodable` init is main-actor-isolated and can't be used from `APIClient`.
 - **`APIClient` and live services**: `nonisolated final class … : Sendable`, holding only `let` properties (`URLSession`, `AppConfig`, `JSONDecoder` created per call or held as `let`).
+- **Shared statics used by the networking layer** (`URLSession.omniserv`, `Endpoint` factories, date-format and decoder helpers): declare them `nonisolated static`. An unannotated `extension URLSession { static let omniserv }` is main-actor-isolated, so the `nonisolated` `APIClient.init` couldn't even use it as a default argument.
 - **Stores**: stay main-actor (the default), `@Observable final class`.
 - **Decoding** happens in the `nonisolated async` service method. Under approachable concurrency it runs on the caller's actor (main). Payloads here are tiny (largest is the B2 list, ~1 500 rows/year), so that's acceptable; if profiling ever shows a hitch, mark the decode helper `@concurrent`.
 - **`BrightnessSender`** is a `@MainActor` class with a synchronous `submit` (§7.2), so slider values keep their order.
@@ -316,12 +318,14 @@ HTTP 2xx + {"status":"ok"} → success
 HTTP 2xx + anything else   → .unexpectedResponse
 ```
 
+**Wrong secret on JSON routes.** Until B0/§1 is deployed, `/query` with a wrong secret also answers HTTP `200` with body `403`. `get(_:as:)` therefore checks for a body that is exactly the integer `403` before decoding `T` and maps it to `.unauthorized`. Without that check a wrong secret on a read would surface as "Unexpected response". After B0/§1 every protected route answers HTTP `401` with JSON instead (rule 2 below).
+
 Response checks shared by all routes, in this order. Status comes first: today every downstream failure is a `text/plain` `500` (API-CONTRACT §2.3), and Cloudflare's tunnel errors are HTML, so a Content-Type-first check would turn all of them into "Unexpected response".
 1. Status `502` / `530` → `.unreachableService(detail?)`; `504` → `.timeout`; any other `5xx` → `.server(status, detail?)`. `detail` is read only when the body is JSON (B8), otherwise `nil`.
 2. Status `401` / `403`: JSON body → `.unauthorized` (after audit §1 is fixed); non-JSON body → `.unexpectedResponse`. An HTML `403` is a Cloudflare challenge (B9), not a wrong secret.
 3. Status `400` / `422` → `.invalidInput(detail)`. The `detail` comes from the body: FastAPI's list form today; the string form once B8 is in.
 4. Status `2xx` with a `Content-Type` other than `application/json` → `.unexpectedResponse` (except the empty legacy body above).
-5. Decode `T`, or apply the legacy rules above. A decoding failure is a developer error, mapped to `.unexpectedResponse` ("Unexpected response").
+5. Body exactly `403` → `.unauthorized` (both `get` and `send`). Otherwise decode `T`, or apply the legacy rules above. A decoding failure is a developer error, mapped to `.unexpectedResponse` ("Unexpected response").
 
 ### 4.4 `APIError`
 
@@ -332,7 +336,7 @@ nonisolated enum APIError: Error, Sendable, Equatable {
     case unauthorized                  // wrong secret (rebuild with the right .env)
     case invalidInput(String?)         // 422, 400
     case server(status: Int, detail: String?)
-    case unreachableService(String?)   // 502 from B7 (omniscient/smartlife down), 502/530 from cloudflared
+    case unreachableService(String?)   // 502 from B7 (omniscient/smartlife down, or "strip unreachable" on a write), 502/530 from cloudflared
     case unexpectedResponse            // non-JSON 2xx / Cloudflare challenge / unknown shape
     case cancelled                     // swallowed by stores, never shown
 
@@ -390,7 +394,7 @@ Used by the Add sheet and by Settings (goal). It works on a `String` field with 
 2. Accept exactly one decimal separator, `,` or `.`; reject grouping separators (`1.234,56` → invalid: ambiguous).
 3. Regex `^\d{1,6}([.,]\d{1,2})?$`.
 4. `Decimal(string: normalized, locale: Locale(identifier: "en_US_POSIX"))` → `× 100`. Exact because there are ≤ 2 decimals → `Int`.
-5. Bounds: payment `0 < x ≤ 100 000,00 €`; goal `0 ≤ x ≤ 1 000 000,00 €`.
+5. Bounds: payment `0 < x ≤ 100 000,00 €`; goal `0 ≤ x ≤ 999 999,99 €` (the regex's six integer digits).
 
 Errors are inline under the field ("Use up to 2 decimals", "Amount must be above 0").
 
@@ -422,7 +426,7 @@ nonisolated struct PaymentDraft: Sendable { var store: String; var amount: Money
 
 ```swift
 nonisolated struct SmartlifeState: Sendable, Decodable {
-    struct Automation: Sendable, Decodable { let active: Bool; let ownerPresent: Bool }
+    struct Automation: Sendable, Decodable { let active: Bool; let ownerPresent: Bool? }  // nil = unknown since smartlife restarted (B4)
     let automation: Automation
     let devices: [Device]
 }
@@ -434,7 +438,7 @@ nonisolated struct Device: Sendable, Identifiable, Decodable {
     let name: String
     let reachable: Bool
     let on: Bool
-    let brightness: Int?  // 0…100; nil when unreachable
+    let brightness: Int?  // 0…100; nil when unreachable, may be nil when off (B4)
 }
 ```
 `Kind.unknown` (via a custom `init(from:)` fallback) lets a newer backend add device kinds without breaking an older app build: the tile then shows name and reachability only.
@@ -505,7 +509,7 @@ Input: the `[Payment]` from `/payments` for the visible range. Output: `[Bucket(
 - **Zero-fill** every bucket in range (`calendar.enumerateDates` over the period) so bars align and empty days are visible.
 - Future buckets of the current month are emitted with `total = nil` and not drawn (the axis still spans the month).
 - Reference line: daily budget `G / daysIn(month)`, or monthly `G`.
-- If `PaymentPage.truncated` is true (B2 cap), the chart shows a footnote "Showing first N payments".
+- If `PaymentPage.truncated` is true (B2 cap), the chart shows a footnote "Showing the latest N payments". B2 returns rows newest first, so the earliest buckets are the incomplete ones. At ~100 payments/month this needs 4+ years in one range, which the 400-day limit rules out; the footnote is a safeguard.
 
 ### 6.4 What is fetched when
 
@@ -529,7 +533,7 @@ Input: the `[Payment]` from `/payments` for the visible range. Output: `[Bucket(
 
 ### 7.1 Reading state
 
-`LightsStore` loads `GET /devices` (B4) on first appearance of Overview or Lights, on pull-to-refresh, when the app becomes active (§8.3), and once after brightness changes settle (§7.2). There is no polling timer: the strip changes on its own only through automation, at most every ~10 min, and a refresh on foregrounding is enough for a personal app.
+`LightsStore` loads `GET /devices` (B4) on first appearance of Overview or Lights, on pull-to-refresh, when the app becomes active (§8.3), and once after brightness changes settle (§7.2). There is no polling timer. Outside the app the strip changes only through the automation loop (every ~10 min) and the presence Shortcut (`/updStatus` on leaving/arriving), and a refresh on foregrounding is enough for a personal app.
 
 An unreachable device comes back as `reachable: false` (B4), not as an HTTP error, so the tile can render "Unreachable" while the rest of the screen works.
 
@@ -578,12 +582,13 @@ final class BrightnessSender {
 Properties:
 - **"On any change" is kept.** Every change is submitted. While a request is in flight, intermediate values collapse to the newest. The round-trip time (phone → Cloudflare → tunnel → gRPC → strip, ~100–300 ms) is the natural throttle. No timer is needed.
 - **Ordering:** strictly sequential, so the strip ends at the last value the user chose.
-- **Why main actor, not an `actor`:** `submit` is synchronous and called directly from `.onChange` / `onEditingChanged`, so values are recorded in the order the slider produced them. With an `actor`, every call would need `Task { await sender.submit(v) }`, and unstructured tasks hopping onto an actor aren't guaranteed to run in creation order. A stale value could then overtake the final one. The state is a few scalars. The network wait is an `await`, so the main thread is never blocked.
+- **Only user input submits.** `submit` is called from the slider's `Binding` setter, the power button and the accessibility adjustable action, never from `.onChange(of:)`. The displayed value is also written by code: a store refresh while the user isn't dragging, or a rollback after a failure. An `.onChange` hook would fire on those writes too and send them back to the strip; a rollback would actively re-send the old value. The tile therefore binds the slider to `Binding(get: { displayed }, set: { displayed = $0; sender.submit(Int($0)) })` and assigns `displayed` directly for refreshes and rollbacks.
+- **Why main actor, not an `actor`:** `submit` is synchronous and called directly from the binding setter / `onEditingChanged`, so values are recorded in the order the slider produced them. With an `actor`, every call would need `Task { await sender.submit(v) }`, and unstructured tasks hopping onto an actor aren't guaranteed to run in creation order. A stale value could then overtake the final one. The state is a few scalars. The network wait is an `await`, so the main thread is never blocked.
 - **Duplicates:** a value equal to the last one sent in the *same burst* is skipped (e.g. the release event after the last drag value). `lastSent` is cleared when the burst ends, because the automation can change the strip between bursts. `force: true` always sends.
 - **Typed throws:** `do throws(APIError)` is needed. Without the `FullTypedThrows` feature, a plain `do`/`catch` binds `error` as `any Error`.
 - **Release:** `Slider(onEditingChanged:)` with `false` submits the final value. That is a no-op while the burst is still running. If the burst has already ended, it costs one redundant set, which is idempotent and harmless.
-- **Reconcile:** `onSettled(.success)` schedules one `/devices` refresh after 1 s, cancelled if a new submit arrives. The tile then reflects what the strip actually reports.
-- **Failure:** `onSettled(.failure)` rolls the slider back to the last confirmed brightness and shows an inline error on the tile.
+- **Reconcile:** `onSettled` schedules one `/devices` refresh after 1 s, cancelled if a new submit arrives. It does so on success *and* failure. The tile then reflects what the strip actually reports.
+- **Failure:** `onSettled(.failure)` shows an inline error on the tile. If `error.isDefiniteRejection` (§4.4), the slider rolls back to the last confirmed brightness at once. For any other error (timeout, `5xx`, connection lost) the write may have been applied: the slider keeps the value the user chose and the reconcile refresh decides. A blind rollback could show a value the strip no longer has.
 - The slider's displayed value is local UI state (`@State`). It is only overwritten by store state when the user isn't dragging, so a refresh never yanks the thumb.
 
 Slider spec: `0…100`, step 1, sent as `Int`. `0` means off (`/updBrightness/0`), per API-CONTRACT §6.3. Range validation is B5.
@@ -591,7 +596,7 @@ Slider spec: `0…100`, step 1, sent as `Int`. `0` means off (`/updBrightness/0`
 ### 7.3 Power and automation
 
 - **Power button** on the tile: if on → send `0`; if off → send `lastNonZeroBrightness`. That is persisted in `UserDefaults` per device id, default `25`, matching the automation's default in `ColoStrip.on`. It goes through the same `BrightnessSender` with `force: true`. The automation may have changed the strip since the app last sent a value, so "restore 40" must be sent even if 40 was the last value sent.
-- **Automation switch** (Lights screen, below the tiles): `GET /updActive/{true|false}`. Optimistic toggle with rollback on error. Shown with the read-only line "Owner at home: yes/no" from `automation.ownerPresent`.
+- **Automation switch** (Lights screen, below the tiles): `GET /updActive/{true|false}`. The toggle flips optimistically. On a definite rejection it rolls back; on any other error it refetches `/devices`. `updActive(true)` sets the flag on the server *before* it runs `check()`, so a `502` from an unreachable strip (B7) still leaves automation on. Shown with the read-only line "Owner at home: yes / no / unknown" from `automation.ownerPresent` (`nil` = unknown until the presence Shortcut reports after a smartlife restart, B4).
 - **Override hint** (footer text): "Automation checks every 10 minutes and may switch the lights off at bedtime or when you leave." Without it, a manual change being reverted would look like a bug.
 - The client never calls `/updStatus`.
 
@@ -653,10 +658,10 @@ The system tab bar and navigation bars keep their default iOS 27 materials. No c
 │ ┌───────────────────────────┐ │
 │ │ October budget         ›  │ │
 │ │      ╭──────╮             │ │
-│ │     │ 412 € │  of 600 €   │ │  donut: spent (Accent) / remaining (AccentSoft)
+│ │     │ 372 € │  of 600 €   │ │  donut: spent (Accent) / remaining (AccentSoft)
 │ │      ╰──────╯             │ │
-│ │ 188 € left · 15 €/day     │ │
-│ │ 12 € under pace           │ │
+│ │ 228 € left · 19 €/day     │ │  (on 20 Oct: 12 days left incl. today)
+│ │ 15 € under pace           │ │  (pace 600 × 20/31 = 387 €)
 │ └───────────────────────────┘ │
 │ ┌───────────────────────────┐ │
 │ │ Lights                 ›  │ │
@@ -670,7 +675,7 @@ The system tab bar and navigation bars keep their default iOS 27 materials. No c
 - `Chart` with two `SectorMark(angle: .value("Amount", …), innerRadius: .ratio(0.68), angularInset: 2)` marks, `.cornerRadius(4)`. The centre label sits in `.chartBackground`.
 - Over budget: a single full ring in `Warning`; centre shows spent, and the subtitle reads "Over by 37 €".
 - No goal set (`G == 0`): the card shows "Set a monthly goal" and the button goes to Settings.
-- Tap → Budget tab.
+- Tap → Budget tab. Context menu → "Add check" opens the Add sheet (§8.6).
 
 **Lights card**
 - One row per device: reachability dot, name, brightness % or "Off" / "Unreachable", and a power button (§7.3).
@@ -713,7 +718,7 @@ toolbar: Cancel · Save
 - Success: success haptic, dismiss, `BudgetStore.invalidateAll()` and refetch of what is visible.
 - Failure: the sheet stays open with values intact and a `StatusBanner` at the top. The copy depends on `APIError.isDefiniteRejection` (§4.4):
   - `.unauthorized` / `.invalidInput`: the normal error message. Nothing was saved, and retrying is safe once the cause is fixed.
-  - Any other error (`.timeout`, `.offline`, `.server`, …): "The server didn't confirm — it may have been saved. Check today's bar in Budget › Trend before retrying." A failed non-idempotent write is ambiguous. There is no payment list yet (§10, step 11), so the Trend bar for the payment's day is where to check.
+  - Any other error (`.timeout`, `.offline`, `.server`, …): "The server didn't confirm — it may have been saved. Check that day's bar in Budget › Trend before retrying." A failed non-idempotent write is ambiguous. There is no payment list yet (§10, step 11), so the Trend bar for the payment's day is where to check.
 - Sent as `/add_payment/{secret}/{store}/{12.34}?at={UTC ISO}` (B1).
 
 ### 8.7 Lights
@@ -734,14 +739,14 @@ toolbar: Cancel · Save
 | Section | Content |
 |---|---|
 | Budget | "Monthly goal" text field (§5.2). It is saved on submit or when the field loses focus, and persisted in `UserDefaults` under `settings.monthlyGoalCents`. A change recomputes plans immediately and needs no fetch. |
-| About | Server host (read-only, from `AppConfig`), app version and build, "Test connection" button → `GET /health` with latency in ms, or the error. |
+| About | Server host (read-only, from `AppConfig`), app version and build, "Test connection" button → `GET /health` with latency in ms, then `GET /devices` to check the secret (`/health` is unauthenticated, so on its own it passes with a wrong secret). Shows `OK · NN ms` or the first error. |
 
 `SettingsStore` is `@Observable` and backed by `UserDefaults.standard`. It isn't `@AppStorage`, because non-view code (stores) reads the goal too.
 
 ### 8.9 Accessibility
 
-- Every amount has a spoken label from `.currency` formatting ("412 euros 30 cents").
-- The donut is `.accessibilityElement(children: .ignore)` with the label "October budget: 412 euros spent of 600, 188 left".
+- Every amount has a spoken label from `.currency` formatting ("372 euros 30 cents").
+- The donut is `.accessibilityElement(children: .ignore)` with the label "October budget: 372 euros spent of 600, 228 left".
 - Trend charts provide an `AXChartDescriptorRepresentable` (bucket series), so VoiceOver's audio graph works.
 - The slider has `.accessibilityValue("40 percent")`, and `.accessibilityAdjustableAction` steps by 5. Every step goes through `BrightnessSender`.
 - Dynamic Type up to `.accessibility2`: the Overview cards' rows reflow vertically via `ViewThatFits`.
@@ -755,14 +760,14 @@ toolbar: Cancel · Save
 
 | Suite | Cases |
 |---|---|
-| `MoneyParserTests` | `12,34` / `12.34` / `12` / `0,29` → exact cents; rejects `1.234,56`, `12,345`, `-1`, `0`, empty, `abc`; strips `€`/NBSP. |
+| `MoneyParserTests` | `12,34` / `12.34` / `12` / `0,29` → exact cents; rejects `1.234,56`, `12,345`, `-1`, empty, `abc`; `0` rejected as a payment, accepted as a goal; goal `999999,99` accepted, `1000000` rejected; strips `€`/NBSP. |
 | `MoneyFormatTests` | canonical wire string (`5` → `0.05`, `1234` → `12.34`, `100000` → `1000.00`). |
 | `BudgetMathTests` | the table in §6.1; leap February; a period across a year boundary; `G = 0`; pace on the 1st and last day. |
 | `PeriodTests` | week start honours `firstWeekday`; `shifted` across years; `endExclusive` correct on DST-change days (Europe/Berlin, 2026-03-29 and 2026-10-25) with a fixed calendar injected. |
 | `SpendingSeriesTests` | zero-fill; a 23:30 local payment lands on that local day; future buckets are `nil`; monthly buckets over 12 months. |
 | `StoreNameTests` | trim/collapse; 64-char limit; `/` rejected; `.` and `..` rejected; `Dr. Oetker` accepted. |
 | `EndpointTests` | segment encoding (space, `&`, `?`, `#`, `ü`, `%`); the secret appears exactly once and only for authorized routes; `?at=` contains no `+`. |
-| `ResponseDecodingTests` | legacy `200`, `403`, empty 2xx body; HTTP 401 JSON → `.unauthorized`; HTML 403 from Cloudflare → `.unexpectedResponse`; 422 list detail, 422 string detail; `text/plain` 500 → `.server`; HTML 502/530 → `.unreachableService`; 504 → `.timeout`; `/payments` dates with and without fractional seconds; `isDefiniteRejection` per case. |
+| `ResponseDecodingTests` | legacy `200`, `403`, empty 2xx body; HTTP 200 + body `403` on a JSON route (`get`) → `.unauthorized`; HTTP 401 JSON → `.unauthorized`; `/devices` with `owner_present: null`; HTML 403 from Cloudflare → `.unexpectedResponse`; 422 list detail, 422 string detail; `text/plain` 500 → `.server`; HTML 502/530 → `.unreachableService`; 504 → `.timeout`; `/payments` dates with and without fractional seconds; `isDefiniteRejection` per case. |
 | `BrightnessSenderTests` | with a fake `send` that suspends: at most one in flight; 100 synchronous submits → ≤ 3 sends, last = final value, order preserved; failure → `onSettled(.failure)`; duplicate of `lastSent` not resent within a burst; same value resent after the burst ends; `force: true` always sends. |
 
 ### 9.2 `APIClient` tests
@@ -776,10 +781,10 @@ Every feature view has `#Preview`s on `AppEnvironment.preview()` covering these 
 ### 9.4 Manual end-to-end checklist (on device, against production)
 
 1. Fresh clone → `make client-config` → build & run → Settings › Test connection shows `OK · NN ms`.
-2. Build with a wrong secret → any screen shows "Wrong API secret".
+2. Build with a wrong secret → any screen and Settings › Test connection show "Wrong API secret".
 3. Airplane mode → screens keep the last values and show "No connection"; pull-to-refresh recovers.
-4. Add a check `Test 0,29 €` dated yesterday 23:30 → the Overview total rises by exactly 0,29 €. Trend daily shows it on yesterday's bar. Mongo has `amount: 29` and the right UTC date.
-5. Drag the slider quickly from 0 to 100 and back to 37 → the strip ends at 37; the server log shows a short sequential series of `/updBrightness` calls, not dozens.
+4. Add a check `Test 0,29 €` dated yesterday 23:30 (not on the 1st: yesterday would be in the previous month) → the Overview total rises by exactly 0,29 €. Trend daily shows it on yesterday's bar. Mongo has `amount: 29` and the right UTC date.
+5. Drag the slider quickly from 0 to 100 and back to 37 → the strip ends at 37; the server log shows a short sequential series of `/updBrightness` calls, not dozens. Then change the brightness with `curl` and pull to refresh → the slider moves to the new value and **no** `/updBrightness` call follows.
 6. Power off and on → restores the previous brightness.
 7. Unplug the strip → the tile shows "Unreachable" and the rest of the app works.
 8. Toggle automation off → `/devices` reports `active: false` after a refresh.
@@ -799,7 +804,7 @@ Each step ends in a buildable app that does something verifiable. Backend depend
 | 4 | **Settings: goal** | `MoneyParser` (§5.2), `SettingsStore`, goal field. | Value survives relaunch; parser tests pass. | — |
 | 5 | **Overview budget card** | `Money`, `Period`, `BudgetMath`, `BudgetService.total`, `BudgetStore`, donut card, empty/over/no-goal states. | Matches a manual `curl /query` for the month. | **B0** for correct numbers (the card works without it, but shows the audit §5 values). |
 | 6 | **Budget › Summary** | Period selector, history navigation, plan vs actual, pace. | Hand-computed plan for three periods matches the UI. | B0 |
-| 7 | **Add check** | `AddPaymentSheet`, validation, submit flow, invalidation (§8.6). | Checklist item 4. | **B1** (without it, the date picker is hidden and the server timestamp is used). |
+| 7 | **Add check** | `AddPaymentSheet`, validation, submit flow, invalidation (§8.6). | Checklist item 4. | **B1**, deployed first. FastAPI ignores unknown query parameters, so before B1 `?at=` is silently dropped and the payment gets the server time. The app can't detect that. If step 7 has to ship earlier, hide the date picker behind a build setting (`ENABLE_PAYMENT_DATE`) and turn it on once B1 is live. |
 | 8 | **Budget › Trend** | `BudgetService.payments`, `SpendingSeries`, charts, selection (§6.3, §8.5). | Daily bars sum to the Summary total for the same month. | **B2, B3** |
 | 9 | **Lights** | `SmartlifeService`, `LightsStore`, `BrightnessSender`, tiles, power, automation, Overview lights card (§7, §8.7). | Checklist items 5–8. | **B4** (state), **B5, B6** (safe slider), B7 (bounded waits) |
 | 10 | **Polish** | `SnapshotCache`, haptics, number transitions, accessibility pass (§8.9), Dynamic Type check, all previews. | VoiceOver walkthrough; cold launch shows cached numbers. | B8 (better error copy), B9 (edge config, before daily use) |
@@ -829,4 +834,5 @@ Steps 1–6 need no backend work beyond B0, so client and backend work can proce
 1. **Owner time zone.** B0 sets omniscient's `TZ` to the owner's zone, and the client assumes the device is in the same zone. Is the phone ever used for budget entry while abroad? If so, switch Summary to `/payments` totals (§6.5).
 2. **Strip brightness range.** The design assumes 0–100 (`pycololighto` 2.1.1). Confirm on the device; the slider range and B5 follow from it.
 3. **Cloudflare Access.** Is a Zero Trust Access policy in front of `api.omniserv.me`? If yes, the app needs `CF-Access-Client-Id` / `CF-Access-Client-Secret` service-token headers. That is the same injection path as §2 and a one-line addition in `APIClient`.
-4. **Shortcuts automation and `/payments`.** Older documents may hold euro floats (audit §5). B0's migration decides whether historic months are shown.
+4. **Shortcuts automation and `/payments`.** Older documents may hold euro floats (audit §5). B0's inventory query shows whether any exist; its migration decides whether historic months are shown.
+5. **Shortcuts and a real `401`.** B0/§1 changes a wrong secret from `200` to `401`. Confirm that the payment and presence Shortcuts don't depend on always getting `200`.

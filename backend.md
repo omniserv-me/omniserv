@@ -8,7 +8,7 @@
 
 | ID | Change | Owner | Kind | Unblocks client step |
 |---|---|---|---|---|
-| B0 | Resolve audit §5, §6, §7 the way the client expects | api, omniscient | fix | 5, 6, 7 |
+| B0 | Resolve audit §1, §5, §6, §7 the way the client expects | api, omniscient | fix | 5, 6, 7 |
 | B1 | `/add_payment`: optional payment time `?at=` | api, omniscient | extend route | 7 |
 | B2 | `GET /payments/{secret}/{start}/{stop}`: list payments | api, omniscient | **new route** | 8 |
 | B3 | Stable payment ids (Mongo `_id`) | omniscient | fix | 8 |
@@ -31,10 +31,10 @@ in each service. It's worth adding that as a `make proto` target that also copie
 
 | Audit | Client needs | Notes |
 |---|---|---|
-| §5 | `/query` `total` is euros for **all** stored documents. Stored `amount` is integer cents everywhere. | Includes a one-off migration of documents written as euro floats (detect: non-integer `amount`, or `id`/date before the cents switch). Without it the Overview donut and Summary show wrong totals; the client deliberately does not compensate. B2 depends on the same normalisation. |
-| §6 | Keep the **half-open `[start, stop)`** semantics and document them as the contract. Do **not** make `stop` inclusive. Set `TZ` on the `omniscient` container to the owner's zone (same zone as smartlife's `CITY`). **In the same change**, store dates as UTC-aware (`datetime.now(timezone.utc)` instead of the naive `datetime.datetime.now()` in `omniscient/api.py:28`), and have `/query` build its day bounds in `TZ` and convert them to UTC before querying. | The client sends `stop` = the day after the last included day (client/design.md §4.5, §6.2). Changing the semantics would double-count boundaries. Setting `TZ` alone would make the naive `now()` return local time, which pymongo stores as if it were UTC, shifting every new payment by the UTC offset. Existing documents were written with the container clock at UTC, so they are already UTC and need no date migration. |
+| §5 | `/query` `total` is euros for **all** stored documents. Stored `amount` is integer cents everywhere. `query_date` sums `amount` as is (drop the `* 100` in `omniscient/db_handler.py:91`). | Includes a one-off migration of documents written as euro floats. Detect them by BSON type, `{"amount": {"$type": "double"}}`: `/add_payment` has always stored a Python `int`, while a euro value may be integral (`5.0`), so "non-integer amount" misses some. Don't use `id` or date as the discriminator; ids reset on rebuilds (B3). Skip documents without `amount` (`put_test` writes `{"test": 1}`). First run an inventory, `aggregate([{"$group": {"_id": {"$type": "$amount"}, "n": {"$sum": 1}, "first": {"$min": "$date"}, "last": {"$max": "$date"}}}])`, to see whether any legacy documents exist at all. Without this the Overview donut and Summary show wrong totals; the client deliberately does not compensate. B2 depends on the same normalisation. |
+| §6 | Keep the **half-open `[start, stop)`** semantics and document them as the contract. Do **not** make `stop` inclusive. **Change `$lte` to `$lt`** in `query_date` (`omniscient/db_handler.py:86`): today a payment at exactly `stop` 00:00 is counted in both adjacent periods. Add `TZ` (IANA name, e.g. `Europe/Berlin`, same zone as smartlife's `CITY`) to the `omniscient` service in `docker-compose.yaml` and to the deploy workflow's `env` (`.github/workflows/main.yml`). **In the same change**, store dates as UTC-aware (`datetime.now(timezone.utc)` instead of the naive `datetime.datetime.now()` in `omniscient/api.py:28`), and have `/query` build its day bounds as `datetime(…, tzinfo=ZoneInfo(os.environ["TZ"]))` and convert them to UTC before querying. Add `tzdata` to `omniscient/requirements.txt`. | The client sends `stop` = the day after the last included day (client/design.md §4.5, §6.2). Changing the semantics would double-count boundaries. B2 uses `$lt`; the two routes agree only once `/query` does too (client/design.md §6.5), and B1 makes exact-midnight payments possible. Use explicit `zoneinfo` rather than relying on the process-local time: setting `TZ` alone would make the naive `now()` return local time, which pymongo stores as if it were UTC, shifting every new payment by the UTC offset, and `FROM python` doesn't guarantee system tzdata. Existing documents were written with the container clock at UTC, so they are already UTC and need no date migration. |
 | §7 | `"12.34"` (dot, two decimals, no suffix) is parsed **exactly**: `Decimal(amount) * 100` → `int`, rejecting more than 2 decimals with `422`. | The client always sends that canonical form. Keep the NBSP-euro / comma handling for the Shortcuts automation. |
-| §1 | No constraint on timing. | The client accepts both today's body `403` and a real `401`/`403` status. Fix whenever convenient. |
+| §1 | A wrong secret returns **HTTP `401`** with `{"detail": "unauthorized"}` on every protected route, including the new B2 and B4. | Do it in this change rather than "whenever convenient": the client's wrong-secret message depends on it for the JSON routes (`/query`, `/payments`, `/devices`), where a `200` with body `403` can't be told apart from a malformed response. The client still accepts today's body `403` on all routes (client/design.md §4.3), so the order of deployment doesn't matter. Check the Shortcuts automations: they currently see `200` either way. |
 
 ---
 
@@ -93,6 +93,8 @@ curl "https://api.omniserv.me/add_payment/$API_SECRET/Test/0.29?at=2026-10-18T21
 ```
 - Sorted by `date` **descending**.
 - Cap of **5 000** rows. If more match, return the newest 5 000 with `"truncated": true`. `total_cents` is always the sum over the **whole** range (computed with a Mongo `$group`, not from the returned rows).
+- Wrong secret → `401` JSON (B0/§1). Never `200` with body `403`.
+- `store` is the stored `description` field (`omniscient/check.py`).
 - `amount_cents` is an integer (requires the B0/§5 normalisation). `currency` is mapped from the stored ISO numeric `978` to `"EUR"`.
 - `date` is serialised as `strftime("%Y-%m-%dT%H:%M:%SZ")` on the UTC value: seconds precision, literal `Z`. Do **not** use `isoformat()`. Stored dates carry milliseconds, so it would emit `…:00.123000+00:00`, which Foundation's standard ISO 8601 decoding rejects. The client tolerates fractional seconds as a fallback (client/design.md §4.3), but the contract is the format above.
 - `id` per B3.
@@ -121,7 +123,7 @@ curl "https://api.omniserv.me/payments/$API_SECRET/2026-09-30T22:00:00Z/2026-10-
 
 ## B3 — Stable payment ids
 
-**Problem (not in audit.md):** `Check.id` comes from the `.state` counter file in omniscient's container working directory (`omniscient/common.py:7`). The CI deploy runs `docker compose up -d --build` on every push to `main`, which recreates the container and resets the counter to `0`. Ids are therefore **not unique** across deploys. The `Check.id` type hint is also `str` while the value is `int` (`omniscient/check.py`).
+**Problem (not in audit.md):** `Check.id` comes from the `.state` counter file in omniscient's container working directory (`omniscient/common.py:7`). The CI deploy runs `docker compose up -d --build` on every push to `main`. Whenever that rebuilds omniscient's image (any change under `omniscient/`), the container is recreated and the counter resets to `0`. Ids are therefore **not unique** across deploys. The `Check.id` type hint is also `str` while the value is `int` (`omniscient/check.py`).
 **Why the client cares:** SwiftUI lists and chart selection key on `Payment.id` (client/design.md §5.4). Duplicate ids cause rows to be dropped or merged.
 
 **Change:**
@@ -147,18 +149,25 @@ curl "https://api.omniserv.me/payments/$API_SECRET/2026-09-30T22:00:00Z/2026-10-
   ]
 }
 ```
+- Wrong secret → `401` JSON (B0/§1).
 - `id` is the existing `ColoStrip.id` (`smartlife/src/devices.py`, currently `0`).
-- `name`: new optional env `STRIP_NAME`, default `"Strip"`.
+- `name`: new optional env `STRIP_NAME`, default `"Strip"`. Wire it through `docker-compose.yaml` and the deploy workflow like `STRIP_IP`.
 - `brightness`: `0…100` when reachable, `null` when not. `on: false` → report the last read brightness, or `null`.
+- `owner_present`: `null` until the first `/updStatus` after a smartlife start (see below).
 - **An unreachable strip is not an error.** Return `200` with `reachable: false, on: false, brightness: null`, so the app can render everything else. `5xx` is reserved for smartlife itself being down (→ B7/B8).
 - Bound the device query: one `strip.state()` attempt with a ~2 s socket timeout. Do **not** reuse `check_connection()` (`smartlife/src/colo_strip.py:19`), which retries with `sleep(1)` and raises.
+
+**Smartlife behaviour B4 has to fix to report the truth** (not in audit.md):
+- **Startup with the strip unreachable.** `ColoStrip.__init__` calls `check_connection()`, which raises (`colo_strip.py:58`). `cololight_strip` is created at import time (`devices.py:7`), so smartlife doesn't start at all and every lights route fails. "Unreachable is not an error" must also hold at startup: create the `PyCololight` object without the connection check and let `snapshot()` / `check()` discover reachability.
+- **Presence after a restart.** `owner_present` starts as `False` (`smartlife/src/common.py:5`). After every smartlife deploy the app would show "At home: no", and `check()` switches the strip off every 10 minutes until the presence Shortcut next calls `/updStatus`. Start with `owner_present = None` (unknown), have `check()` take no presence-based action while it is `None`, and report it as `null`.
+- **The automation loop dies on the first strip error.** `check()` raises when the strip is unreachable. In `run()` (`smartlife/src/main.py:21-22`) the exception escapes `asyncio.gather`, `asyncio.run` returns, and the non-daemon gRPC thread keeps the process alive. From then on there is no automation while `service_active` still reads `true`. Catch and log exceptions around `check()` inside the loop.
 
 **gRPC** (`smartlife.proto`, existing `StateUpdate` service):
 ```proto
 message StateRequest {}
 message DeviceState { int32 id = 1; string kind = 2; string name = 3;
                       bool reachable = 4; bool on = 5; optional int32 brightness = 6; }
-message StateResponse { bool service_active = 1; bool owner_present = 2; repeated DeviceState devices = 3; }
+message StateResponse { bool service_active = 1; optional bool owner_present = 2; repeated DeviceState devices = 3; }
 
 service StateUpdate {
   // existing rpcs …
@@ -184,9 +193,11 @@ curl "https://api.omniserv.me/devices/$API_SECRET" | jq
 
 ## B6 — Serialise strip access
 
-**Problem (not in audit.md):** the smartlife gRPC server runs 3 worker threads (`smartlife/src/api.py:47`) and the automation loop calls `check()` from the asyncio thread. Nothing serialises `ColoStrip`, so a `state()` read and a set from two threads can interleave on the same UDP device. Each `on()` / `off()` is itself a `state()` + set sequence (`colo_strip.py:108-116`).
+**Problem (not in audit.md):** the smartlife gRPC server runs 3 worker threads (`smartlife/src/api.py:48`) and the automation loop calls `check()` from the asyncio thread. Nothing serialises `ColoStrip`, so a `state()` read and a set from two threads can interleave on the same UDP device. Each `on()` / `off()` is itself a `state()` + set sequence (`colo_strip.py:108-116`).
 **Why the client cares:** the client already sends brightness changes strictly one at a time (client/design.md §7.2). The automation loop and other callers (the presence Shortcut) still race with it.
 **Change:** add a `threading.RLock` on `ColoStrip`. Hold it for the whole of `check()`, `on()`, `off()`, `updBrightness()` and `snapshot()` (B4). It must be an `RLock` because `check()` calls `on()` / `off()`. The asyncio loop calls `check()` synchronously, so the lock works across both. Any future smartlife thread pool size stays safe.
+- `snapshot()` acquires with a timeout (`acquire(timeout=2.5)`). A `check()` that is waiting on an unreachable strip can hold the lock for several socket timeouts. Without the bound, `/devices` would hit the B7 deadline and return `504` instead of answering. On timeout, report the device as `reachable: false`.
+- `RLock` is not FIFO. A write whose gateway call already timed out (B7) keeps waiting for the lock, and it can still be applied after a newer write. The client copes by refetching `/devices` after any write that ended in an error (client/design.md §7.2). Strict ordering across timeouts is not a requirement.
 
 ---
 
@@ -199,6 +210,7 @@ curl "https://api.omniserv.me/devices/$API_SECRET" | jq
 - Map `UNAVAILABLE` → **502**.
 - Map `INVALID_ARGUMENT` → **422** (omniscient should raise it for bad dates and amounts instead of a bare exception).
 - Map anything else → **500**.
+- **Unreachable strip on a write.** Today `updBrightness` / `updActive` / `updStatus` let the `pycololighto` exception escape. gRPC turns that into `UNKNOWN`, which maps to `500`, and the app could only say "server error". smartlife should catch device errors and `context.abort(grpc.StatusCode.UNAVAILABLE, "strip unreachable")` → **502** with that `detail` (B8), so the app shows "Lights are unreachable". Note that `updActive(true)` sets `service_active` *before* `check()` runs, so a `502` there doesn't mean nothing changed.
 
 ---
 
@@ -223,6 +235,7 @@ Requests reach the gateway through Cloudflare and a Zero Trust tunnel. Edge sett
 3. **The secret also reaches Cloudflare.** Because it is a path segment, it appears in Cloudflare's request logs and analytics (Logpush, Security Events), in addition to the gateway's access log covered by audit §3. Treat Cloudflare as a party that sees the secret until auth moves to a header.
 4. **Option for the auth phase.** A Cloudflare Access application on `api.omniserv.me` with a **service token** would reject unauthenticated traffic at the edge before it reaches the tunnel. The app would send `CF-Access-Client-Id` / `CF-Access-Client-Secret` headers, injected exactly like `API_SECRET` (client/design.md §2, §12 Q3). Not required now, but it is the cheapest strong layer available.
 5. Cloudflare's 100 s origin timeout is irrelevant once B7 is in (5 s).
+6. **The edge is not the only way in.** `docker-compose.yaml` publishes `5006` (api, plain HTTP), `5003` / `5002` (omniscient / smartlife gRPC, no auth at all) and `27017` (Mongo) on the host. The cloudflared setup isn't in the repo (`docker-compose.proxy.yaml` is empty), so "no open ports" (client/design.md §0) holds only if the host firewall/NAT blocks them. Anything on the LAN can bypass the edge controls above and call the gRPC services without the secret. Not a client dependency; consider dropping the `ports:` entries that only the `omniserv` network needs.
 
 ---
 
@@ -234,7 +247,7 @@ Requests reach the gateway through Cloudflare and a Zero Trust tunnel. Edge sett
 
 ## Suggested order
 
-1. **B0** (correct numbers; unblocks client steps 5–6) and **B9** (before using the app daily).
+1. **B0** (correct numbers and a real `401`; unblocks client steps 5–6) and **B9** (before using the app daily).
 2. **B6 → B5 → B4 → B7** (safe and observable lights; client step 9). B6 first, because B4 reuses its lock.
 3. **B3 → B2** (trend; client step 8). B2 exposes the B3 id.
 4. **B1** (dated checks; client step 7).
