@@ -2,8 +2,7 @@
 
 > **Status:** design, pre-implementation. Written 2026-10-19 against `d23f667`. Revised 2026-10-20: auth phase 0 (§2, §4.6) and the `/v1` HTTP API (§4.1).
 > **Inputs:** [`client.md`](../client.md) (wishes), [`API-CONTRACT.md`](../API-CONTRACT.md) (as-is API), [`audit.md`](../audit.md) (API findings).
-> **Backend changes this design depends on:** [`backend.md`](../backend.md), referenced as **B0–B9**, plus **B10** (the `/v1` foundation, §4.1).
-> **backend.md predates the `/v1` revision.** Where its route shapes differ (B1, B2, B4, B5, B0/§1), §4.1 here is authoritative until backend.md is updated. B10 is specified only here so far.
+> **Backend changes this design depends on:** [`backend.md`](../backend.md), referenced as **B0–B11**. §4.1 summarises the `/v1` contract the client relies on; backend.md specifies each route in full.
 > Approach per `client.md`: Design → Document → Implement. Nothing in §10 is built before its section here is agreed.
 
 ---
@@ -292,9 +291,9 @@ The app talks only to a new, versioned set of routes under `/v1` (D1). The legac
 | Device state (Overview, Lights) | `GET /v1/devices` | `200` | — | B10, B4 |
 | Set brightness / on / off | `PATCH /v1/devices/{id}` | `204` | `/updBrightness` | B10, B5, B6 |
 | Automation and presence state | `GET /v1/automation` | `200` | — | B10, B4 |
-| Pause / resume automation | `PATCH /v1/automation` | `204` | `/updActive` | B10 |
+| Pause / resume automation | `PATCH /v1/automation` | `204` | `/updActive` | B10, B4 |
 
-Defined for the presence Shortcut, **never sent by the app:** `PATCH /v1/automation` with `owner_present` (replaces `/updStatus`; the app must never fake presence). Not used: `/docs`, `/redoc`, `/openapi.json` (disabled by B10).
+Defined for the presence Shortcut (B11), **never sent by the app:** `PATCH /v1/automation` with `owner_present` (replaces `/updStatus`; the app must never fake presence). Not used: `/docs`, `/redoc`, `/openapi.json` (disabled by B10).
 
 That is six method/path pairs on four paths, the same number of operations the client needed before (four legacy routes plus B2 and B4). `/query` has no `/v1` successor: `GET /v1/payments` with `limit=0` returns the same total (§6.5).
 
@@ -363,15 +362,9 @@ Field semantics, the unreachable-is-not-an-error rule and the bounded strip read
 - `active: true` sets the flag, then runs `check()`. A `502` from an unreachable strip still leaves the flag set.
 - `owner_present` records presence and runs `check()` only while `active` (B4's fix of audit §8).
 
-#### B10 — `/v1` foundation (backend; to be added to backend.md)
+#### Backend foundation (B10)
 
-- `APIRouter(prefix="/v1", dependencies=[Depends(require_bearer)])`. `require_bearer` reads `Authorization: Bearer …` (`HTTPBearer(auto_error=False)`), compares with `hmac.compare_digest`, and raises `401` with `WWW-Authenticate: Bearer`. Add a test that a request with a bad secret *and* bad input gets `401`, not `422`.
-- B7 deadlines and B8 JSON errors apply to every `/v1` route from the first deploy. They are part of B10, not follow-ups.
-- `Cache-Control: no-store` on all `/v1` responses.
-- `FastAPI(docs_url=None, redoc_url=None, openapi_url=None)` (audit §4).
-- Nothing logs request headers. uvicorn's access log doesn't, so the secret no longer reaches it (audit §3 is fixed for `/v1`).
-- Edge and host: the Cloudflare Access application (B9.4) and dropping the host `ports:` (B9.6) belong to the same phase (§4.6).
-- Legacy routes are untouched by B10. B0/§1 (`401` on legacy routes) is no longer a client dependency.
+Shared by every `/v1` route and specified in backend.md B10: a middleware that checks the bearer before routing and validation (`401` for any `/v1` path, never `422` or `404`), B7 deadlines and B8 JSON errors from the first deploy, `Cache-Control: no-store`, `/docs` disabled, and no header logging. The edge half of phase 0 (Access, closed host ports) is B9.4 and B9.6. The legacy routes are untouched until B11.
 
 ### 4.2 `APIClient`
 
@@ -512,7 +505,7 @@ Two independent layers:
 - Payment Shortcut → `POST /v1/payments`, with `amount_cents` computed in the Shortcut (Apple Pay's amount × 100). The NBSP-euro parsing then disappears from the server.
 - Presence Shortcut → `PATCH /v1/automation` with `{"owner_present": true|false}`.
 
-Then delete the legacy routes, rotate `API_SECRET` (it has been in access and Cloudflare logs), and widen the Access application to the whole host (§4.6). Until then, the secret's exposure through legacy URLs remains, which is a second reason to migrate the Shortcuts early.
+Then delete the legacy routes, rotate `API_SECRET` (it has been in access and Cloudflare logs), and widen the Access application to the whole host (§4.6). The steps are backend.md B11. Until then, the secret's exposure through legacy URLs remains, which is a second reason to migrate the Shortcuts early.
 
 ---
 
@@ -980,7 +973,7 @@ Each step ends in a buildable app that does something verifiable. Backend depend
 | 4 | **Settings: goal** | `MoneyParser` (§5.2), `SettingsStore`, goal field. | Value survives relaunch; parser tests pass. | — |
 | 5 | **Overview budget card** | `Money`, `Period`, `BudgetMath`, `BudgetService.total`, `BudgetStore`, donut card, empty/over/no-goal states. | Matches a manual `curl` of `GET /v1/payments?…&limit=0` for the month. | B10, B2; **B0/§5** for correct numbers (the card works without it, but shows the audit §5 values). |
 | 6 | **Budget › Summary** | Period selector, history navigation, plan vs actual, pace. | Hand-computed plan for three periods matches the UI. | B10, B2, B0/§5 |
-| 7 | **Add check** | `AddPaymentSheet`, validation, submit flow, invalidation (§8.6). | Checklist item 4. | `POST /v1/payments` (B1's `at` is part of the new route from the start, so there is no window where the date is silently dropped). |
+| 7 | **Add check** | `AddPaymentSheet`, validation, submit flow, invalidation (§8.6). | Checklist item 4. | **B1** (`POST /v1/payments`). `at` is part of the new route from the start, so there is no window where the date is silently dropped. |
 | 8 | **Budget › Trend** | `BudgetService.payments`, `SpendingSeries`, charts, selection (§6.3, §8.5). | Daily bars sum to the Summary total for the same month. | **B2** (rows), **B3** |
 | 9 | **Lights** | `SmartlifeService`, `LightsStore`, `BrightnessSender`, tiles, power, automation, Overview lights card (§7, §8.7). | Checklist items 5–8. | **B4** (`GET /v1/devices`, `/v1/automation`, `PATCH /v1/automation`), **B5, B6** (`PATCH /v1/devices/{id}`, safe slider), B7 (bounded waits, part of B10) |
 | 10 | **Polish** | `SnapshotCache`, haptics, number transitions, accessibility pass (§8.9), Dynamic Type check, all previews. | VoiceOver walkthrough; cold launch shows cached numbers. | B8 (better error copy), B9 (edge config, before daily use) |
@@ -1015,4 +1008,4 @@ Steps 1, 2 and 4 need no backend work. Everything from step 3 on talks to `/v1`,
 4. **Shortcuts automation and `/payments`.** Older documents may hold euro floats (audit §5). B0's inventory query shows whether any exist; its migration decides whether historic months are shown.
 5. **Shortcuts and a real `401`.** Only relevant if B0/§1 is still done on the legacy routes; the client no longer needs it. If it is, confirm that the payment and presence Shortcuts don't depend on always getting `200`.
 6. **Strip read timeout.** B4 and B6 budget a ~2 s single `state()` read plus a 2.5 s lock wait, inside B7's 5 s deadline. Confirm that `pycololighto` 2.1.1 lets the socket timeout be set (or wraps it). If it doesn't, B4 needs its own bounded read.
-7. **Shortcut migration (§4.7).** When do the payment and presence Shortcuts move to `/v1`? Until then the secret keeps appearing in legacy URLs and logs, and Access can't cover the whole host. Rotate `API_SECRET` right after.
+7. **Shortcut migration (§4.7, B11).** When do the payment and presence Shortcuts move to `/v1`? Until then the secret keeps appearing in legacy URLs and logs, and Access can't cover the whole host. Rotate `API_SECRET` right after.

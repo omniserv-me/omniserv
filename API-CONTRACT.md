@@ -1,7 +1,8 @@
 # API Contract — `omniserv/api`
 
 > **Status:** as-is description of the current implementation (`api/api.py`, last changed in `6fed1bf`, documented at `5f61ea0`, 2026-10-19).
-> This document describes what the code *does*, including its quirks. It does not propose changes; deviations from intent are collected in [§9 Known gaps](#9-known-gaps--divergences).
+> §1–§9 describe what the code *does*, including its quirks; deviations from intent are collected in [§9 Known gaps](#9-known-gaps--divergences).
+> [§10 Proposed implementation](#10-proposed-implementation--v1-not-yet-implemented) describes the planned `/v1` API (from [`backend.md`](backend.md)). It is **not implemented**; nothing in §1–§9 changes until it ships.
 
 ---
 
@@ -325,7 +326,7 @@ All `success` fields are hard-coded `true` by the servers and ignored by the gat
 
 ## 9. Known gaps / divergences
 
-Collected facts from the sections above, plus `ToDo`s in the code. Listed for awareness only.
+Collected facts from the sections above, plus `ToDo`s in the code. §10.9 maps each gap to its proposed resolution.
 
 **Security**
 1. Single shared secret, no scopes: any holder can write payments, read spending and control devices.
@@ -350,6 +351,327 @@ Collected facts from the sections above, plus `ToDo`s in the code. Listed for aw
 16. No endpoint returns smartlife state (current brightness, on/off, `owner_present`, `service_active`) — the widget's "current brightness" cannot be read today.
 17. No endpoint lists payments or returns a breakdown; monthly allowance/trajectory functions exist only as stubs in `omniscient/api.py` (`spending_trajectory`, `configure_monthly_allowance`).
 18. No health signal for downstream services (`/health` covers the gateway only).
+
+---
+
+## 10. Proposed implementation — `/v1` (not yet implemented)
+
+> **Status:** proposal, 2026-10-20. Nothing in this section exists in the code yet. Sources: [`backend.md`](backend.md) (B0–B11, the implementation spec) and [`client/design.md`](client/design.md) §4 (the client's view). `client.md` sets the rules: secrets never in URLs, conventional HTTP methods, slim set of endpoints.
+> When an item ships, move its description into §1–§8 as the as-is contract and remove it here.
+
+### 10.1 Summary
+
+A versioned set of routes under `/v1` **alongside** the existing ones. The legacy routes (§4–§6) stay unchanged until the Shortcuts automations move to `/v1` (§10.8); then they are removed. Everything in §10 is additive: no existing route, response or gRPC field changes meaning.
+
+```
+  iOS app / Shortcuts
+        │ HTTPS
+        ▼
+  Cloudflare edge  api.omniserv.me      ← Access: CF-Access-Client-Id/-Secret (service token)   [B9.4]
+        │ Zero Trust tunnel
+        ▼
+  cloudflared ──HTTP──▶ api:5006        ← Authorization: Bearer <API_SECRET> on /v1/*            [B10]
+                          │                no host port published (or 127.0.0.1 only)            [B9.6]
+          gRPC, 5 s deadline (both)        │
+             ┌────────────┴───────────────┐
+             ▼                            ▼
+       omniscient:5003               smartlife:5002      ← no host ports                          [B9.6]
+             │                            │
+       mongodb:27017 (127.0.0.1 only)   Cololight strip (LAN), access serialised by a lock         [B6]
+```
+
+### 10.2 Global conventions (`/v1`)
+
+**Transport**
+- HTTPS to Cloudflare; TLS ends at the edge. Origin traffic stays plain HTTP, but only inside the tunnel and the `omniserv` docker network once host ports are closed (B9.6).
+- `GET /health` stays at the root, unauthenticated, unchanged (§4.1).
+
+**Authentication** (auth "phase 0"; two independent layers)
+
+| Layer | Credential | Covers | Failure |
+|---|---|---|---|
+| Cloudflare Access (B9.4) | `CF-Access-Client-Id` + `CF-Access-Client-Secret` headers (service token; one per client after §10.8) | path `/v1` at first; whole host after §10.8 | Cloudflare's HTML `403`, request never reaches the origin |
+| Gateway middleware (B10) | `Authorization: Bearer <API_SECRET>` | every path `/v1` and `/v1/*` | `401` `{"detail":"unauthorized"}` + `WWW-Authenticate: Bearer` |
+
+- The bearer check is a middleware: it runs **before routing and validation**. Without a valid secret every `/v1` path answers `401`, never `422` and never `404`.
+- Constant-time comparison (`hmac.compare_digest`). The gateway refuses to start if `API_SECRET` is unset (today it silently rejects everything, §2.2).
+- Still no scopes or roles: a valid secret grants every `/v1` operation.
+
+**Methods**
+
+| Method | Meaning | Idempotent | Success |
+|---|---|---|---|
+| `GET` | Read. Never changes state. | yes | `200` + JSON |
+| `POST` | Create a resource. | **no** | `201` + the created resource |
+| `PATCH` | Change some fields of an existing resource. | yes | `204`, no body |
+| `DELETE` | Remove a resource. None defined yet. | yes | `204` |
+
+**Inputs**
+- Resource ids in the path, filters in the query string, write data in a JSON body (`Content-Type: application/json`). Never secrets.
+- Request bodies reject unknown fields (`422`), so a misspelled field is never silently ignored.
+- Instants are ISO 8601 with a zone. Clients send UTC with `Z` (a literal `+` in a query string decodes to a space).
+
+**Outputs**
+- JSON, snake_case keys. Money as integer cents (`amount_cents`, `total_cents`), never floats. Instants as UTC, seconds precision, literal `Z` (`2026-10-18T21:30:00Z`).
+- `Cache-Control: no-store` on every `/v1` response.
+
+**Errors.** Always `Content-Type: application/json`, body `{"detail": <string | FastAPI's list form for schema errors>}`, never a stack trace:
+
+| Status | When | Example `detail` |
+|---|---|---|
+| `401` | Missing or wrong bearer | `"unauthorized"` |
+| `404` | Unknown route or resource id | `"unknown device"` |
+| `422` | Invalid input (schema, range, unknown field, empty patch) | list form, or `"at is in the future"` |
+| `502` | Downstream service unavailable, or the strip unreachable on a write (gRPC `UNAVAILABLE`) | `"smartlife unavailable"`, `"strip unreachable"` |
+| `504` | Downstream call exceeded the 5 s deadline (gRPC `DEADLINE_EXCEEDED`) | `"timeout"` |
+| `500` | Anything else | `"internal error"` |
+
+**Logging and docs**
+- The secret is a header, which uvicorn's access log doesn't record, so `/v1` requests no longer leak it (§2.4).
+- `/docs`, `/redoc`, `/openapi.json` are disabled (§2.5).
+
+### 10.3 Endpoint summary
+
+| # | Route | Goal | Owner (system of record) | Scope | Replaces |
+|---|---|---|---|---|---|
+| P1 | `GET /v1/payments?from&to&limit` | Payments and their total in a time range | **omniscient** | **Read**: `Leo.checks` | `/query` |
+| P2 | `POST /v1/payments` | Record one payment | **omniscient** | **Write**: inserts one document | `/add_payment` |
+| P3 | `GET /v1/devices` | Current device state | **smartlife** (proxy for the device) | **Read**: one bounded strip query; no actuation | — (gap 16) |
+| P4 | `PATCH /v1/devices/{id}` | Set brightness / on / off | **smartlife** | **Actuates** the device; stores nothing | `/updBrightness` |
+| P5 | `GET /v1/automation` | Automation flags | **smartlife** | **Read**: in-memory, no device access | — (gap 16) |
+| P6 | `PATCH /v1/automation` | Pause/resume automation; report presence | **smartlife** | **Write**: `service_active`, `owner_present`; may actuate via `check()` | `/updActive`, `/updStatus` |
+
+Callers: the iOS client (P1–P6, except `owner_present` on P6); the payment Shortcut (P2) and presence Shortcut (P6 with `owner_present`) after §10.8.
+
+---
+
+### 10.4 Endpoints — omniscient (payments)
+
+#### P1 `GET /v1/payments`
+
+| | |
+|---|---|
+| **Goal** | Return the payments and their total in a time range. With rows, clients build daily/monthly charts in their own calendar; with `limit=0`, it is a plain total (successor of `/query`). |
+| **Scope** | Read-only, `Leo.checks`. No pagination; hard cap of 5 000 rows. |
+| **Ownership** | **omniscient** (`ListPayments` rpc, `db_handler.list_checks`). The gateway validates and proxies. Spec: backend.md B2. |
+
+| Query param | Type | Rules |
+|---|---|---|
+| `from` | instant | Required. Inclusive. Must carry a zone. |
+| `to` | instant | Required. **Exclusive** (half-open `[from, to)`). `to ≤ from` → `422`. Range > 400 days → `422`. |
+| `limit` | int | Optional, `0…5000`, default `5000`. `0` → no rows, totals only. |
+
+**Response `200`**
+```json
+{
+  "payments": [
+    { "id": "6713a0c2f1e4b2a9c0d1e2f3", "store": "Lidl", "amount_cents": 1234,
+      "date": "2026-10-18T21:30:00Z", "currency": "EUR" }
+  ],
+  "total_cents": 1234,
+  "count": 1,
+  "truncated": false
+}
+```
+- Rows newest first, at most `limit`. `total_cents` and `count` always cover the **whole** range. `truncated` = `count > len(payments)`.
+- `id`: Mongo `_id` as 24-char hex, stable across deploys (B3). `store`: stored `description`. `currency`: `978` mapped to `"EUR"`.
+- Correct totals require all stored amounts to be cents (B0/§5, fixes gap 8).
+
+**Responses:** `200` · `401` · `422` bad/missing range or limit · `502`/`504` omniscient down/slow.
+
+```sh
+H=(-H "Authorization: Bearer $API_SECRET" -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+curl "${H[@]}" "https://api.omniserv.me/v1/payments?from=2026-09-30T22:00:00Z&to=2026-10-31T23:00:00Z&limit=0"
+# {"payments":[],"total_cents":37230,"count":41,"truncated":true}
+```
+
+#### P2 `POST /v1/payments`
+
+| | |
+|---|---|
+| **Goal** | Record one payment at a given time. |
+| **Scope** | Write, one document in `Leo.checks`. **Not idempotent**: a repeated request creates a second payment. No update/delete. |
+| **Ownership** | **omniscient** (`AddPayment` rpc). Validation entirely in the gateway. Spec: backend.md B1. |
+
+**Body**
+
+| Field | Type | Rules |
+|---|---|---|
+| `store` | string | Trimmed, 1…64 characters. Any character, including `/` (it's JSON, not a path segment). |
+| `amount_cents` | int | `1…10000000`. No decimal parsing (fixes gap 10). |
+| `at` | instant | Optional. Must carry a zone; ≤ now + 24 h. Absent → server time. Stored as UTC (fixes gap 11, except currency). |
+
+**Response `201`:** the stored payment in P1's row shape. No `Location` header (there is no single-payment route).
+
+**Responses:** `201` · `401` · `422` invalid body · `502`/`504`. After a `5xx` or a timeout the payment **may** have been stored; clients must not retry blindly.
+
+```sh
+curl "${H[@]}" -X POST -H "Content-Type: application/json" \
+  -d '{"store": "Rewe City", "amount_cents": 1234, "at": "2026-10-18T21:30:00Z"}' \
+  https://api.omniserv.me/v1/payments
+# 201 {"id":"…","store":"Rewe City","amount_cents":1234,"date":"2026-10-18T21:30:00Z","currency":"EUR"}
+```
+
+---
+
+### 10.5 Endpoints — smartlife (smart-home)
+
+**Changes to shared smartlife behaviour (§6.0)** that come with these routes (backend.md B4, B6, B7):
+- `owner_present` starts as **unknown** (`null`) after a restart instead of `False`; `check()` takes no presence-based action while it is unknown. `service_active` still resets to `true`.
+- Presence reports run `check()` **only while `service_active`** (fixes gap 12, for `/updStatus` too).
+- Strip access is serialised by a lock across gRPC threads and the background loop.
+- An unreachable strip no longer stops smartlife from starting, and no longer kills the background loop. Services get `restart: unless-stopped`.
+- Device errors on writes become gRPC `UNAVAILABLE` → HTTP `502` `"strip unreachable"` instead of `500`.
+
+#### P3 `GET /v1/devices`
+
+| | |
+|---|---|
+| **Goal** | Report each device's reachability, power and brightness. |
+| **Scope** | Read-only. One `state()` query per device, ~2 s socket timeout, lock wait ≤ 2.5 s. Never runs `check()` or actuates. |
+| **Ownership** | **smartlife** (`GetDevices` rpc, `ColoStrip.snapshot()`). Spec: backend.md B4. |
+
+**Response `200`**
+```json
+{ "devices": [ { "id": 0, "kind": "cololight_strip", "name": "Strip",
+                 "reachable": true, "on": true, "brightness": 40 } ] }
+```
+- `name` from env `STRIP_NAME` (default `"Strip"`).
+- `brightness`: `0…100` when reachable; `null` when unreachable; last read value or `null` when off.
+- **Unreachable is not an error:** `200` with `reachable: false, on: false, brightness: null`. `5xx` means smartlife itself is down.
+
+**Responses:** `200` · `401` · `502`/`504` smartlife down/slow.
+
+#### P4 `PATCH /v1/devices/{id}`
+
+| | |
+|---|---|
+| **Goal** | Set a device's brightness; `0` switches it off. |
+| **Scope** | Actuates the device; stores nothing. Idempotent. The next automated `check()` may still override it (as §6.3). |
+| **Ownership** | **smartlife** (`BrightnessUpdate` rpc with the new `device_id`). Spec: backend.md B5. |
+
+| | Name | Rules |
+|---|---|---|
+| path | `id` | int, a device id from P3. Unknown → `404`. |
+| body | `brightness` | Required int, `0…100` → otherwise `422`. Only writable field; any other field → `422`. |
+
+**Responses:** `204` · `401` · `404` unknown device · `422` · `502` strip unreachable or smartlife down · `504`.
+
+```sh
+curl "${H[@]}" -X PATCH -H "Content-Type: application/json" -d '{"brightness": 40}' https://api.omniserv.me/v1/devices/0   # 204, on at 40
+curl "${H[@]}" -X PATCH -H "Content-Type: application/json" -d '{"brightness": 0}'  https://api.omniserv.me/v1/devices/0   # 204, off
+```
+
+#### P5 `GET /v1/automation`
+
+| | |
+|---|---|
+| **Goal** | Report the automation flags. |
+| **Scope** | Read-only, in-memory. No device access, so it answers instantly even with the strip unreachable. |
+| **Ownership** | **smartlife** (`GetAutomation` rpc). Spec: backend.md B4. |
+
+**Response `200`:** `{"active": true, "owner_present": true}`. `owner_present` is `null` until the first presence report after a smartlife restart.
+
+**Responses:** `200` · `401` · `502`/`504`.
+
+#### P6 `PATCH /v1/automation`
+
+| | |
+|---|---|
+| **Goal** | Pause or resume the automation (iOS client); report the owner's presence (presence Shortcut). |
+| **Scope** | Writes `service_active` and/or `owner_present`, then runs `check()` **once** if `service_active` is true afterwards. |
+| **Ownership** | **smartlife** (`UpdateAutomation` rpc). Spec: backend.md B4. |
+
+| Body field | Type | Rules |
+|---|---|---|
+| `active` | bool | Optional. Strict JSON boolean. |
+| `owner_present` | bool | Optional. Strict JSON boolean. The iOS client never sends it. |
+
+At least one field; `{}`, `null` values or unknown fields → `422`.
+
+**Responses:** `204` · `401` · `422` · `502` (strip unreachable during `check()`; **the flags are still set**) · `504`.
+
+```sh
+curl "${H[@]}" -X PATCH -H "Content-Type: application/json" -d '{"active": false}'       https://api.omniserv.me/v1/automation   # pause
+curl "${H[@]}" -X PATCH -H "Content-Type: application/json" -d '{"owner_present": true}' https://api.omniserv.me/v1/automation   # presence
+```
+
+---
+
+### 10.6 gRPC additions
+
+All additive; legacy callers keep working without regenerating anything they don't use. The proto copies listed in §7 must stay identical.
+
+**`package omniscient`**
+
+| Change | Definition | Used by |
+|---|---|---|
+| `Payment` gains a field | `string timestamp = 3;` (ISO 8601 UTC; empty = now) | P2 |
+| `PaymentResponse` gains a field | `PaymentItem payment = 2;` (the stored document) | P2 |
+| new messages | `TimeRange { string start = 1; string stop = 2; int32 limit = 3; }` · `PaymentItem { string id = 1; string store = 2; int64 amount_cents = 3; string date = 4; string currency = 5; }` · `PaymentList { repeated PaymentItem payments = 1; int64 total_cents = 2; int64 count = 3; }` | P1, P2 |
+| new rpc | `Query.ListPayments (TimeRange) returns (PaymentList)` | P1 |
+
+**`package smartlife`**
+
+| Change | Definition | Used by |
+|---|---|---|
+| `BrightnessRequest` gains a field | `int32 device_id = 2;` (`0` = the strip, which is what legacy callers send implicitly) | P4 |
+| new messages | `Empty {}` · `DeviceState { int32 id = 1; string kind = 2; string name = 3; bool reachable = 4; bool on = 5; optional int32 brightness = 6; }` · `DeviceList { repeated DeviceState devices = 1; }` · `AutomationState { bool active = 1; optional bool owner_present = 2; }` · `AutomationPatch { optional bool active = 1; optional bool owner_present = 2; }` | P3, P5, P6 |
+| new rpcs | `StateUpdate.GetDevices (Empty) returns (DeviceList)` · `StateUpdate.GetAutomation (Empty) returns (AutomationState)` · `StateUpdate.UpdateAutomation (AutomationPatch) returns (UpdateResponse)` | P3, P5, P6 |
+
+Every gateway stub call gets `timeout=5`. Status mapping: `DEADLINE_EXCEEDED` → `504`, `UNAVAILABLE` → `502`, `NOT_FOUND` → `404`, `INVALID_ARGUMENT` → `422`, other → `500` (B7).
+
+---
+
+### 10.7 Ownership & state matrix (proposed)
+
+| State | Owner | Persistence | Written by | Read by |
+|---|---|---|---|---|
+| `Leo.checks` documents | omniscient | MongoDB; `date` indexed | P2 (legacy: `/add_payment`) | P1 (legacy: `/query`) |
+| Payment id | omniscient | Mongo `_id` (the `.state` counter is retired, B3) | P2 | P1 |
+| `owner_present` | smartlife | memory (default **unknown**) | P6 (legacy: `/updStatus`) | P5, `check()` |
+| `service_active` | smartlife | memory (default `true`) | P6 (legacy: `/updActive`) | P5, `check()`, background loop |
+| Strip power/brightness | the device | device | P4, `check()` (legacy: `/updBrightness`) | P3 (**now exposed**), `check()` |
+| `API_SECRET` | api | env var; startup fails if unset | — | `/v1` middleware, legacy routes |
+| Access service tokens | Cloudflare | Zero Trust config; expiring | — | Cloudflare edge |
+
+---
+
+### 10.8 Legacy routes and migration (B11)
+
+Until migration, §4–§6 apply unchanged to `/add_payment`, `/query`, `/updStatus`, `/updActive`, `/updBrightness`, except for the shared smartlife fixes in §10.5 (presence only acts while active; `owner_present` unknown after restart; `502` for an unreachable strip). The legacy routes keep the secret-in-path problem (gap 2), so migration is the security step:
+
+1. Payment Shortcut → P2, with `amount_cents` computed in the Shortcut and its own Access service token.
+2. Presence Shortcut → P6 with `{"owner_present": …}`, same token.
+3. One week with no legacy calls in the access log.
+4. Remove the legacy routes, the NBSP-euro parsing and the unused legacy rpcs (`Query.Query`, `StatusUpdate`, `ActiveUpdate`).
+5. Widen the Access application from `/v1` to the whole hostname.
+6. Rotate `API_SECRET`: the old value has been in access and Cloudflare logs.
+
+---
+
+### 10.9 Resolution of known gaps (§9)
+
+| Gap | Resolution | Item |
+|---|---|---|
+| 1 Single secret, no scopes | Partly: two layers (Access + bearer); separate Access tokens per client after §10.8. Scopes still not planned. | B9.4, B10, B11 |
+| 2 Secret in URL, plain HTTP, logged | Header auth on `/v1`; HTTPS to the edge, origin unreachable from outside the tunnel. Legacy routes until §10.8. | B10, B9.6, B11 |
+| 3 State changes via `GET` | `POST` / `PATCH` on `/v1`. | B1, B4, B5 |
+| 4 Public `/docs` | Disabled. | B10 |
+| 5 Validation before auth | Middleware checks auth before routing. | B10 |
+| 6 Auth failure is HTTP `200` | `401` JSON on `/v1`; optional for legacy routes. | B10 (B0/§1) |
+| 7 Generic `500`s | `502` / `504` / `404` / `422` with a JSON `detail`. | B7, B8 |
+| 8 `/query` unit mismatch | Stored amounts normalised to cents; `/v1` returns integer cents. | B0/§5 |
+| 9 `/query` day boundaries | `/v1` takes instants, half-open; no server time zone involved. `/query` itself: optional B0/§6. | B2 |
+| 10 Float truncation, NBSP only | `amount_cents` integer; nothing to parse. | B1 |
+| 11 Receipt time, EUR only | `at` field. Currency stays EUR-only. | B1 |
+| 12 Presence actuates while paused | Fixed for legacy and `/v1`. | B4 |
+| 13 Flags reset, id counter | `owner_present` unknown after restart (`service_active` still resets); ids are Mongo `_id`. | B3, B4 |
+| 14 No gRPC deadlines | 5 s on every call. | B7 |
+| 15 Only runs as `python api.py` | Not addressed. | — |
+| 16 No smartlife state | P3, P5. | B4 |
+| 17 No payment list | P1. Allowance/trajectory not needed: planning runs in the client. | B2 |
+| 18 No downstream health | Not planned; per-request `502` / `504` with `detail` instead. | — |
 
 ---
 
