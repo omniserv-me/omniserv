@@ -1,6 +1,9 @@
+from db_handler import get_last_id
+
 # Common makros
 EUR_CODE = 978
 UAH_CODE = 980
+
 
 # Common state vars
 # ToDo: add support for many variables, add monthly_allowance
@@ -9,9 +12,9 @@ class State:
         try:
             with open(".state", "r") as file:
                 self.next_id = int(file.readline().strip())
-        except IOError:
+        except OSError:
             with open(".state", "w") as file:
-                self.next_id = 0
+                self.next_id = get_last_id() + 1
                 file.write(f"{self.next_id}\n")
 
                 file.flush()
@@ -31,4 +34,6 @@ class State:
         self.update_statefile()
         return current_id
 
+
 state = State()
+
