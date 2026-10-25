@@ -4,6 +4,7 @@
 > **Inputs:** [`client.md`](../client.md) (wishes), [`API-CONTRACT.md`](../API-CONTRACT.md) (as-is API), [`audit.md`](../audit.md) (API findings).
 > **Backend changes this design depends on:** [`backend.md`](../backend.md), referenced as **B0–B11**. §4.1 summarises the `/v1` contract the client relies on; backend.md specifies each route in full.
 > Approach per `client.md`: Design → Document → Implement. Nothing in §10 is built before its section here is agreed.
+> **Implementation** is tracked in [`PROGRESS.md`](PROGRESS.md) (checkpoints, ownership, errata, log); session conventions and the kickoff prompt are in [`SESSIONS.md`](SESSIONS.md). Spots marked `(errata E#)` are open there.
 
 ---
 
@@ -212,7 +213,7 @@ Features/
 DesignSystem/   Theme.swift, Card.swift, StatusBanner.swift
 Assets.xcassets AccentColor, AccentSoft, Background, Surface, Ink, InkSecondary, Warning
 ```
-(`Info.plist` and the xcconfigs live in `client/Config/`, §1–2.)
+(`Info.plist` and the xcconfigs live in `client/Config/`, §1–2.) *(errata E8: no file for `MoneyParser` or store-name rules.)*
 
 ### 3.3 Concurrency under `MainActor`-by-default
 
@@ -600,7 +601,7 @@ nonisolated struct Device: Sendable, Identifiable, Decodable {
     let brightness: Int?  // 0…100; nil when unreachable, may be nil when off (B4)
 }
 ```
-Nested types are marked `nonisolated` explicitly. Under `MainActor` default isolation, don't rely on them inheriting it from the enclosing type.
+Nested types are marked `nonisolated` explicitly *(errata E2: `Device.Kind` above and `Period.Kind` in §6.2 don't yet)*. Under `MainActor` default isolation, don't rely on them inheriting it from the enclosing type.
 
 `Kind.unknown` (via a custom `init(from:)` fallback) lets a newer backend add device kinds without breaking an older app build: the tile then shows name and reachability only.
 
@@ -653,7 +654,7 @@ nonisolated struct Period: Sendable, Hashable {
 }
 ```
 - Weeks use `Calendar.current.firstWeekday` (Monday in a German region).
-- `custom` comes from two `DatePicker`s (inclusive end day in the UI, converted to `endExclusive`). It can't be shifted.
+- `custom` comes from two `DatePicker`s (inclusive end day in the UI, converted to `endExclusive`). It can't be shifted. *(errata E6: range limits unspecified.)*
 - History: chevrons shift by one unit. "Next" is disabled once the period contains today.
 - To `/v1/payments`: `from = start`, `to = endExclusive`, both as UTC instants (§4.5). Local midnights become instants on the device, so DST and the device's zone are handled here and the server needs no time-zone setting.
 
@@ -812,8 +813,8 @@ The system tab bar and navigation bars keep their default iOS 27 materials. No c
 ### 8.3 "Responsive and light-weight" rules
 
 1. **Never block on the network.** Screens render immediately from cached state. On first ever load they show the real layout with `.redacted(reason: .placeholder)` and placeholder values, not spinners.
-2. **Refresh triggers:** `.task` on first appearance; `.refreshable` everywhere; `scenePhase → .active` refreshes visible stores if older than 30 s (`Loadable.isStale`).
-3. **Errors are inline and non-destructive.** A `StatusBanner` sits inside the affected card; the last good value stays visible. No modal alerts except for a failed add (the sheet stays open).
+2. **Refresh triggers:** `.task` on first appearance; `.refreshable` everywhere; `scenePhase → .active` refreshes visible stores if older than 30 s (`Loadable.isStale`) *(errata E4)*.
+3. **Errors are inline and non-destructive.** A `StatusBanner` sits inside the affected card; the last good value stays visible. No modal alerts except for a failed add (the sheet stays open) *(errata E7)*.
 4. **Feedback:** `.sensoryFeedback(.success, trigger:)` on a saved check; `.selection` on slider release; `.error` on rollback.
 5. **Motion:** numbers animate with `.contentTransition(.numericText())`; chart data changes animate with `.animation(.smooth, value:)`. Nothing animates longer than ~300 ms.
 6. **Cold launch (step 10):** `SnapshotCache` writes the last `Overview` data (month total, devices) as JSON to the Caches directory and reads it synchronously at launch. The first frame shows real, slightly stale numbers marked "Updated 2 h ago" until the refresh lands.
@@ -856,7 +857,7 @@ A `Picker` with `.segmented` style switches **Summary | Trend**. The toolbar has
 
 **Summary** (`client.md` view 1):
 - Period selector: segmented `Month | Week | Year | Custom` plus a `‹ October 2026 ›` row.
-- Big numbers: **Spent**, **Planned** (prorated, §6.1), **Difference** (green under / `Warning` over), **Used %**.
+- Big numbers: **Spent**, **Planned** (prorated, §6.1), **Difference** (green under / `Warning` over) *(errata E5)*, **Used %**.
 - A horizontal progress bar (spent / planned), with a tick at "pace" when the period contains today.
 - History is navigated with the chevrons; each period is cached once loaded.
 
@@ -906,7 +907,7 @@ toolbar: Cancel · Save
 
 | Section | Content |
 |---|---|
-| Budget | "Monthly goal" text field (§5.2). It is saved on submit or when the field loses focus, and persisted in `UserDefaults` under `settings.monthlyGoalCents`. A change recomputes plans immediately and needs no fetch. |
+| Budget | "Monthly goal" text field (§5.2). It is saved on submit or when the field loses focus *(errata E3)*, and persisted in `UserDefaults` under `settings.monthlyGoalCents`. A change recomputes plans immediately and needs no fetch. |
 | About | Server host (read-only, from `AppConfig`), app version and build, "Test connection" button → `GET /health` with latency in ms, then `GET /v1/payments` for today → tomorrow with `limit=0` to check the secret (`/health` has no bearer check, so on its own it passes with a wrong secret). The probe is read-only and cheap. It tells apart a wrong `API_SECRET` (`401`), a missing or wrong Access token (`.edgeRejected`) and a backend without `/v1` yet (`.notFound`). Also shows "Edge auth: Access token / none" from `AppConfig.accessToken`. Shows `OK · NN ms` or the first error. |
 
 `SettingsStore` is `@Observable` and backed by `UserDefaults.standard`. It isn't `@AppStorage`, because non-view code (stores) reads the goal too.
@@ -929,7 +930,7 @@ toolbar: Cancel · Save
 | Suite | Cases |
 |---|---|
 | `MoneyParserTests` | `12,34` / `12.34` / `12` / `0,29` → exact cents; rejects `1.234,56`, `12,345`, `-1`, empty, `abc`; `0` rejected as a payment, accepted as a goal; goal `999999,99` accepted, `1000000` rejected; strips `€`/NBSP. |
-| `MoneyFormatTests` | canonical wire string (`5` → `0.05`, `1234` → `12.34`, `100000` → `1000.00`). |
+| `MoneyFormatTests` *(errata E1)* | canonical wire string (`5` → `0.05`, `1234` → `12.34`, `100000` → `1000.00`). |
 | `BudgetMathTests` | the table in §6.1; leap February; a period across a year boundary; `G = 0`; pace on the 1st and last day. |
 | `PeriodTests` | week start honours `firstWeekday`; `shifted` across years; `endExclusive` correct on DST-change days (Europe/Berlin, 2026-03-29 and 2026-10-25) with a fixed calendar injected. |
 | `SpendingSeriesTests` | zero-fill; a 23:30 local payment lands on that local day; future buckets are `nil`; monthly buckets over 12 months. |
@@ -963,7 +964,7 @@ Every feature view has `#Preview`s on `AppEnvironment.preview()` covering these 
 
 ## 10. Implementation steps
 
-Each step ends in a buildable app that does something verifiable. Backend dependencies refer to `backend.md`.
+Each step ends in a buildable app that does something verifiable. Backend dependencies refer to `backend.md`. The steps are implemented as the checkpoints in [`PROGRESS.md`](PROGRESS.md): step 3 is split into 3a–3c, steps 5, 9 and 10 into a/b, and where PROGRESS.md assigns a part differently (e.g. `Money` and the wire DTOs in 3a), PROGRESS.md wins.
 
 | # | Step | Deliverable | Verify | Backend |
 |---|---|---|---|---|
